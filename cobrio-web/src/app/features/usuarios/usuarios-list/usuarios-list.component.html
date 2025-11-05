@@ -1,0 +1,109 @@
+<div class="card">
+  <div class="flex justify-content-between align-items-center mb-4">
+    <h2 class="text-2xl font-semibold m-0">Gerenciar Usuários</h2>
+    <button pButton type="button" icon="pi pi-plus" label="Novo Usuário"
+            (click)="novoUsuario()" class="p-button-success"></button>
+  </div>
+
+  <p-table [value]="usuarios" [loading]="loading" responsiveLayout="scroll"
+           styleClass="p-datatable-sm" [rowHover]="true">
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Nome</th>
+        <th>Email</th>
+        <th style="width: 150px">Perfil</th>
+        <th style="width: 120px">Status</th>
+        <th style="width: 180px">Último Acesso</th>
+        <th style="width: 250px" class="text-center">Ações</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-usuario>
+      <tr>
+        <td>
+          <div class="font-medium">
+            {{ usuario.nome }}
+            <span *ngIf="usuario.ehProprietario"
+                  class="ml-2 px-2 py-1 border-round text-xs font-semibold bg-yellow-100 text-yellow-800"
+                  pTooltip="Proprietário da conta - Não pode ser modificado ou desativado"
+                  tooltipPosition="top">
+              <i class="pi pi-star-fill mr-1"></i>Proprietário
+            </span>
+          </div>
+        </td>
+        <td>{{ usuario.email }}</td>
+        <td>
+          <span [class]="'px-2 py-1 border-round text-sm font-semibold ' + getPerfilClass(usuario.perfil)">
+            {{ usuario.perfilDescricao }}
+          </span>
+        </td>
+        <td>
+          <span [class]="'px-2 py-1 border-round text-sm font-semibold ' + getStatusClass(usuario.ativo)">
+            {{ getStatusLabel(usuario.ativo) }}
+          </span>
+        </td>
+        <td>
+          <span *ngIf="usuario.ultimoAcesso">
+            {{ usuario.ultimoAcesso | date:'dd/MM/yyyy HH:mm' }}
+          </span>
+          <span *ngIf="!usuario.ultimoAcesso" class="text-500">Nunca</span>
+        </td>
+        <td class="text-center">
+          <button pButton type="button" icon="pi pi-pencil"
+                  [pTooltip]="usuario.ehProprietario ? 'Proprietário não pode ser editado' : 'Editar'"
+                  tooltipPosition="top"
+                  class="p-button-rounded p-button-text p-button-primary mr-2"
+                  [disabled]="usuario.ehProprietario"
+                  (click)="editarUsuario(usuario)"></button>
+          <button pButton type="button" icon="pi pi-key" pTooltip="Resetar Senha"
+                  tooltipPosition="top"
+                  class="p-button-rounded p-button-text p-button-warning mr-2"
+                  (click)="mostrarDialogResetarSenha(usuario)"></button>
+          <button pButton type="button" icon="pi pi-ban"
+                  [pTooltip]="usuario.ehProprietario ? 'Proprietário não pode ser desativado' : 'Desativar'"
+                  tooltipPosition="top"
+                  class="p-button-rounded p-button-text p-button-danger"
+                  [disabled]="!usuario.ativo || usuario.ehProprietario"
+                  (click)="desativarUsuario(usuario)"></button>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="6" class="text-center text-500">
+          Nenhum usuário encontrado
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<!-- Dialog Resetar Senha -->
+<p-dialog header="Resetar Senha" [(visible)]="displayResetarSenhaDialog"
+          [modal]="true" [style]="{width: '450px'}" [draggable]="false" [resizable]="false">
+  <div class="field mb-3" *ngIf="selectedUsuario">
+    <label class="font-semibold mb-2 block">Resetar senha para: {{ selectedUsuario.nome }}</label>
+  </div>
+
+  <div class="field mb-3">
+    <label for="novaSenha" class="font-semibold mb-2 block">Nova Senha *</label>
+    <input id="novaSenha" type="password" pInputText [(ngModel)]="novaSenha"
+           placeholder="Mínimo 8 caracteres" class="w-full">
+  </div>
+
+  <div class="field mb-3">
+    <label for="confirmSenha" class="font-semibold mb-2 block">Confirmar Senha *</label>
+    <input id="confirmSenha" type="password" pInputText [(ngModel)]="confirmSenha"
+           placeholder="Digite novamente a senha" class="w-full">
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button pButton type="button" label="Cancelar" icon="pi pi-times"
+            (click)="displayResetarSenhaDialog = false" class="p-button-text"></button>
+    <button pButton type="button" label="Resetar Senha" icon="pi pi-check"
+            (click)="resetarSenha()"
+            [disabled]="!novaSenha || !confirmSenha"></button>
+  </ng-template>
+</p-dialog>
+
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>

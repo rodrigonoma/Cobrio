@@ -1,0 +1,28 @@
+// Estilos mínimos - a maior parte vem do PrimeNG e classes utilitárias
+
+::ng-deep {
+  // Ajustar altura das células da tabela
+  .p-datatable-sm {
+    .p-datatable-tbody > tr > td {
+      padding: 0.75rem;
+    }
+  }
+
+  // Cabeçalhos da tabela mais compactos
+  .p-datatable .p-datatable-thead > tr > th {
+    background-color: #f9fafb;
+    border-bottom: 2px solid #e5e7eb;
+    font-weight: 600;
+    padding: 1rem 0.75rem;
+  }
+
+  // Hover nas linhas
+  .p-datatable .p-datatable-tbody > tr:hover {
+    background-color: #f9fafb;
+  }
+
+  // Centralizar checkboxes
+  .p-checkbox {
+    display: inline-flex;
+  }
+}

@@ -1,0 +1,16 @@
+C:\Cobrio\src\Cobrio.Application\bin\Debug\net8.0\Cobrio.Application.deps.json
+C:\Cobrio\src\Cobrio.Application\bin\Debug\net8.0\Cobrio.Application.dll
+C:\Cobrio\src\Cobrio.Application\bin\Debug\net8.0\Cobrio.Application.pdb
+C:\Cobrio\src\Cobrio.Application\bin\Debug\net8.0\Cobrio.Domain.dll
+C:\Cobrio\src\Cobrio.Application\bin\Debug\net8.0\Cobrio.Domain.pdb
+C:\Cobrio\src\Cobrio.Application\obj\Debug\net8.0\Cobrio.Application.csproj.AssemblyReference.cache
+C:\Cobrio\src\Cobrio.Application\obj\Debug\net8.0\Cobrio.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\Cobrio\src\Cobrio.Application\obj\Debug\net8.0\Cobrio.Application.AssemblyInfoInputs.cache
+C:\Cobrio\src\Cobrio.Application\obj\Debug\net8.0\Cobrio.Application.AssemblyInfo.cs
+C:\Cobrio\src\Cobrio.Application\obj\Debug\net8.0\Cobrio.Application.csproj.CoreCompileInputs.cache
+C:\Cobrio\src\Cobrio.Application\obj\Debug\net8.0\Cobrio.A.949D8CE0.Up2Date
+C:\Cobrio\src\Cobrio.Application\obj\Debug\net8.0\Cobrio.Application.dll
+C:\Cobrio\src\Cobrio.Application\obj\Debug\net8.0\refint\Cobrio.Application.dll
+C:\Cobrio\src\Cobrio.Application\obj\Debug\net8.0\Cobrio.Application.pdb
+C:\Cobrio\src\Cobrio.Application\obj\Debug\net8.0\ref\Cobrio.Application.dll
+C:\Cobrio\src\Cobrio.Application\obj\Debug\net8.0\Cobrio.Application.sourcelink.json

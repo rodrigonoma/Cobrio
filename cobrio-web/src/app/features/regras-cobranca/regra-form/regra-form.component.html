@@ -1,0 +1,307 @@
+<div class="card">
+  <div class="flex justify-content-between align-items-center mb-4">
+    <h2 class="text-2xl font-semibold m-0">
+      {{ editMode ? 'Editar Regra de Cobrança' : 'Nova Regra de Cobrança' }}
+    </h2>
+    <button pButton type="button" icon="pi pi-times" label="Voltar"
+            (click)="voltar()" class="p-button-text"></button>
+  </div>
+
+  <!-- Aviso para Regra Padrão -->
+  <div class="bg-yellow-50 border-1 border-yellow-200 border-round p-3 mb-4" *ngIf="editMode && ehPadrao">
+    <div class="flex align-items-start gap-2">
+      <i class="pi pi-info-circle text-yellow-600 text-xl mt-1"></i>
+      <div class="text-sm text-yellow-800">
+        <strong>Regra Padrão:</strong> Esta é a regra padrão "Envio Imediato" que não pode ser deletada.
+        Você pode alterar apenas o <strong>Canal de Notificação</strong> (Email, SMS ou WhatsApp).
+        Outras configurações como nome, descrição, momento de disparo e template não podem ser modificadas.
+      </div>
+    </div>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="salvar()">
+    <div class="grid">
+      <!-- Nome -->
+      <div class="col-12 md:col-6">
+        <div class="field">
+          <label for="nome" class="font-semibold">Nome da Regra *</label>
+          <input id="nome" type="text" pInputText formControlName="nome"
+                 class="w-full" [class.ng-invalid]="isFieldInvalid('nome')"
+                 placeholder="Ex: Cobrança 3 dias antes do vencimento">
+          <small class="p-error" *ngIf="isFieldInvalid('nome')">
+            {{ getFieldError('nome') }}
+          </small>
+        </div>
+      </div>
+
+      <!-- Tipo de Momento -->
+      <div class="col-12 md:col-2">
+        <div class="field">
+          <label for="tipoMomento" class="font-semibold">Momento *</label>
+          <p-dropdown id="tipoMomento" formControlName="tipoMomento"
+                      [options]="tiposMomento" optionLabel="label" optionValue="value"
+                      class="w-full" [class.ng-invalid]="isFieldInvalid('tipoMomento')">
+          </p-dropdown>
+          <small class="p-error" *ngIf="isFieldInvalid('tipoMomento')">
+            {{ getFieldError('tipoMomento') }}
+          </small>
+        </div>
+      </div>
+
+      <!-- Valor Tempo -->
+      <div class="col-12 md:col-2">
+        <div class="field">
+          <label for="valorTempo" class="font-semibold">Valor *</label>
+          <p-inputNumber id="valorTempo" formControlName="valorTempo"
+                         [min]="1" [max]="9999" [showButtons]="true"
+                         class="w-full" [class.ng-invalid]="isFieldInvalid('valorTempo')">
+          </p-inputNumber>
+          <small class="p-error" *ngIf="isFieldInvalid('valorTempo')">
+            {{ getFieldError('valorTempo') }}
+          </small>
+        </div>
+      </div>
+
+      <!-- Unidade de Tempo -->
+      <div class="col-12 md:col-2">
+        <div class="field">
+          <label for="unidadeTempo" class="font-semibold">Unidade *</label>
+          <p-dropdown id="unidadeTempo" formControlName="unidadeTempo"
+                      [options]="unidadesTempo" optionLabel="label" optionValue="value"
+                      class="w-full" [class.ng-invalid]="isFieldInvalid('unidadeTempo')">
+          </p-dropdown>
+          <small class="p-error" *ngIf="isFieldInvalid('unidadeTempo')">
+            {{ getFieldError('unidadeTempo') }}
+          </small>
+        </div>
+      </div>
+
+      <!-- Canal de Notificação -->
+      <div class="col-12 md:col-3">
+        <div class="field">
+          <label for="canalNotificacao" class="font-semibold">Canal de Notificação *</label>
+          <p-dropdown id="canalNotificacao" formControlName="canalNotificacao"
+                      [options]="canaisNotificacao" optionLabel="label" optionValue="value"
+                      class="w-full" [class.ng-invalid]="isFieldInvalid('canalNotificacao')">
+          </p-dropdown>
+        </div>
+      </div>
+
+      <!-- Descrição -->
+      <div class="col-12">
+        <div class="field">
+          <label for="descricao" class="font-semibold">Descrição</label>
+          <textarea id="descricao" pInputTextarea formControlName="descricao"
+                    rows="2" class="w-full"
+                    placeholder="Descrição opcional da regra de cobrança"></textarea>
+        </div>
+      </div>
+
+      <!-- Variáveis Obrigatórias do Sistema -->
+      <div class="col-12" *ngIf="!ehPadrao">
+        <div class="field">
+          <label class="font-semibold mb-2 block">
+            <i class="pi pi-shield mr-2"></i>
+            Variáveis Obrigatórias do Sistema
+          </label>
+          <small class="block mb-3 text-600">
+            Defina quais campos serão obrigatórios na raiz do JSON do webhook (ex: email, telefone, nomeCliente).
+            Esses campos NÃO vão dentro do objeto "payload".
+          </small>
+
+          <!-- Chips com variáveis adicionadas -->
+          <div class="flex flex-wrap gap-2 mb-3" *ngIf="variaveisObrigatoriasSistema.length > 0">
+            <p-chip *ngFor="let variavel of variaveisObrigatoriasSistema"
+                    [label]="variavel"
+                    [removable]="true"
+                    (onRemove)="removerVariavelSistema(variavel)"
+                    styleClass="bg-orange-100 text-orange-900">
+            </p-chip>
+          </div>
+
+          <!-- Input para adicionar nova variável -->
+          <div class="p-inputgroup">
+            <input type="text" pInputText
+                   [(ngModel)]="novaVariavelSistema"
+                   [ngModelOptions]="{standalone: true}"
+                   placeholder="Digite o nome da variável (ex: email, telefone)"
+                   (keyup.enter)="adicionarVariavelSistema()"
+                   class="w-full">
+            <button pButton type="button" label="Adicionar" icon="pi pi-plus"
+                    class="p-button-outlined p-button-secondary"
+                    (click)="adicionarVariavelSistema()"
+                    [disabled]="!novaVariavelSistema || novaVariavelSistema.trim() === ''"></button>
+          </div>
+
+          <small class="block mt-2 text-500">
+            <i class="pi pi-info-circle mr-1"></i>
+            Pressione Enter ou clique em Adicionar para incluir uma nova variável
+          </small>
+        </div>
+      </div>
+
+      <!-- Template de Notificação -->
+      <div class="col-12">
+        <div class="field">
+          <label for="templateNotificacao" class="font-semibold">Template HTML *</label>
+          <small class="block mb-2 text-600">
+            Crie o conteúdo da mensagem usando HTML. Campos do sistema (nome, email, telefone) são enviados separadamente.
+            Use variáveis no formato {{'{{'}}NomeVariavel{{'}}'}} para dados específicos da cobrança (valor, link, código de barras, etc).
+          </small>
+          <p-editor #editor formControlName="templateNotificacao"
+                    [style]="{'height':'320px'}"
+                    [class.ng-invalid]="isFieldInvalid('templateNotificacao')">
+            <ng-template pTemplate="header">
+              <span class="ql-formats">
+                <select class="ql-header">
+                  <option value="1">Heading 1</option>
+                  <option value="2">Heading 2</option>
+                  <option value="3">Heading 3</option>
+                  <option selected>Normal</option>
+                </select>
+                <select class="ql-font">
+                  <option selected>Sans Serif</option>
+                  <option value="serif">Serif</option>
+                  <option value="monospace">Monospace</option>
+                </select>
+              </span>
+              <span class="ql-formats">
+                <button class="ql-bold" aria-label="Bold"></button>
+                <button class="ql-italic" aria-label="Italic"></button>
+                <button class="ql-underline" aria-label="Underline"></button>
+              </span>
+              <span class="ql-formats">
+                <select class="ql-color"></select>
+                <select class="ql-background"></select>
+              </span>
+              <span class="ql-formats">
+                <button class="ql-list" value="ordered" aria-label="Ordered List"></button>
+                <button class="ql-list" value="bullet" aria-label="Unordered List"></button>
+                <select class="ql-align">
+                  <option selected></option>
+                  <option value="center"></option>
+                  <option value="right"></option>
+                  <option value="justify"></option>
+                </select>
+              </span>
+              <span class="ql-formats">
+                <button class="ql-link" aria-label="Insert Link"></button>
+              </span>
+              <span class="ql-formats">
+                <button class="ql-clean" aria-label="Remove Styles"></button>
+              </span>
+            </ng-template>
+          </p-editor>
+          <small class="p-error block mt-2" *ngIf="isFieldInvalid('templateNotificacao')">
+            {{ getFieldError('templateNotificacao') }}
+          </small>
+        </div>
+      </div>
+
+      <!-- Campos Obrigatórios do Sistema (Preview) -->
+      <div class="col-12" *ngIf="variaveisObrigatoriasSistema.length > 0">
+        <div class="bg-orange-50 border-1 border-orange-300 border-round p-3">
+          <div class="font-semibold mb-2 text-orange-900">
+            <i class="pi pi-shield mr-2"></i>
+            Campos Obrigatórios do Sistema ({{ variaveisObrigatoriasSistema.length }})
+          </div>
+          <small class="text-orange-700 mb-2 block">
+            Esses campos serão obrigatórios na raiz do JSON do webhook.
+          </small>
+          <div class="flex flex-wrap gap-2">
+            <p-chip *ngFor="let variavel of variaveisObrigatoriasSistema"
+                    [label]="variavel"
+                    styleClass="bg-orange-200 text-orange-900">
+            </p-chip>
+          </div>
+          <small class="text-orange-700 mt-2 block">
+            <strong>Nota:</strong> dataVencimento sempre é obrigatório também.
+          </small>
+        </div>
+      </div>
+
+      <!-- Campos da Mensagem (Variáveis do Template) -->
+      <div class="col-12" *ngIf="variaveisExtraidas.length > 0">
+        <div class="bg-blue-50 border-1 border-blue-200 border-round p-3">
+          <div class="font-semibold mb-2 text-blue-900">
+            <i class="pi pi-code mr-2"></i>
+            Campos da Mensagem ({{ variaveisExtraidas.length }})
+          </div>
+          <small class="text-blue-700 mb-2 block">
+            Variáveis extraídas do template que devem ser enviadas dentro do objeto <code class="bg-blue-100 px-2 py-1 border-round">payload</code>.
+          </small>
+          <div class="flex flex-wrap gap-2">
+            <p-chip *ngFor="let variavel of variaveisExtraidas"
+                    [label]="variavel"
+                    styleClass="bg-blue-100 text-blue-900"></p-chip>
+          </div>
+        </div>
+      </div>
+
+      <!-- Assistente de Variáveis Comuns -->
+      <div class="col-12" *ngIf="!ehPadrao">
+        <div class="bg-gray-50 border-1 border-gray-200 border-round p-3">
+          <div class="font-semibold mb-2 text-gray-900">
+            <i class="pi pi-sparkles mr-2"></i>
+            Inserir Variáveis da Mensagem
+          </div>
+          <small class="text-gray-600 mb-2 block">
+            Clique para inserir variáveis no template. Essas variáveis devem ser enviadas no objeto <code class="bg-gray-200 px-2 py-1 border-round">payload</code> do webhook.
+          </small>
+          <div class="flex flex-wrap gap-2">
+            <button pButton type="button" label="Valor" icon="pi pi-plus"
+                    class="p-button-sm p-button-outlined"
+                    (click)="inserirVariavel('Valor')"></button>
+            <button pButton type="button" label="DataVencimento" icon="pi pi-plus"
+                    class="p-button-sm p-button-outlined"
+                    (click)="inserirVariavel('DataVencimento')"></button>
+            <button pButton type="button" label="LinkPagamento" icon="pi pi-plus"
+                    class="p-button-sm p-button-outlined"
+                    (click)="inserirVariavel('LinkPagamento')"></button>
+            <button pButton type="button" label="CodigoBarras" icon="pi pi-plus"
+                    class="p-button-sm p-button-outlined"
+                    (click)="inserirVariavel('CodigoBarras')"></button>
+            <button pButton type="button" label="LinhaDigitavel" icon="pi pi-plus"
+                    class="p-button-sm p-button-outlined"
+                    (click)="inserirVariavel('LinhaDigitavel')"></button>
+            <button pButton type="button" label="NumeroFatura" icon="pi pi-plus"
+                    class="p-button-sm p-button-outlined"
+                    (click)="inserirVariavel('NumeroFatura')"></button>
+            <button pButton type="button" label="NomeEmpresa" icon="pi pi-plus"
+                    class="p-button-sm p-button-outlined"
+                    (click)="inserirVariavel('NomeEmpresa')"></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- URL do Webhook (após criar) -->
+      <div class="col-12" *ngIf="webhookUrl">
+        <div class="bg-green-50 border-1 border-green-200 border-round p-3">
+          <div class="font-semibold mb-2 text-green-900">
+            <i class="pi pi-check-circle mr-2"></i>
+            URL do Webhook Gerada
+          </div>
+          <div class="flex gap-2">
+            <input type="text" pInputText [value]="webhookUrl" readonly
+                   class="flex-1 font-mono text-sm bg-white">
+            <button pButton type="button" icon="pi pi-copy" label="Copiar"
+                    (click)="copiarWebhookUrl()" class="p-button-success"></button>
+          </div>
+          <small class="text-green-700 mt-2 block">
+            Use esta URL para enviar dados de cobrança via POST com o payload contendo as variáveis acima.
+          </small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botões de Ação -->
+    <div class="flex justify-content-end gap-2 mt-4">
+      <button pButton type="button" label="Cancelar" icon="pi pi-times"
+              (click)="voltar()" class="p-button-text" [disabled]="loading"></button>
+      <button pButton type="submit" label="Salvar" icon="pi pi-check"
+              [loading]="loading" [disabled]="loading"></button>
+    </div>
+  </form>
+</div>
+
+<p-toast></p-toast>

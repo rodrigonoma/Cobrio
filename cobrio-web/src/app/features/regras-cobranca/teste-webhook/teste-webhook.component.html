@@ -1,0 +1,186 @@
+<div class="card">
+  <div class="flex justify-content-between align-items-center mb-4">
+    <h2 class="text-2xl font-semibold m-0">
+      <i class="pi pi-send mr-2"></i>
+      Teste de Webhook
+    </h2>
+    <button pButton type="button" icon="pi pi-arrow-left" label="Voltar"
+            routerLink="/regras-cobranca" class="p-button-text"></button>
+  </div>
+
+  <p class="text-600 mb-4">
+    Use esta tela para testar o envio de dados para o webhook de uma regra de cobrança.
+    Selecione uma regra, edite o payload JSON e envie o teste.
+  </p>
+
+  <!-- Seleção de Regra -->
+  <div class="grid">
+    <div class="col-12">
+      <div class="field">
+        <label for="regra" class="font-semibold">Selecione uma Regra de Cobrança *</label>
+        <p-dropdown id="regra" [(ngModel)]="regraSelecionada" [options]="regras"
+                    optionLabel="nome" placeholder="Selecione uma regra..."
+                    (onChange)="onRegraChange()" [filter]="true" filterBy="nome"
+                    class="w-full">
+          <ng-template let-regra pTemplate="item">
+            <div class="flex flex-column">
+              <span class="font-semibold">{{ regra.nome }}</span>
+              <small class="text-600">
+                Canal: {{ getCanalLabel(regra.canalNotificacao) }} |
+                {{ regra.diasAntesVencimento }} dias antes
+              </small>
+            </div>
+          </ng-template>
+        </p-dropdown>
+      </div>
+    </div>
+  </div>
+
+  <!-- Informações da Regra Selecionada -->
+  <div *ngIf="regraSelecionada" class="grid">
+    <!-- URL do Webhook -->
+    <div class="col-12">
+      <div class="bg-blue-50 border-1 border-blue-200 border-round p-3 mb-3">
+        <div class="font-semibold mb-2 text-blue-900">
+          <i class="pi pi-link mr-2"></i>
+          URL do Webhook
+        </div>
+        <div class="flex gap-2">
+          <input type="text" pInputText [value]="webhookUrl" readonly
+                 class="flex-1 font-mono text-sm bg-white">
+          <button pButton type="button" icon="pi pi-copy" label="Copiar"
+                  (click)="copiarWebhookUrl()" class="p-button-outlined p-button-primary"></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Informações da Regra -->
+    <div class="col-12 md:col-6">
+      <div class="bg-gray-50 border-1 border-gray-200 border-round p-3">
+        <div class="font-semibold mb-2 text-gray-900">
+          <i class="pi pi-info-circle mr-2"></i>
+          Informações da Regra
+        </div>
+        <div class="flex flex-column gap-2">
+          <div>
+            <span class="font-semibold">Nome:</span> {{ regraSelecionada.nome }}
+          </div>
+          <div>
+            <span class="font-semibold">Canal:</span> {{ getCanalLabel(regraSelecionada.canalNotificacao) }}
+          </div>
+          <div>
+            <span class="font-semibold">Momento:</span> {{ getDescricaoTempo() }}
+          </div>
+          <div *ngIf="regraSelecionada.descricao">
+            <span class="font-semibold">Descrição:</span> {{ regraSelecionada.descricao }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Variáveis Obrigatórias -->
+    <div class="col-12 md:col-6">
+      <div class="bg-orange-50 border-1 border-orange-200 border-round p-3">
+        <div class="font-semibold mb-2 text-orange-900">
+          <i class="pi pi-exclamation-triangle mr-2"></i>
+          Variáveis Obrigatórias ({{ regraSelecionada.variaveisObrigatorias.length }})
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <p-chip *ngFor="let variavel of regraSelecionada.variaveisObrigatorias"
+                  [label]="variavel" styleClass="bg-orange-100"></p-chip>
+        </div>
+        <small class="text-orange-700 mt-2 block">
+          Todas essas variáveis devem estar presentes no payload JSON.
+        </small>
+      </div>
+    </div>
+
+    <!-- Editor de Payload -->
+    <div class="col-12">
+      <div class="field">
+        <div class="flex justify-content-between align-items-center mb-2">
+          <label for="payload" class="font-semibold">Payload JSON *</label>
+          <div class="flex gap-2">
+            <button pButton type="button" icon="pi pi-refresh" label="Formatar"
+                    (click)="formatarJson()" class="p-button-sm p-button-outlined"></button>
+            <button pButton type="button" icon="pi pi-copy" label="Copiar"
+                    (click)="copiarPayload()" class="p-button-sm p-button-outlined"></button>
+          </div>
+        </div>
+        <textarea id="payload" pInputTextarea [(ngModel)]="payloadJson"
+                  rows="15" class="w-full font-mono text-sm"
+                  placeholder="Cole ou edite o JSON aqui..."></textarea>
+        <small class="text-600 mt-2 block">
+          Edite o JSON acima com os dados reais que serão enviados ao webhook.
+        </small>
+      </div>
+    </div>
+
+    <!-- Botão de Envio -->
+    <div class="col-12">
+      <div class="flex justify-content-end gap-2">
+        <button pButton type="button" icon="pi pi-send" label="Enviar Teste"
+                (click)="enviarTeste()" [loading]="sendingTest"
+                class="p-button-success" [disabled]="!payloadJson || sendingTest"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Histórico de Testes -->
+  <div *ngIf="testResults.length > 0" class="mt-4">
+    <div class="flex justify-content-between align-items-center mb-3">
+      <h3 class="text-xl font-semibold m-0">
+        <i class="pi pi-history mr-2"></i>
+        Histórico de Testes ({{ testResults.length }})
+      </h3>
+      <button pButton type="button" icon="pi pi-trash" label="Limpar"
+              (click)="limparHistorico()" class="p-button-sm p-button-outlined p-button-danger"></button>
+    </div>
+
+    <div class="flex flex-column gap-3">
+      <div *ngFor="let result of testResults"
+           [class]="result.status === 'success' ? 'bg-green-50 border-1 border-green-200' : 'bg-red-50 border-1 border-red-200'"
+           class="border-round p-3">
+        <div class="flex justify-content-between align-items-start mb-2">
+          <div class="flex align-items-center gap-2">
+            <i [class]="result.status === 'success' ? 'pi pi-check-circle text-green-600' : 'pi pi-times-circle text-red-600'"
+               class="text-xl"></i>
+            <span class="font-semibold"
+                  [class]="result.status === 'success' ? 'text-green-900' : 'text-red-900'">
+              {{ result.status === 'success' ? 'Sucesso' : 'Erro' }}
+            </span>
+            <p-tag [value]="'HTTP ' + result.statusCode"
+                   [severity]="result.status === 'success' ? 'success' : 'danger'"></p-tag>
+          </div>
+          <small class="text-600">
+            {{ result.timestamp | date:'dd/MM/yyyy HH:mm:ss' }}
+          </small>
+        </div>
+
+        <div [class]="result.status === 'success' ? 'text-green-700' : 'text-red-700'">
+          {{ result.message }}
+        </div>
+
+        <div *ngIf="result.response" class="mt-2">
+          <details>
+            <summary class="cursor-pointer font-semibold">
+              <i class="pi pi-code mr-2"></i>
+              Ver Resposta Completa
+            </summary>
+            <pre class="bg-gray-800 text-white p-3 border-round mt-2 overflow-auto text-sm">{{ result.response | json }}</pre>
+          </details>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mensagem quando nenhuma regra está selecionada -->
+  <div *ngIf="!regraSelecionada && !loading" class="text-center p-5">
+    <i class="pi pi-info-circle text-4xl text-blue-500 mb-3"></i>
+    <p class="text-600 text-lg">
+      Selecione uma regra de cobrança acima para começar a testar.
+    </p>
+  </div>
+</div>
+
+<p-toast></p-toast>

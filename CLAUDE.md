@@ -1,0 +1,7 @@
+- estava validando a data e hora para enviar cobrança quando for 30 minutos antes
+- ajuste para guardar no historico importações feitas via webhook.
+- ajustando a regra de duplicidade entre variaveis de informação e obrigatorios. Caso for duplicado, deixar em obrigatorio.
+- ajustes de layout
+- tela de usuario
+- tela de permissao e acoes
+- corrigindo erro de 401

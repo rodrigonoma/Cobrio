@@ -1,0 +1,54 @@
+// Estilos para o editor HTML
+::ng-deep {
+  .p-editor-container {
+    .ql-editor {
+      min-height: 250px;
+      font-size: 14px;
+      line-height: 1.6;
+
+      // Estilo para variáveis no editor
+      .variavel {
+        background-color: #e3f2fd;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: 'Courier New', monospace;
+        font-weight: 500;
+        color: #1565c0;
+        font-size: 13px;
+      }
+
+      // Melhorar aparência de links
+      a {
+        color: #1976d2;
+        text-decoration: underline;
+      }
+    }
+
+    .ql-toolbar {
+      border-top-left-radius: 4px;
+      border-top-right-radius: 4px;
+      background-color: #f8f9fa;
+    }
+
+    .ql-container {
+      border-bottom-left-radius: 4px;
+      border-bottom-right-radius: 4px;
+    }
+  }
+
+  // Melhorar aparência quando inválido
+  .p-editor-container.ng-invalid.ng-touched {
+    .ql-container {
+      border-color: #f44336;
+    }
+  }
+}
+
+// Preview de variáveis
+.bg-blue-50 {
+  p-chip {
+    .p-chip {
+      font-family: 'Courier New', monospace;
+    }
+  }
+}

@@ -1,0 +1,250 @@
+<div class="p-4">
+  <!-- Header -->
+  <div class="card mb-4">
+    <div class="flex justify-content-between align-items-center">
+      <div>
+        <h1 class="text-3xl font-bold m-0 mb-2">
+          <i class="pi pi-user-plus mr-2" *ngIf="!isEditMode"></i>
+          <i class="pi pi-user-edit mr-2" *ngIf="isEditMode"></i>
+          {{ isEditMode ? 'Editar Usuário' : 'Novo Usuário' }}
+        </h1>
+        <p class="text-600 m-0">
+          {{ isEditMode ? 'Atualize as informações do usuário' : 'Preencha os dados para criar um novo usuário' }}
+        </p>
+      </div>
+      <button pButton type="button" icon="pi pi-times" label="Cancelar"
+              (click)="voltar()" class="p-button-text p-button-secondary"></button>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <form [formGroup]="form" (ngSubmit)="salvar()">
+    <!-- Informações Básicas -->
+    <div class="card mb-4">
+      <div class="flex align-items-center mb-4 pb-3 border-bottom-1 border-200">
+        <i class="pi pi-id-card text-primary text-2xl mr-3"></i>
+        <div>
+          <h3 class="m-0 mb-1">Informações Básicas</h3>
+          <p class="text-600 text-sm m-0">Dados pessoais do usuário</p>
+        </div>
+      </div>
+
+      <div class="grid">
+        <!-- Nome -->
+        <div class="col-12 md:col-6">
+          <div class="field">
+            <label for="nome" class="block font-semibold mb-2">
+              <i class="pi pi-user mr-1"></i> Nome Completo *
+            </label>
+            <input id="nome" type="text" pInputText formControlName="nome"
+                   placeholder="Digite o nome completo do usuário"
+                   class="w-full"
+                   [ngClass]="{'ng-invalid ng-dirty': nome?.invalid && nome?.touched}">
+            <small class="block mt-2">
+              <span class="text-red-500" *ngIf="nome?.invalid && nome?.touched">
+                <i class="pi pi-exclamation-circle mr-1"></i>
+                <span *ngIf="nome?.errors?.['required']">Nome é obrigatório</span>
+                <span *ngIf="nome?.errors?.['minlength']">Nome deve ter no mínimo 3 caracteres</span>
+                <span *ngIf="nome?.errors?.['maxlength']">Nome deve ter no máximo 200 caracteres</span>
+              </span>
+            </small>
+          </div>
+        </div>
+
+        <!-- Email -->
+        <div class="col-12 md:col-6">
+          <div class="field">
+            <label for="email" class="block font-semibold mb-2">
+              <i class="pi pi-envelope mr-1"></i> Email *
+            </label>
+            <div class="p-inputgroup">
+              <span class="p-inputgroup-addon"><i class="pi pi-at"></i></span>
+              <input id="email" type="email" pInputText formControlName="email"
+                     placeholder="exemplo@empresa.com"
+                     class="w-full"
+                     [disabled]="isEditMode"
+                     [ngClass]="{'ng-invalid ng-dirty': email?.invalid && email?.touched}">
+            </div>
+            <small class="block mt-2">
+              <span class="text-red-500" *ngIf="email?.invalid && email?.touched && !isEditMode">
+                <i class="pi pi-exclamation-circle mr-1"></i>
+                <span *ngIf="email?.errors?.['required']">Email é obrigatório</span>
+                <span *ngIf="email?.errors?.['email']">Email inválido</span>
+              </span>
+              <span class="text-blue-600" *ngIf="isEditMode">
+                <i class="pi pi-info-circle mr-1"></i>
+                Email não pode ser alterado após criação
+              </span>
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Permissões e Acesso -->
+    <div class="card mb-4">
+      <div class="flex align-items-center mb-4 pb-3 border-bottom-1 border-200">
+        <i class="pi pi-shield text-primary text-2xl mr-3"></i>
+        <div>
+          <h3 class="m-0 mb-1">Permissões e Acesso</h3>
+          <p class="text-600 text-sm m-0">Defina o nível de acesso do usuário</p>
+        </div>
+      </div>
+
+      <div class="grid">
+        <!-- Perfil -->
+        <div class="col-12 md:col-6">
+          <div class="field">
+            <label for="perfil" class="block font-semibold mb-2">
+              <i class="pi pi-key mr-1"></i> Perfil de Acesso *
+              <i class="pi pi-info-circle ml-2 text-blue-500 cursor-pointer"
+                 pTooltip="Administrador: Acesso total ao sistema, incluindo gerenciar usuários, configurações e todas as funcionalidades.&#10;&#10;Operador: Pode criar, editar e gerenciar cobranças e assinaturas, mas sem acesso a configurações críticas.&#10;&#10;Visualizador: Apenas leitura. Pode visualizar dados e relatórios, mas não pode fazer alterações."
+                 tooltipPosition="right"
+                 [escape]="false"
+                 tooltipStyleClass="perfil-tooltip"></i>
+            </label>
+            <p-dropdown id="perfil" formControlName="perfil"
+                        [options]="perfisOptions"
+                        optionLabel="label"
+                        optionValue="value"
+                        placeholder="Selecione o perfil de acesso"
+                        [ngClass]="{'ng-invalid ng-dirty': perfil?.invalid && perfil?.touched}"
+                        styleClass="w-full"
+                        [showClear]="false">
+              <ng-template let-option pTemplate="item">
+                <div class="flex align-items-center py-2">
+                  <i class="pi mr-3 text-xl"
+                     [ngClass]="{
+                       'pi-crown text-purple-500': option.value === 1,
+                       'pi-briefcase text-blue-500': option.value === 2,
+                       'pi-eye text-gray-500': option.value === 3
+                     }"></i>
+                  <div>
+                    <div class="font-semibold">{{ option.label }}</div>
+                    <div class="text-sm text-600">{{ option.description }}</div>
+                  </div>
+                </div>
+              </ng-template>
+            </p-dropdown>
+
+            <small class="block mt-2">
+              <span class="text-red-500" *ngIf="perfil?.invalid && perfil?.touched">
+                <i class="pi pi-exclamation-circle mr-1"></i>
+                <span *ngIf="perfil?.errors?.['required']">Perfil é obrigatório</span>
+              </span>
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Senha - Apenas no modo de criação -->
+    <div class="card mb-4" *ngIf="!isEditMode">
+      <div class="flex align-items-center mb-4 pb-3 border-bottom-1 border-200">
+        <i class="pi pi-lock text-primary text-2xl mr-3"></i>
+        <div>
+          <h3 class="m-0 mb-1">Definir Senha</h3>
+          <p class="text-600 text-sm m-0">Crie uma senha segura para o usuário</p>
+        </div>
+      </div>
+
+      <div class="grid">
+        <!-- Senha -->
+        <div class="col-12 md:col-6">
+          <div class="field">
+            <label for="senha" class="block font-semibold mb-2">
+              <i class="pi pi-key mr-1"></i> Senha *
+              <i class="pi pi-info-circle ml-2 text-blue-500 cursor-pointer"
+                 pTooltip="Dicas para uma senha segura:&#10;• Use no mínimo 8 caracteres&#10;• Combine letras maiúsculas e minúsculas&#10;• Inclua números e símbolos&#10;• Evite informações pessoais óbvias"
+                 tooltipPosition="right"
+                 [escape]="false"
+                 tooltipStyleClass="senha-tooltip"></i>
+            </label>
+            <div class="p-inputgroup">
+              <span class="p-inputgroup-addon"><i class="pi pi-lock"></i></span>
+              <input id="senha" [type]="showPassword ? 'text' : 'password'"
+                     pInputText formControlName="senha"
+                     placeholder="Digite a senha (mínimo 8 caracteres)"
+                     class="w-full"
+                     [ngClass]="{'ng-invalid ng-dirty': senha?.invalid && senha?.touched}">
+              <button type="button" pButton
+                      [icon]="showPassword ? 'pi pi-eye-slash' : 'pi pi-eye'"
+                      class="p-button-text"
+                      (click)="togglePasswordVisibility()"
+                      pTooltip="Mostrar/Ocultar senha"
+                      tooltipPosition="top">
+              </button>
+            </div>
+            <small class="block mt-2">
+              <span class="text-red-500" *ngIf="senha?.invalid && senha?.touched">
+                <i class="pi pi-exclamation-circle mr-1"></i>
+                <span *ngIf="senha?.errors?.['required']">Senha é obrigatória</span>
+                <span *ngIf="senha?.errors?.['minlength']">Senha deve ter no mínimo 8 caracteres</span>
+              </span>
+            </small>
+          </div>
+        </div>
+
+        <!-- Confirmar Senha -->
+        <div class="col-12 md:col-6">
+          <div class="field">
+            <label for="confirmSenha" class="block font-semibold mb-2">
+              <i class="pi pi-lock mr-1"></i> Confirmar Senha *
+            </label>
+            <div class="p-inputgroup">
+              <span class="p-inputgroup-addon"><i class="pi pi-lock"></i></span>
+              <input id="confirmSenha" [type]="showConfirmPassword ? 'text' : 'password'"
+                     pInputText formControlName="confirmSenha"
+                     placeholder="Digite novamente a senha"
+                     class="w-full"
+                     [ngClass]="{'ng-invalid ng-dirty': senha?.value && senha?.value !== confirmSenha?.value && confirmSenha?.touched}">
+              <button type="button" pButton
+                      [icon]="showConfirmPassword ? 'pi pi-eye-slash' : 'pi pi-eye'"
+                      class="p-button-text"
+                      (click)="toggleConfirmPasswordVisibility()"
+                      pTooltip="Mostrar/Ocultar senha"
+                      tooltipPosition="top">
+              </button>
+            </div>
+            <small class="block mt-2">
+              <span class="text-red-500" *ngIf="senha?.value && senha?.value !== confirmSenha?.value && confirmSenha?.touched">
+                <i class="pi pi-exclamation-circle mr-1"></i>
+                As senhas não coincidem
+              </span>
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Aviso sobre senha no modo de edição -->
+    <div class="card mb-4" *ngIf="isEditMode">
+      <div class="flex align-items-center p-3 surface-50 border-round border-1 border-blue-200">
+        <i class="pi pi-info-circle text-blue-500 text-2xl mr-3"></i>
+        <div>
+          <p class="font-semibold m-0 mb-1 text-blue-900">Alteração de Senha</p>
+          <p class="text-600 text-sm m-0">
+            Para alterar a senha deste usuário, use o botão <strong>"Resetar Senha"</strong> na lista de usuários.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ações -->
+    <div class="card">
+      <div class="flex justify-content-end gap-2">
+        <button pButton type="button" label="Cancelar" icon="pi pi-times"
+                (click)="voltar()" class="p-button-text p-button-secondary p-button-lg"
+                [disabled]="loading"></button>
+        <button pButton type="submit"
+                [label]="isEditMode ? 'Atualizar Usuário' : 'Criar Usuário'"
+                [icon]="isEditMode ? 'pi pi-check' : 'pi pi-user-plus'"
+                class="p-button-success p-button-lg"
+                [disabled]="loading"
+                [loading]="loading"></button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<p-toast></p-toast>

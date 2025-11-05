@@ -1,0 +1,13 @@
+<aside class="sidebar" [class.collapsed]="collapsed">
+  <nav class="sidebar-nav">
+    <ng-container *ngFor="let item of menuItems">
+      <a *ngIf="canViewMenuItem(item)"
+         [routerLink]="item.route"
+         class="nav-item"
+         [class.active]="isActive(item.route)">
+        <i class="pi" [ngClass]="item.icon"></i>
+        <span class="nav-label" *ngIf="!collapsed">{{ item.label }}</span>
+      </a>
+    </ng-container>
+  </nav>
+</aside>

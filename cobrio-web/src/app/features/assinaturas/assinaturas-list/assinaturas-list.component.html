@@ -1,0 +1,392 @@
+<div class="container mx-auto">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold">Assinaturas</h1>
+    <button pButton label="Nova Assinatura" icon="pi pi-plus" class="p-button-success" (click)="openNewAssinaturaDialog()" [disabled]="!canCreate()"></button>
+  </div>
+
+  <div class="card bg-white rounded-lg shadow p-6">
+    <!-- Search Bar -->
+    <div class="mb-4">
+      <span class="p-input-icon-left w-full">
+        <i class="pi pi-search"></i>
+        <input
+          pInputText
+          type="text"
+          placeholder="Buscar por nome, email ou plano..."
+          class="w-full"
+          (input)="dt.filterGlobal($any($event.target).value, 'contains')"
+        />
+      </span>
+    </div>
+
+    <!-- Table -->
+    <p-table
+      #dt
+      [value]="assinaturas"
+      [loading]="loading"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [globalFilterFields]="['assinanteNome', 'assinanteEmail', 'planoNome', 'status']"
+      [rowHover]="true"
+      styleClass="p-datatable-gridlines">
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="assinanteNome">
+            Assinante <p-sortIcon field="assinanteNome"></p-sortIcon>
+          </th>
+          <th pSortableColumn="planoNome">
+            Plano <p-sortIcon field="planoNome"></p-sortIcon>
+          </th>
+          <th pSortableColumn="status">
+            Status <p-sortIcon field="status"></p-sortIcon>
+          </th>
+          <th pSortableColumn="valor">
+            Valor <p-sortIcon field="valor"></p-sortIcon>
+          </th>
+          <th pSortableColumn="dataInicio">
+            Data Início <p-sortIcon field="dataInicio"></p-sortIcon>
+          </th>
+          <th pSortableColumn="dataProximaCobranca">
+            Próxima Cobrança
+          </th>
+          <th>Ações</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-assinatura>
+        <tr>
+          <td>
+            <div>
+              <div class="font-semibold">{{ assinatura.assinanteNome }}</div>
+              <div class="text-sm text-gray-500">{{ assinatura.assinanteEmail }}</div>
+            </div>
+          </td>
+          <td>
+            <div>
+              <div class="font-medium">{{ assinatura.planoNome }}</div>
+              <div class="text-xs text-gray-500">{{ assinatura.tipoCiclo }}</div>
+            </div>
+          </td>
+          <td>
+            <div class="flex flex-col gap-1">
+              <p-tag
+                [value]="assinatura.status === 'EmTrial' ? 'Em Trial' : assinatura.status"
+                [severity]="getStatusSeverity(assinatura.status)">
+              </p-tag>
+              <span *ngIf="assinatura.emTrial" class="text-xs text-blue-600">
+                Trial até {{ formatDate(assinatura.trialFim) }}
+              </span>
+            </div>
+          </td>
+          <td>
+            <span class="font-semibold text-green-600">{{ formatCurrency(assinatura.valor) }}</span>
+          </td>
+          <td>{{ formatDate(assinatura.dataInicio) }}</td>
+          <td>{{ formatDate(assinatura.dataProximaCobranca) }}</td>
+          <td>
+            <div class="flex gap-1">
+              <button
+                pButton
+                icon="pi pi-eye"
+                class="p-button-rounded p-button-text p-button-info"
+                pTooltip="Ver Detalhes"
+                tooltipPosition="top"
+                (click)="showDetails(assinatura)">
+              </button>
+              <button
+                *ngIf="canCancel(assinatura) && canEdit()"
+                pButton
+                icon="pi pi-ban"
+                class="p-button-rounded p-button-text p-button-warning"
+                pTooltip="Cancelar"
+                tooltipPosition="top"
+                (click)="openCancelDialog(assinatura)">
+              </button>
+              <button
+                *ngIf="canSuspend(assinatura) && canEdit()"
+                pButton
+                icon="pi pi-pause"
+                class="p-button-rounded p-button-text p-button-warning"
+                pTooltip="Suspender"
+                tooltipPosition="top"
+                (click)="suspenderAssinatura(assinatura)">
+              </button>
+              <button
+                *ngIf="canReactivate(assinatura) && canEdit()"
+                pButton
+                icon="pi pi-check"
+                class="p-button-rounded p-button-text p-button-success"
+                pTooltip="Reativar"
+                tooltipPosition="top"
+                (click)="reativarAssinatura(assinatura)">
+              </button>
+              <button
+                pButton
+                icon="pi pi-trash"
+                class="p-button-rounded p-button-text p-button-danger"
+                pTooltip="Excluir"
+                tooltipPosition="top"
+                [disabled]="!canDelete()"
+                (click)="confirmDelete(assinatura)">
+              </button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="7" class="text-center py-8">
+            <i class="pi pi-inbox text-4xl text-gray-400 mb-3"></i>
+            <p class="text-gray-500">Nenhuma assinatura encontrada</p>
+            <button pButton label="Criar Primeira Assinatura" icon="pi pi-plus" class="mt-4" (click)="openNewAssinaturaDialog()" [disabled]="!canCreate()"></button>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>
+
+<!-- Dialog: Nova Assinatura -->
+<p-dialog
+  header="Nova Assinatura"
+  [(visible)]="displayFormDialog"
+  [modal]="true"
+  [style]="{ width: '700px' }"
+  [draggable]="false"
+  [resizable]="false">
+
+  <form [formGroup]="assinaturaForm" (ngSubmit)="saveAssinatura()">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Plano -->
+      <div class="col-span-2">
+        <label class="block text-sm font-medium mb-2">Plano *</label>
+        <p-dropdown
+          formControlName="planoOfertaId"
+          [options]="planos"
+          optionLabel="nome"
+          optionValue="id"
+          placeholder="Selecione um plano"
+          [filter]="true"
+          filterBy="nome"
+          class="w-full">
+          <ng-template let-plano pTemplate="item">
+            <div class="flex justify-between items-center">
+              <span>{{ plano.nome }}</span>
+              <span class="text-green-600 font-semibold">{{ formatCurrency(plano.valor) }}</span>
+            </div>
+          </ng-template>
+        </p-dropdown>
+        <small class="text-red-500" *ngIf="assinaturaForm.get('planoOfertaId')?.invalid && assinaturaForm.get('planoOfertaId')?.touched">
+          Plano é obrigatório
+        </small>
+      </div>
+
+      <!-- Dados do Assinante -->
+      <div class="col-span-2">
+        <h3 class="text-lg font-semibold mb-3 border-b pb-2">Dados do Assinante</h3>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-2">Nome Completo *</label>
+        <input pInputText formControlName="nome" class="w-full" />
+        <small class="text-red-500" *ngIf="assinaturaForm.get('nome')?.invalid && assinaturaForm.get('nome')?.touched">
+          Nome é obrigatório (mín. 3 caracteres)
+        </small>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-2">Email *</label>
+        <input pInputText type="email" formControlName="email" class="w-full" />
+        <small class="text-red-500" *ngIf="assinaturaForm.get('email')?.invalid && assinaturaForm.get('email')?.touched">
+          Email válido é obrigatório
+        </small>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-2">Telefone</label>
+        <input pInputText formControlName="telefone" class="w-full" placeholder="(00) 00000-0000" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-2">CPF/CNPJ</label>
+        <input pInputText formControlName="cpfCnpj" class="w-full" />
+      </div>
+
+      <!-- Endereço -->
+      <div class="col-span-2">
+        <h3 class="text-lg font-semibold mb-3 border-b pb-2">Endereço</h3>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-2">CEP</label>
+        <input pInputText formControlName="cep" class="w-full" placeholder="00000-000" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-2">Logradouro</label>
+        <input pInputText formControlName="logradouro" class="w-full" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-2">Número</label>
+        <input pInputText formControlName="numero" class="w-full" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-2">Complemento</label>
+        <input pInputText formControlName="complemento" class="w-full" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-2">Bairro</label>
+        <input pInputText formControlName="bairro" class="w-full" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-2">Cidade</label>
+        <input pInputText formControlName="cidade" class="w-full" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-2">Estado</label>
+        <input pInputText formControlName="estado" class="w-full" placeholder="SP" maxlength="2" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-2">País</label>
+        <input pInputText formControlName="pais" class="w-full" />
+      </div>
+
+      <!-- Configurações da Assinatura -->
+      <div class="col-span-2">
+        <h3 class="text-lg font-semibold mb-3 border-b pb-2">Configurações</h3>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <p-inputSwitch formControlName="iniciarEmTrial"></p-inputSwitch>
+        <label class="text-sm font-medium">Iniciar em período de trial</label>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-2">Data de Início</label>
+        <input pInputText type="date" formControlName="dataInicio" class="w-full" />
+      </div>
+    </div>
+
+    <div class="flex justify-end gap-2 mt-6 pt-4 border-t">
+      <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text" type="button" (click)="displayFormDialog = false"></button>
+      <button pButton label="Criar Assinatura" icon="pi pi-check" type="submit"></button>
+    </div>
+  </form>
+</p-dialog>
+
+<!-- Dialog: Detalhes da Assinatura -->
+<p-dialog
+  header="Detalhes da Assinatura"
+  [(visible)]="displayDetailsDialog"
+  [modal]="true"
+  [style]="{ width: '600px' }"
+  [draggable]="false"
+  [resizable]="false">
+
+  <div *ngIf="selectedAssinatura" class="space-y-4">
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="text-sm font-medium text-gray-500">Assinante</label>
+        <p class="font-semibold">{{ selectedAssinatura.assinanteNome }}</p>
+        <p class="text-sm text-gray-600">{{ selectedAssinatura.assinanteEmail }}</p>
+      </div>
+
+      <div>
+        <label class="text-sm font-medium text-gray-500">Plano</label>
+        <p class="font-semibold">{{ selectedAssinatura.planoNome }}</p>
+        <p class="text-sm text-gray-600">{{ selectedAssinatura.tipoCiclo }}</p>
+      </div>
+
+      <div>
+        <label class="text-sm font-medium text-gray-500">Status</label>
+        <p-tag [value]="selectedAssinatura.status" [severity]="getStatusSeverity(selectedAssinatura.status)"></p-tag>
+      </div>
+
+      <div>
+        <label class="text-sm font-medium text-gray-500">Valor</label>
+        <p class="font-bold text-lg text-green-600">{{ formatCurrency(selectedAssinatura.valor) }}</p>
+      </div>
+
+      <div>
+        <label class="text-sm font-medium text-gray-500">Data de Início</label>
+        <p>{{ formatDate(selectedAssinatura.dataInicio) }}</p>
+      </div>
+
+      <div>
+        <label class="text-sm font-medium text-gray-500">Próxima Cobrança</label>
+        <p>{{ formatDate(selectedAssinatura.dataProximaCobranca) }}</p>
+      </div>
+
+      <div *ngIf="selectedAssinatura.emTrial" class="col-span-2">
+        <label class="text-sm font-medium text-gray-500">Período de Trial</label>
+        <p>{{ formatDate(selectedAssinatura.trialInicio) }} até {{ formatDate(selectedAssinatura.trialFim) }}</p>
+      </div>
+
+      <div *ngIf="selectedAssinatura.dataCancelamento">
+        <label class="text-sm font-medium text-gray-500">Data de Cancelamento</label>
+        <p class="text-red-600">{{ formatDate(selectedAssinatura.dataCancelamento) }}</p>
+      </div>
+
+      <div *ngIf="selectedAssinatura.dataSuspensao">
+        <label class="text-sm font-medium text-gray-500">Data de Suspensão</label>
+        <p class="text-yellow-600">{{ formatDate(selectedAssinatura.dataSuspensao) }}</p>
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button pButton label="Fechar" icon="pi pi-times" class="p-button-text" (click)="displayDetailsDialog = false"></button>
+  </ng-template>
+</p-dialog>
+
+<!-- Dialog: Cancelar Assinatura -->
+<p-dialog
+  header="Cancelar Assinatura"
+  [(visible)]="displayCancelDialog"
+  [modal]="true"
+  [style]="{ width: '500px' }"
+  [draggable]="false"
+  [resizable]="false">
+
+  <form [formGroup]="cancelForm" (ngSubmit)="cancelarAssinatura()">
+    <div *ngIf="selectedAssinatura" class="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+      <p class="font-semibold">{{ selectedAssinatura.assinanteNome }}</p>
+      <p class="text-sm text-gray-600">{{ selectedAssinatura.planoNome }}</p>
+    </div>
+
+    <div class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium mb-2">Motivo do Cancelamento</label>
+        <textarea
+          pInputTextarea
+          formControlName="motivo"
+          rows="4"
+          class="w-full"
+          placeholder="Digite o motivo do cancelamento (opcional)">
+        </textarea>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <p-inputSwitch formControlName="cancelarImediatamente"></p-inputSwitch>
+        <label class="text-sm">Cancelar imediatamente (não aguardar fim do período)</label>
+      </div>
+    </div>
+
+    <div class="flex justify-end gap-2 mt-6 pt-4 border-t">
+      <button pButton label="Voltar" icon="pi pi-times" class="p-button-text" type="button" (click)="displayCancelDialog = false"></button>
+      <button pButton label="Confirmar Cancelamento" icon="pi pi-ban" class="p-button-danger" type="submit"></button>
+    </div>
+  </form>
+</p-dialog>
+
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>

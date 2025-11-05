@@ -1,0 +1,18 @@
+[
+  {
+    "NomeCliente": "Rodrigo Noma",
+    "Email": "rodrigonoma@gmail.com",
+    "Telefone": "+5511999999999",
+    "DataVencimento": "05/11/2025 18:00",
+    "Payload": {
+      "Nome do Cliente": "Rodrigo Noma",
+      "Nome da empresa": "Minha Empresa Ltda",
+      "descrição": "Cobrança de mensalidade",
+      "dataVencimento": "05/11/2025",
+      "valor": "150.00",
+      "linkBoleto": "https://seusite.com/pagar/123456",
+      "emailSuporte": "suporte@cobrio.com.br",
+      "telefone": "+5511999999999"
+    }
+  }
+]

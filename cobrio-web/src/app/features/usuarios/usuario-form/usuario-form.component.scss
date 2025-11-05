@@ -1,0 +1,11 @@
+::ng-deep .perfil-tooltip,
+::ng-deep .senha-tooltip {
+  max-width: 400px;
+  white-space: pre-line;
+  line-height: 1.6;
+
+  .p-tooltip-text {
+    font-size: 0.9rem;
+    padding: 1rem;
+  }
+}

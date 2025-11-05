@@ -1,0 +1,372 @@
+<div class="container mx-auto">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold">Planos de Oferta</h1>
+    <button pButton label="Novo Plano" icon="pi pi-plus" class="p-button-success" (click)="openNewPlanoDialog()" [disabled]="!canCreate()"></button>
+  </div>
+
+  <div class="card bg-white rounded-lg shadow">
+    <p-table
+      #dt
+      [value]="planos"
+      [loading]="loading"
+      [paginator]="true"
+      [rows]="10"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} planos"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [globalFilterFields]="['nome', 'descricao', 'tipoCiclo']"
+      responsiveLayout="scroll"
+      styleClass="p-datatable-sm"
+    >
+      <ng-template pTemplate="caption">
+        <div class="flex justify-between items-center">
+          <span class="p-input-icon-left w-full md:w-auto">
+            <i class="pi pi-search"></i>
+            <input
+              pInputText
+              type="text"
+              (input)="dt.filterGlobal($any($event.target).value, 'contains')"
+              placeholder="Buscar planos..."
+              class="w-full"
+            />
+          </span>
+        </div>
+      </ng-template>
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="nome">
+            Nome <p-sortIcon field="nome"></p-sortIcon>
+          </th>
+          <th pSortableColumn="valor">
+            Valor <p-sortIcon field="valor"></p-sortIcon>
+          </th>
+          <th pSortableColumn="tipoCiclo">
+            Ciclo <p-sortIcon field="tipoCiclo"></p-sortIcon>
+          </th>
+          <th>Período Trial</th>
+          <th>Limite Usuários</th>
+          <th pSortableColumn="ativo">
+            Status <p-sortIcon field="ativo"></p-sortIcon>
+          </th>
+          <th style="width: 150px">Ações</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-plano>
+        <tr>
+          <td>
+            <div class="font-semibold">{{ plano.nome }}</div>
+            <div class="text-sm text-gray-500" *ngIf="plano.descricao">{{ plano.descricao }}</div>
+          </td>
+          <td>
+            <span class="font-semibold text-green-600">{{ formatCurrency(plano.valor) }}</span>
+          </td>
+          <td>
+            <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">
+              {{ plano.tipoCiclo }}
+            </span>
+          </td>
+          <td>
+            <span *ngIf="plano.periodoTrial > 0">{{ plano.periodoTrial }} dias</span>
+            <span *ngIf="plano.periodoTrial === 0" class="text-gray-400">Sem trial</span>
+          </td>
+          <td>
+            <span *ngIf="plano.limiteUsuarios">{{ plano.limiteUsuarios }} usuários</span>
+            <span *ngIf="!plano.limiteUsuarios" class="text-gray-400">Ilimitado</span>
+          </td>
+          <td>
+            <p-tag
+              [value]="getStatusLabel(plano.ativo)"
+              [severity]="getSeverity(plano.ativo)"
+            ></p-tag>
+          </td>
+          <td>
+            <div class="flex gap-2">
+              <button
+                pButton
+                icon="pi pi-eye"
+                class="p-button-rounded p-button-text p-button-info"
+                pTooltip="Visualizar"
+                tooltipPosition="top"
+                (click)="showDetails(plano)"
+              ></button>
+              <button
+                pButton
+                icon="pi pi-pencil"
+                class="p-button-rounded p-button-text p-button-primary"
+                pTooltip="Editar"
+                tooltipPosition="top"
+                [disabled]="!canEdit()"
+                (click)="openEditPlanoDialog(plano)"
+              ></button>
+              <button
+                pButton
+                [icon]="plano.ativo ? 'pi pi-ban' : 'pi pi-check'"
+                class="p-button-rounded p-button-text"
+                [ngClass]="plano.ativo ? 'p-button-warning' : 'p-button-success'"
+                [pTooltip]="plano.ativo ? 'Desativar' : 'Ativar'"
+                tooltipPosition="top"
+                [disabled]="!canToggleStatus()"
+                (click)="toggleStatus(plano)"
+              ></button>
+              <button
+                pButton
+                icon="pi pi-trash"
+                class="p-button-rounded p-button-text p-button-danger"
+                [disabled]="!canDelete()"
+                pTooltip="Excluir"
+                tooltipPosition="top"
+                (click)="confirmDelete(plano)"
+              ></button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="7" class="text-center py-8">
+            <div class="flex flex-col items-center gap-3">
+              <i class="pi pi-inbox text-4xl text-gray-400"></i>
+              <p class="text-gray-500">Nenhum plano encontrado</p>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>
+
+<!-- Dialog de Formulário -->
+<p-dialog
+  [header]="editMode ? 'Editar Plano' : 'Novo Plano'"
+  [(visible)]="displayFormDialog"
+  [modal]="true"
+  [style]="{ width: '600px' }"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <form [formGroup]="planoForm" (ngSubmit)="savePlano()">
+    <div class="space-y-4">
+      <!-- Nome -->
+      <div class="form-field">
+        <label for="nome" class="block text-sm font-medium text-gray-700 mb-2">
+          Nome do Plano <span class="text-red-500">*</span>
+        </label>
+        <input
+          pInputText
+          id="nome"
+          formControlName="nome"
+          placeholder="Ex: Plano Básico"
+          class="w-full"
+          [class.p-invalid]="hasError('nome')"
+        />
+        <small *ngIf="hasError('nome')" class="p-error">{{ getErrorMessage('nome') }}</small>
+      </div>
+
+      <!-- Descrição -->
+      <div class="form-field">
+        <label for="descricao" class="block text-sm font-medium text-gray-700 mb-2">
+          Descrição
+        </label>
+        <textarea
+          pInputTextarea
+          id="descricao"
+          formControlName="descricao"
+          placeholder="Descrição do plano"
+          rows="3"
+          class="w-full"
+        ></textarea>
+      </div>
+
+      <!-- Valor e Ciclo -->
+      <div class="grid grid-cols-2 gap-4">
+        <div class="form-field">
+          <label for="valor" class="block text-sm font-medium text-gray-700 mb-2">
+            Valor (R$) <span class="text-red-500">*</span>
+          </label>
+          <p-inputNumber
+            inputId="valor"
+            formControlName="valor"
+            mode="currency"
+            currency="BRL"
+            locale="pt-BR"
+            [minFractionDigits]="2"
+            [min]="0"
+            styleClass="w-full"
+            [class.p-invalid]="hasError('valor')"
+          ></p-inputNumber>
+          <small *ngIf="hasError('valor')" class="p-error">{{ getErrorMessage('valor') }}</small>
+        </div>
+
+        <div class="form-field">
+          <label for="tipoCiclo" class="block text-sm font-medium text-gray-700 mb-2">
+            Ciclo de Cobrança <span class="text-red-500">*</span>
+          </label>
+          <p-dropdown
+            inputId="tipoCiclo"
+            formControlName="tipoCiclo"
+            [options]="tiposCiclo"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Selecione"
+            styleClass="w-full"
+          ></p-dropdown>
+        </div>
+      </div>
+
+      <!-- Período Trial e Limite Usuários -->
+      <div class="grid grid-cols-2 gap-4">
+        <div class="form-field">
+          <label for="periodoTrial" class="block text-sm font-medium text-gray-700 mb-2">
+            Período Trial (dias)
+          </label>
+          <p-inputNumber
+            inputId="periodoTrial"
+            formControlName="periodoTrial"
+            [min]="0"
+            [showButtons]="true"
+            buttonLayout="horizontal"
+            incrementButtonIcon="pi pi-plus"
+            decrementButtonIcon="pi pi-minus"
+            styleClass="w-full"
+          ></p-inputNumber>
+        </div>
+
+        <div class="form-field">
+          <label for="limiteUsuarios" class="block text-sm font-medium text-gray-700 mb-2">
+            Limite de Usuários
+          </label>
+          <p-inputNumber
+            inputId="limiteUsuarios"
+            formControlName="limiteUsuarios"
+            [min]="1"
+            [showButtons]="true"
+            buttonLayout="horizontal"
+            incrementButtonIcon="pi pi-plus"
+            decrementButtonIcon="pi pi-minus"
+            placeholder="Ilimitado"
+            styleClass="w-full"
+          ></p-inputNumber>
+          <small class="text-gray-500">Deixe vazio para ilimitado</small>
+        </div>
+      </div>
+
+      <!-- Opções -->
+      <div class="grid grid-cols-2 gap-4">
+        <div class="form-field flex items-center gap-3">
+          <p-inputSwitch formControlName="permiteUpgrade"></p-inputSwitch>
+          <label class="text-sm font-medium text-gray-700">
+            Permite Upgrade
+          </label>
+        </div>
+
+        <div class="form-field flex items-center gap-3">
+          <p-inputSwitch formControlName="permiteDowngrade"></p-inputSwitch>
+          <label class="text-sm font-medium text-gray-700">
+            Permite Downgrade
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="flex justify-end gap-2 mt-6 pt-4 border-t">
+      <button
+        pButton
+        type="button"
+        label="Cancelar"
+        icon="pi pi-times"
+        class="p-button-text"
+        (click)="displayFormDialog = false"
+        [disabled]="submitting"
+      ></button>
+      <button
+        pButton
+        type="submit"
+        [label]="editMode ? 'Salvar' : 'Criar'"
+        icon="pi pi-check"
+        [loading]="submitting"
+      ></button>
+    </div>
+  </form>
+</p-dialog>
+
+<!-- Dialog de Detalhes -->
+<p-dialog
+  header="Detalhes do Plano"
+  [(visible)]="displayDialog"
+  [modal]="true"
+  [style]="{ width: '500px' }"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div *ngIf="selectedPlano" class="space-y-4">
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Nome</label>
+      <p class="text-lg font-semibold">{{ selectedPlano.nome }}</p>
+    </div>
+
+    <div *ngIf="selectedPlano.descricao">
+      <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+      <p class="text-gray-600">{{ selectedPlano.descricao }}</p>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Valor</label>
+        <p class="text-lg font-semibold text-green-600">{{ formatCurrency(selectedPlano.valor) }}</p>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Ciclo</label>
+        <p>{{ selectedPlano.tipoCiclo }}</p>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Período Trial</label>
+        <p>{{ selectedPlano.periodoTrial }} dias</p>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Limite Usuários</label>
+        <p>{{ selectedPlano.limiteUsuarios || 'Ilimitado' }}</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Permite Upgrade</label>
+        <p>
+          <i [class]="selectedPlano.permiteUpgrade ? 'pi pi-check text-green-600' : 'pi pi-times text-red-600'"></i>
+          {{ selectedPlano.permiteUpgrade ? 'Sim' : 'Não' }}
+        </p>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Permite Downgrade</label>
+        <p>
+          <i [class]="selectedPlano.permiteDowngrade ? 'pi pi-check text-green-600' : 'pi pi-times text-red-600'"></i>
+          {{ selectedPlano.permiteDowngrade ? 'Sim' : 'Não' }}
+        </p>
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+      <p-tag
+        [value]="getStatusLabel(selectedPlano.ativo)"
+        [severity]="getSeverity(selectedPlano.ativo)"
+      ></p-tag>
+    </div>
+
+    <div class="text-xs text-gray-500 pt-2 border-t">
+      <p>Criado em: {{ selectedPlano.criadoEm | date: 'dd/MM/yyyy HH:mm' }}</p>
+      <p>Atualizado em: {{ selectedPlano.atualizadoEm | date: 'dd/MM/yyyy HH:mm' }}</p>
+    </div>
+  </div>
+</p-dialog>
+
+<p-confirmDialog></p-confirmDialog>
+<p-toast position="top-right"></p-toast>

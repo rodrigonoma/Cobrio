@@ -1,0 +1,75 @@
+<div class="login-container">
+  <div class="login-card">
+    <div class="login-header">
+      <h1 class="text-4xl font-bold text-primary-600 mb-2">Cobrio</h1>
+      <p class="text-gray-600">Sistema de Gestão de Assinaturas</p>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+      <div class="form-field">
+        <label for="email" class="block text-sm font-medium text-gray-700 mb-2">E-mail</label>
+        <span class="p-input-icon-left w-full">
+          <i class="pi pi-envelope"></i>
+          <input
+            pInputText
+            id="email"
+            formControlName="email"
+            placeholder="Digite seu e-mail"
+            class="w-full"
+            [class.p-invalid]="hasError('email')"
+          />
+        </span>
+        <small *ngIf="hasError('email')" class="p-error">{{ getErrorMessage('email') }}</small>
+      </div>
+
+      <div class="form-field">
+        <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Senha</label>
+        <span class="p-input-icon-left w-full">
+          <i class="pi pi-lock"></i>
+          <input
+            pInputText
+            type="password"
+            id="password"
+            formControlName="password"
+            placeholder="Digite sua senha"
+            class="w-full"
+            [class.p-invalid]="hasError('password')"
+          />
+        </span>
+        <small *ngIf="hasError('password')" class="p-error">{{ getErrorMessage('password') }}</small>
+      </div>
+
+      <div class="flex justify-between items-center mb-6">
+        <div class="flex items-center">
+          <p-checkbox
+            name="lembrar"
+            value="1"
+            inputId="lembrar"
+            [binary]="true"
+          ></p-checkbox>
+          <label for="lembrar" class="ml-2 text-sm text-gray-700">Lembrar-me</label>
+        </div>
+        <a href="#" class="text-sm text-primary-600 hover:text-primary-700">Esqueceu a senha?</a>
+      </div>
+
+      <button
+        pButton
+        type="submit"
+        label="Entrar"
+        icon="pi pi-sign-in"
+        [loading]="loading"
+        class="w-full"
+        [disabled]="loading"
+      ></button>
+    </form>
+
+    <div class="login-footer">
+      <p class="text-sm text-gray-600">
+        Não tem uma conta?
+        <a href="#" class="text-primary-600 hover:text-primary-700 font-medium">Solicite acesso</a>
+      </p>
+    </div>
+  </div>
+</div>
+
+<p-toast position="top-right"></p-toast>

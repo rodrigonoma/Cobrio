@@ -1,0 +1,771 @@
+<div class="card">
+  <div class="flex justify-content-between align-items-center mb-4">
+    <h2 class="text-2xl font-semibold m-0">Regras de Cobrança</h2>
+    <div class="flex gap-2">
+      <button pButton type="button" label="Testar Webhook" icon="pi pi-send"
+              routerLink="/regras-cobranca/teste-webhook" class="p-button-outlined"></button>
+      <button pButton type="button" label="Nova Regra" icon="pi pi-plus"
+              (click)="novaRegra()" class="p-button-success"
+              [disabled]="!canCreate()"></button>
+    </div>
+  </div>
+
+  <p-table [value]="regras" [loading]="loading" responsiveLayout="scroll"
+           [paginator]="true" [rows]="10" [showCurrentPageReport]="true"
+           currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} regras"
+           [rowsPerPageOptions]="[10,25,50]">
+
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Nome</th>
+        <th>Descrição</th>
+        <th class="text-center">Canal</th>
+        <th class="text-center">Momento de Disparo</th>
+        <th class="text-center">Status</th>
+        <th class="text-center" style="width: 300px">Ações</th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-regra>
+      <tr>
+        <td>
+          <span class="font-semibold">{{ regra.nome }}</span>
+        </td>
+        <td>
+          <span class="text-sm text-gray-600">{{ regra.descricao || '-' }}</span>
+        </td>
+        <td class="text-center">
+          <span class="text-sm">
+            <i [class]="getCanalIcon(regra.canalNotificacao)" class="mr-1"></i>
+            {{ getCanalLabel(regra.canalNotificacao) }}
+          </span>
+        </td>
+        <td class="text-center">
+          <span class="text-sm font-semibold">{{ getMomentoLabel(regra) }}</span>
+        </td>
+        <td class="text-center">
+          <span [class]="'px-2 py-1 rounded text-xs font-semibold ' + getStatusClass(regra.ativa)">
+            {{ getStatusLabel(regra.ativa) }}
+          </span>
+        </td>
+        <td class="text-center">
+          <div class="flex gap-2 justify-content-center">
+            <button pButton type="button" icon="pi pi-link"
+                    class="p-button-rounded p-button-info p-button-text"
+                    pTooltip="Ver URL" tooltipPosition="top"
+                    (click)="mostrarUrl(regra)"></button>
+
+            <button pButton type="button" icon="pi pi-code"
+                    class="p-button-rounded p-button-primary p-button-text"
+                    pTooltip="Exemplo de Payload" tooltipPosition="top"
+                    (click)="mostrarExemploPayload(regra)"></button>
+
+            <button pButton type="button" icon="pi pi-upload"
+                    class="p-button-rounded p-button-success p-button-text"
+                    pTooltip="Envio em Massa" tooltipPosition="top"
+                    (click)="mostrarImportDialog(regra)"
+                    [disabled]="!canEdit()"></button>
+
+            <button pButton type="button" icon="pi pi-history"
+                    class="p-button-rounded p-button-help p-button-text"
+                    pTooltip="Histórico de Importações" tooltipPosition="top"
+                    (click)="mostrarHistorico(regra)"></button>
+
+            <button pButton type="button" icon="pi pi-pencil"
+                    class="p-button-rounded p-button-warning p-button-text"
+                    pTooltip="Editar" tooltipPosition="top"
+                    (click)="editarRegra(regra)"
+                    [disabled]="!canEdit()"></button>
+
+            <button pButton type="button"
+                    [icon]="regra.ativa ? 'pi pi-eye-slash' : 'pi pi-eye'"
+                    [class]="'p-button-rounded p-button-text ' + (regra.ativa ? 'p-button-secondary' : 'p-button-success')"
+                    [pTooltip]="regra.ativa ? 'Desativar' : 'Ativar'"
+                    tooltipPosition="top"
+                    (click)="toggleAtivo(regra)"
+                    [disabled]="!canEdit()"></button>
+
+            <button pButton type="button" icon="pi pi-refresh"
+                    class="p-button-rounded p-button-help p-button-text"
+                    pTooltip="Regenerar Token" tooltipPosition="top"
+                    (click)="regenerarToken(regra)"
+                    [disabled]="!canEdit()"></button>
+
+            <button pButton type="button" icon="pi pi-trash"
+                    class="p-button-rounded p-button-danger p-button-text"
+                    [pTooltip]="regra.ehPadrao ? 'Regra padrão não pode ser excluída' : (!canDelete() ? 'Sem permissão para excluir' : 'Excluir')"
+                    tooltipPosition="top"
+                    [disabled]="regra.ehPadrao || !canDelete()"
+                    (click)="excluirRegra(regra)"></button>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="7" class="text-center py-5">
+          <div class="flex flex-column align-items-center gap-3">
+            <i class="pi pi-inbox text-4xl text-gray-400"></i>
+            <p class="text-gray-600 m-0">Nenhuma regra de cobrança cadastrada</p>
+            <button pButton type="button" label="Criar primeira regra"
+                    icon="pi pi-plus" (click)="novaRegra()"
+                    class="p-button-sm"></button>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<!-- Dialog para mostrar URL -->
+<p-dialog [(visible)]="displayUrlDialog" [modal]="true" [style]="{width: '600px'}"
+          header="URL do Webhook" [draggable]="false" [resizable]="false">
+
+  <div *ngIf="selectedRegra" class="flex flex-column gap-3">
+    <div>
+      <label class="block text-sm font-semibold mb-2">URL Completa (com token):</label>
+      <div class="p-inputgroup">
+        <input type="text" pInputText [value]="gerarWebhookUrl(selectedRegra.tokenWebhook)"
+               readonly class="font-mono text-sm">
+        <button pButton type="button" icon="pi pi-copy"
+                class="p-button-info"
+                (click)="copiarUrl(gerarWebhookUrl(selectedRegra.tokenWebhook))"
+                pTooltip="Copiar URL"></button>
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-sm font-semibold mb-2">Token:</label>
+      <div class="p-inputgroup">
+        <input type="text" pInputText [value]="selectedRegra.tokenWebhook"
+               readonly class="font-mono text-sm">
+        <button pButton type="button" icon="pi pi-copy"
+                class="p-button-info"
+                (click)="copiarUrl(selectedRegra.tokenWebhook)"
+                pTooltip="Copiar Token"></button>
+      </div>
+    </div>
+
+    <div class="bg-yellow-50 border-1 border-yellow-200 border-round p-3">
+      <div class="flex align-items-start gap-2">
+        <i class="pi pi-exclamation-triangle text-yellow-600 mt-1"></i>
+        <div class="text-sm text-yellow-800">
+          <strong>Importante:</strong> Mantenha o token seguro. Se regenerar o token,
+          a URL antiga deixará de funcionar.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button pButton type="button" label="Fechar" icon="pi pi-times"
+            (click)="displayUrlDialog = false" class="p-button-text"></button>
+  </ng-template>
+</p-dialog>
+
+<!-- Dialog para mostrar Exemplo de Payload -->
+<p-dialog [(visible)]="displayPayloadDialog" [modal]="true" [style]="{width: '700px'}"
+          header="Exemplo de Payload JSON" [draggable]="false" [resizable]="false">
+
+  <div *ngIf="selectedRegra" class="flex flex-column gap-3">
+    <!-- Informações da Regra -->
+    <div class="bg-blue-50 border-1 border-blue-200 border-round p-3">
+      <div class="font-semibold text-blue-900 mb-2">
+        <i class="pi pi-info-circle mr-2"></i>
+        Regra: {{ selectedRegra.nome }}
+      </div>
+      <div class="text-sm text-blue-800">
+        Canal: <strong>{{ getCanalLabel(selectedRegra.canalNotificacao) }}</strong> |
+        Momento: <strong>{{ getMomentoLabel(selectedRegra) }}</strong>
+      </div>
+    </div>
+
+    <!-- Campos Obrigatórios -->
+    <div class="bg-orange-50 border-1 border-orange-300 border-round p-3">
+      <div class="font-semibold text-orange-900 mb-2">
+        <i class="pi pi-shield mr-2"></i>
+        Campos do Sistema (Raiz do JSON)
+      </div>
+      <div class="text-sm text-orange-800 mb-3">
+        Estes campos devem ser enviados <strong>na raiz</strong> do JSON com <strong>PascalCase</strong> (primeira letra maiúscula):
+      </div>
+      <div class="flex flex-wrap gap-2" *ngIf="getCamposObrigatoriosSistema(selectedRegra).length > 0">
+        <span *ngFor="let campo of getCamposObrigatoriosSistema(selectedRegra)"
+              class="bg-orange-100 text-orange-900 px-3 py-2 border-round text-sm font-mono font-semibold">
+          {{ campo }}
+        </span>
+      </div>
+      <div class="text-xs text-orange-600 mt-3 p-2 bg-orange-100 border-round">
+        <i class="pi pi-info-circle mr-1"></i>
+        <strong>Nota:</strong> "DataVencimento" é sempre obrigatório. Os outros campos dependem da configuração da regra.
+      </div>
+    </div>
+
+    <!-- Campos da Mensagem -->
+    <div class="bg-blue-50 border-1 border-blue-200 border-round p-3" *ngIf="payloadVariaveis.length > 0">
+      <div class="font-semibold text-blue-900 mb-2">
+        <i class="pi pi-code mr-2"></i>
+        Variáveis do Template (Dentro de "Payload")
+      </div>
+      <div class="text-sm text-blue-800 mb-3">
+        Estas variáveis devem ser enviadas <strong>dentro do objeto</strong> <code class="bg-blue-200 px-2 py-1 border-round font-semibold">"Payload"</code> (com P maiúsculo):
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <span *ngFor="let variavel of payloadVariaveis"
+              class="bg-blue-100 text-blue-900 px-3 py-2 border-round text-sm font-mono font-semibold">
+          {{ variavel }}
+        </span>
+      </div>
+      <div class="text-xs text-blue-600 mt-3 p-2 bg-blue-100 border-round">
+        <i class="pi pi-info-circle mr-1"></i>
+        <strong>Importante:</strong> Variáveis configuradas como obrigatórias e "dataVencimento" não aparecem aqui (já estão na raiz, sem duplicação)
+      </div>
+    </div>
+    <div class="bg-blue-50 border-1 border-blue-200 border-round p-3" *ngIf="payloadVariaveis.length === 0">
+      <div class="text-sm text-blue-800 text-center">
+        <i class="pi pi-info-circle mr-2"></i>
+        Todas as variáveis do template estão configuradas como campos obrigatórios do sistema
+      </div>
+    </div>
+
+    <!-- JSON Exemplo -->
+    <div>
+      <div class="flex justify-content-between align-items-center mb-2">
+        <label class="font-semibold">Exemplo de JSON:</label>
+        <button pButton type="button" label="Copiar JSON" icon="pi pi-copy"
+                class="p-button-sm p-button-outlined"
+                (click)="copiarPayloadExemplo()"></button>
+      </div>
+      <pre class="p-3 border-round overflow-auto" style="max-height: 400px; background-color: #1e293b; color: #f1f5f9;"><code>{{ exemploPayloadJson }}</code></pre>
+    </div>
+
+    <!-- URL do Webhook -->
+    <div class="bg-green-50 border-1 border-green-200 border-round p-3">
+      <div class="font-semibold text-green-900 mb-2">
+        <i class="pi pi-link mr-2"></i>
+        URL do Webhook
+      </div>
+      <div class="p-inputgroup">
+        <input type="text" pInputText [value]="gerarWebhookUrl(selectedRegra.tokenWebhook)"
+               readonly class="font-mono text-xs">
+        <button pButton type="button" icon="pi pi-copy"
+                class="p-button-success"
+                (click)="copiarUrl(gerarWebhookUrl(selectedRegra.tokenWebhook))"
+                pTooltip="Copiar URL"></button>
+      </div>
+    </div>
+
+    <!-- Comando cURL -->
+    <div>
+      <div class="flex justify-content-between align-items-center mb-2">
+        <label class="font-semibold">Exemplo com cURL:</label>
+        <button pButton type="button" label="Copiar cURL" icon="pi pi-copy"
+                class="p-button-sm p-button-outlined"
+                (click)="copiarCurlExemplo()"></button>
+      </div>
+      <pre class="p-3 border-round overflow-auto text-xs" style="background-color: #1e293b; color: #f1f5f9;"><code>{{ exemploCurl }}</code></pre>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button pButton type="button" label="Fechar" icon="pi pi-times"
+            (click)="displayPayloadDialog = false" class="p-button-text"></button>
+  </ng-template>
+</p-dialog>
+
+<!-- Dialog para Importação em Massa -->
+<p-dialog [(visible)]="displayImportDialog" [modal]="true" [style]="{width: '700px'}"
+          [header]="'Envio em Massa - ' + selectedRegra?.nome" [draggable]="false" [resizable]="false">
+
+  <div *ngIf="selectedRegra" class="flex flex-column gap-3">
+    <!-- Informações da Regra -->
+    <div class="bg-blue-50 border-1 border-blue-200 border-round p-3">
+      <div class="font-semibold text-blue-900 mb-2">
+        <i class="pi pi-info-circle mr-2"></i>
+        Regra: {{ selectedRegra.nome }}
+      </div>
+      <div class="text-sm text-blue-800">
+        Canal: <strong>{{ getCanalLabel(selectedRegra.canalNotificacao) }}</strong> |
+        Momento: <strong>{{ getMomentoLabel(selectedRegra) }}</strong>
+      </div>
+    </div>
+
+    <!-- Seleção do Tipo de Importação -->
+    <div class="bg-gray-50 border-1 border-gray-200 border-round p-3">
+      <label class="block font-semibold mb-2">Escolha o formato de importação:</label>
+      <div class="flex gap-4">
+        <div class="flex align-items-center">
+          <p-radioButton name="tipoImportacao" value="excel" [(ngModel)]="tipoImportacao" inputId="tipo-excel"></p-radioButton>
+          <label for="tipo-excel" class="ml-2 cursor-pointer">
+            <i class="pi pi-file-excel mr-1 text-green-600"></i>
+            Excel (.xlsx)
+          </label>
+        </div>
+        <div class="flex align-items-center">
+          <p-radioButton name="tipoImportacao" value="json" [(ngModel)]="tipoImportacao" inputId="tipo-json"></p-radioButton>
+          <label for="tipo-json" class="ml-2 cursor-pointer">
+            <i class="pi pi-code mr-1 text-blue-600"></i>
+            JSON
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Seção Excel -->
+    <div *ngIf="tipoImportacao === 'excel'">
+      <!-- Instruções Excel -->
+      <div class="bg-yellow-50 border-1 border-yellow-200 border-round p-3">
+        <div class="font-semibold text-yellow-900 mb-2">
+          <i class="pi pi-exclamation-triangle mr-2"></i>
+          Instruções
+        </div>
+        <ol class="text-sm text-yellow-800 m-0 pl-4">
+          <li>Baixe o modelo Excel clicando no botão abaixo</li>
+          <li>Preencha o arquivo com os dados das cobranças</li>
+          <li>Faça o upload do arquivo preenchido</li>
+        </ol>
+      </div>
+
+      <!-- Botão para baixar modelo -->
+      <div>
+        <button pButton type="button" label="Baixar Modelo Excel" icon="pi pi-download"
+                class="p-button-outlined p-button-info w-full"
+                (click)="baixarModelo()"></button>
+      </div>
+
+      <!-- Upload de arquivo -->
+      <div>
+        <label class="block font-semibold mb-2">Selecione o arquivo Excel:</label>
+        <p-fileUpload #fileUpload
+                      mode="basic"
+                      chooseLabel="Escolher arquivo"
+                      accept=".xlsx"
+                      [maxFileSize]="10000000"
+                      (onSelect)="onFileSelected($event)"
+                      [auto]="false"
+                      [customUpload]="true"></p-fileUpload>
+        <small class="text-gray-600">Apenas arquivos .xlsx (máx. 10MB)</small>
+      </div>
+
+      <!-- Informações sobre o arquivo selecionado -->
+      <div *ngIf="selectedFile" class="bg-green-50 border-1 border-green-200 border-round p-3">
+        <div class="flex justify-content-between align-items-center">
+          <div class="text-sm text-green-900">
+            <i class="pi pi-check-circle mr-2"></i>
+            <strong>Arquivo selecionado:</strong> {{ selectedFile.name }}
+          </div>
+          <button pButton type="button" icon="pi pi-times"
+                  class="p-button-rounded p-button-text p-button-danger p-button-sm"
+                  (click)="limparArquivo()"
+                  pTooltip="Remover arquivo"></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Seção JSON -->
+    <div *ngIf="tipoImportacao === 'json'">
+      <!-- Instruções JSON -->
+      <div class="bg-yellow-50 border-1 border-yellow-200 border-round p-3">
+        <div class="font-semibold text-yellow-900 mb-2">
+          <i class="pi pi-exclamation-triangle mr-2"></i>
+          Instruções
+        </div>
+        <ol class="text-sm text-yellow-800 m-0 pl-4">
+          <li>Veja o exemplo de JSON clicando em "Exemplo de Payload JSON"</li>
+          <li>Cole o JSON com o array de cobranças no campo abaixo</li>
+          <li>Clique em "Importar" para processar</li>
+        </ol>
+      </div>
+
+      <!-- Campo de texto JSON -->
+      <div>
+        <label class="block font-semibold mb-2">Cole o JSON:</label>
+        <textarea pInputTextarea [(ngModel)]="jsonInput" rows="10"
+                  class="w-full font-mono text-sm"
+                  placeholder='[
+  {
+    "Email": "cliente@exemplo.com",
+    "DataVencimento": "15/12/2025 18:00",
+    "Payload": {
+      "valor": "150.00",
+      "descricao": "Mensalidade"
+    }
+  }
+]'></textarea>
+        <small class="text-gray-600">Cole um array JSON válido com as cobranças</small>
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button pButton type="button" label="Cancelar" icon="pi pi-times"
+            (click)="fecharImportDialog()" class="p-button-text"
+            [disabled]="uploadProgress"></button>
+    <button pButton type="button" label="Importar" icon="pi pi-upload"
+            (click)="upload()" class="p-button-success"
+            [disabled]="(tipoImportacao === 'excel' && !selectedFile) || (tipoImportacao === 'json' && !jsonInput.trim()) || uploadProgress"
+            [loading]="uploadProgress"></button>
+  </ng-template>
+</p-dialog>
+
+<!-- Dialog para Erros de Validação -->
+<p-dialog [(visible)]="displayErrosDialog" [modal]="true" [style]="{width: '900px'}"
+          header="Erros de Validação da Importação" [draggable]="false" [resizable]="false">
+
+  <div class="flex flex-column gap-3">
+    <!-- Resumo -->
+    <div class="bg-red-50 border-1 border-red-200 border-round p-3">
+      <div class="flex align-items-center gap-2">
+        <i class="pi pi-exclamation-circle text-red-600 text-xl"></i>
+        <div>
+          <div class="font-semibold text-red-900">
+            {{ errosValidacao.length }} erro(s) encontrado(s) no arquivo Excel
+          </div>
+          <div class="text-sm text-red-800">
+            Corrija os erros abaixo e tente importar novamente
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabela de Erros -->
+    <p-table [value]="errosValidacao" [scrollable]="true" scrollHeight="400px"
+             styleClass="p-datatable-sm">
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width: 80px" class="text-center">Linha</th>
+          <th style="width: 150px">Tipo de Erro</th>
+          <th>Descrição</th>
+          <th style="width: 200px">Valor Inválido</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-erro>
+        <tr>
+          <td class="text-center">
+            <span class="font-semibold text-red-600">{{ erro.numeroLinha }}</span>
+          </td>
+          <td>
+            <span class="px-2 py-1 border-round text-xs font-semibold"
+                  [ngClass]="{
+                    'bg-orange-100 text-orange-900': erro.tipoErro === 'Campos Obrigatórios',
+                    'bg-red-100 text-red-900': erro.tipoErro === 'Email Inválido' || erro.tipoErro === 'Telefone Inválido',
+                    'bg-purple-100 text-purple-900': erro.tipoErro === 'Data Inválida',
+                    'bg-yellow-100 text-yellow-900': erro.tipoErro === 'Data Vencida',
+                    'bg-gray-100 text-gray-900': erro.tipoErro === 'Erro Desconhecido'
+                  }">
+              {{ erro.tipoErro }}
+            </span>
+          </td>
+          <td>
+            <span class="text-sm">{{ erro.descricao }}</span>
+          </td>
+          <td>
+            <span class="text-xs font-mono bg-gray-100 px-2 py-1 border-round"
+                  *ngIf="erro.valorInvalido">
+              {{ erro.valorInvalido }}
+            </span>
+            <span class="text-xs text-gray-400" *ngIf="!erro.valorInvalido">-</span>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+
+    <!-- Dicas -->
+    <div class="bg-blue-50 border-1 border-blue-200 border-round p-3">
+      <div class="font-semibold text-blue-900 mb-2">
+        <i class="pi pi-lightbulb mr-2"></i>
+        Dicas para correção:
+      </div>
+      <ul class="text-sm text-blue-800 m-0 pl-4">
+        <li><strong>Email Inválido:</strong> Verifique se o email está no formato correto (exemplo@dominio.com)</li>
+        <li><strong>Telefone Inválido:</strong> Use apenas números e opcionalmente o símbolo '+' no início</li>
+        <li><strong>Data Inválida:</strong> Use o formato YYYY-MM-DD ou YYYY-MM-DD HH:mm:ss</li>
+        <li><strong>Data Vencida:</strong> A data de disparo calculada já passou. Ajuste a data de vencimento para uma data futura</li>
+      </ul>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button pButton type="button" label="Fechar" icon="pi pi-times"
+            (click)="displayErrosDialog = false" class="p-button-text"></button>
+    <button pButton type="button" label="Baixar Relatório" icon="pi pi-download"
+            (click)="exportarErros()" class="p-button-outlined"></button>
+  </ng-template>
+</p-dialog>
+
+<!-- Dialog para Histórico de Importações -->
+<p-dialog [(visible)]="displayHistoricoDialog" [modal]="true" [style]="{width: '90%', maxWidth: '1200px'}"
+          header="Histórico de Importações" [draggable]="false" [resizable]="false">
+
+  <div *ngIf="selectedRegra" class="mb-3 flex align-items-center justify-content-between">
+    <p class="text-sm text-gray-600 m-0">
+      Regra: <strong>{{ selectedRegra.nome }}</strong>
+    </p>
+    <button pButton type="button"
+            [label]="mostrarFiltros ? 'Ocultar Filtros' : 'Filtrar'"
+            [icon]="mostrarFiltros ? 'pi pi-chevron-up' : 'pi pi-filter'"
+            class="p-button-text p-button-sm"
+            (click)="mostrarFiltros = !mostrarFiltros"></button>
+  </div>
+
+  <!-- Filtros Compactos -->
+  <div *ngIf="mostrarFiltros" class="mb-3 p-3 surface-50 border-round border-1 surface-border">
+    <div class="flex gap-2 align-items-end flex-wrap">
+      <div style="min-width: 100px; flex: 1;">
+        <label class="block text-xs mb-1">Data Início</label>
+        <p-calendar [(ngModel)]="filtros.dataInicio" [showIcon]="true" dateFormat="dd/mm/yy"
+                    placeholder="Início" [showButtonBar]="true" (onSelect)="aplicarFiltros()"
+                    (onClearClick)="aplicarFiltros()" inputStyleClass="text-sm"
+                    styleClass="w-full"></p-calendar>
+      </div>
+      <div style="min-width: 100px; flex: 1;">
+        <label class="block text-xs mb-1">Data Fim</label>
+        <p-calendar [(ngModel)]="filtros.dataFim" [showIcon]="true" dateFormat="dd/mm/yy"
+                    placeholder="Fim" [showButtonBar]="true" (onSelect)="aplicarFiltros()"
+                    (onClearClick)="aplicarFiltros()" inputStyleClass="text-sm"
+                    styleClass="w-full"></p-calendar>
+      </div>
+      <div style="min-width: 120px; flex: 0.8;">
+        <label class="block text-xs mb-1">Origem</label>
+        <p-dropdown [(ngModel)]="filtros.origem" [options]="[
+          {label: 'Todas', value: null},
+          {label: 'Excel', value: 1},
+          {label: 'Webhook', value: 2},
+          {label: 'Manual', value: 3},
+          {label: 'JSON', value: 4}
+        ]" optionLabel="label" optionValue="value" placeholder="Todas"
+        [showClear]="false" (onChange)="aplicarFiltros()" styleClass="w-full"
+        inputStyleClass="text-sm"></p-dropdown>
+      </div>
+      <div style="min-width: 120px; flex: 0.8;">
+        <label class="block text-xs mb-1">Usuário</label>
+        <p-dropdown [(ngModel)]="filtros.usuario" [options]="usuariosOptions"
+                    optionLabel="label" optionValue="value" placeholder="Todos"
+                    [showClear]="false" (onChange)="aplicarFiltros()" styleClass="w-full"
+                    inputStyleClass="text-sm"></p-dropdown>
+      </div>
+      <div style="min-width: 100px; flex: 0.7;">
+        <label class="block text-xs mb-1">Status</label>
+        <p-dropdown [(ngModel)]="filtros.status" [options]="[
+          {label: 'Todos', value: null},
+          {label: 'Sucesso', value: 1},
+          {label: 'Parcial', value: 2},
+          {label: 'Erro', value: 3}
+        ]" optionLabel="label" optionValue="value" placeholder="Todos"
+        [showClear]="false" (onChange)="aplicarFiltros()" styleClass="w-full"
+        inputStyleClass="text-sm"></p-dropdown>
+      </div>
+      <div class="flex gap-2">
+        <button pButton type="button" label="Limpar" icon="pi pi-filter-slash"
+                class="p-button-outlined p-button-secondary p-button-sm"
+                (click)="limparFiltros()"></button>
+        <button pButton type="button" icon="pi pi-times"
+                class="p-button-text p-button-secondary p-button-sm"
+                pTooltip="Fechar filtros" tooltipPosition="top"
+                (click)="mostrarFiltros = false"></button>
+      </div>
+    </div>
+  </div>
+
+  <p-table [value]="historicoFiltrado" [loading]="loadingHistorico" responsiveLayout="scroll"
+           [paginator]="true" [rows]="10" [showCurrentPageReport]="true"
+           currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} importações"
+           [rowsPerPageOptions]="[5,10,25]">
+
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Data/Hora</th>
+        <th class="text-center">Origem</th>
+        <th>Usuário</th>
+        <th>Arquivo</th>
+        <th class="text-center">Total Linhas</th>
+        <th class="text-center">Processadas</th>
+        <th class="text-center">Com Erro</th>
+        <th class="text-center">Status</th>
+        <th class="text-center">Ações</th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-historico>
+      <tr>
+        <td>
+          <span class="text-sm">{{ historico.dataImportacao | date:'dd/MM/yyyy HH:mm:ss' }}</span>
+        </td>
+        <td class="text-center">
+          <span [class]="'px-2 py-1 rounded text-xs font-semibold ' +
+            (historico.origem === OrigemImportacao.Excel ? 'bg-blue-100 text-blue-800' :
+             historico.origem === OrigemImportacao.Webhook ? 'bg-purple-100 text-purple-800' :
+             historico.origem === OrigemImportacao.Json ? 'bg-green-100 text-green-800' :
+             'bg-gray-100 text-gray-800')">
+            <i [class]="'pi mr-1 ' +
+              (historico.origem === OrigemImportacao.Excel ? 'pi-file-excel' :
+               historico.origem === OrigemImportacao.Webhook ? 'pi-send' :
+               historico.origem === OrigemImportacao.Json ? 'pi-code' : 'pi-circle')"></i>
+            {{ historico.origemDescricao }}
+          </span>
+        </td>
+        <td>
+          <span class="text-sm">
+            <i class="pi pi-user mr-1 text-gray-500"></i>
+            {{ historico.nomeUsuario || 'Sistema' }}
+          </span>
+        </td>
+        <td>
+          <span class="text-sm font-mono">{{ historico.nomeArquivo }}</span>
+        </td>
+        <td class="text-center">
+          <span class="font-semibold">{{ historico.totalLinhas }}</span>
+        </td>
+        <td class="text-center">
+          <span class="text-green-700 font-semibold">{{ historico.linhasProcessadas }}</span>
+        </td>
+        <td class="text-center">
+          <span [class]="'font-semibold ' + (historico.linhasComErro > 0 ? 'text-red-700' : 'text-gray-400')">
+            {{ historico.linhasComErro }}
+          </span>
+        </td>
+        <td class="text-center">
+          <span [class]="'px-2 py-1 rounded text-xs font-semibold ' + getStatusImportacaoClass(historico.status)">
+            {{ historico.statusDescricao }}
+          </span>
+        </td>
+        <td class="text-center">
+          <div class="flex gap-2 justify-content-center">
+            <button pButton type="button" icon="pi pi-eye"
+                    class="p-button-rounded p-button-info p-button-text p-button-sm"
+                    pTooltip="Ver Detalhes" tooltipPosition="top"
+                    (click)="verDetalhesHistorico(historico)"></button>
+            <button pButton type="button" icon="pi pi-download"
+                    class="p-button-rounded p-button-warning p-button-text p-button-sm"
+                    [pTooltip]="historico.linhasComErro > 0 ? 'Baixar Erros' : 'Sem erros para baixar'"
+                    tooltipPosition="top"
+                    [disabled]="!(historico.linhasComErro > 0 && historico.erros && historico.erros.length > 0)"
+                    (click)="exportarErrosHistorico(historico)"></button>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="9" class="text-center py-5">
+          <div class="flex flex-column align-items-center gap-3">
+            <i class="pi pi-inbox text-4xl text-gray-400"></i>
+            <p class="text-gray-600 m-0">Nenhuma importação realizada para esta regra</p>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+
+  <ng-template pTemplate="footer">
+    <button pButton type="button" label="Exportar para Excel" icon="pi pi-file-excel"
+            class="p-button-success"
+            [disabled]="!historicoFiltrado || historicoFiltrado.length === 0"
+            (click)="exportarHistoricoExcel()"></button>
+    <button pButton type="button" label="Fechar" icon="pi pi-times"
+            (click)="displayHistoricoDialog = false" class="p-button-text"></button>
+  </ng-template>
+</p-dialog>
+
+<!-- Dialog para Detalhes do Histórico -->
+<p-dialog [(visible)]="displayDetalhesHistoricoDialog" [modal]="true" [style]="{width: '800px'}"
+          header="Detalhes da Importação" [draggable]="false" [resizable]="false">
+
+  <div *ngIf="selectedHistorico">
+    <!-- Informações Gerais -->
+    <div class="grid mb-4">
+      <div class="col-12 md:col-6">
+        <div class="mb-3">
+          <label class="text-sm font-semibold text-gray-700">Arquivo:</label>
+          <p class="m-0 text-sm font-mono">{{ selectedHistorico.nomeArquivo }}</p>
+        </div>
+        <div class="mb-3">
+          <label class="text-sm font-semibold text-gray-700">Data/Hora:</label>
+          <p class="m-0 text-sm">{{ selectedHistorico.dataImportacao | date:'dd/MM/yyyy HH:mm:ss' }}</p>
+        </div>
+      </div>
+      <div class="col-12 md:col-6">
+        <div class="mb-3">
+          <label class="text-sm font-semibold text-gray-700">Status:</label>
+          <p class="m-0">
+            <span [class]="'px-2 py-1 rounded text-xs font-semibold ' + getStatusImportacaoClass(selectedHistorico.status)">
+              {{ selectedHistorico.statusDescricao }}
+            </span>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Estatísticas -->
+    <div class="grid mb-4">
+      <div class="col-12 md:col-4">
+        <div class="bg-blue-50 border-round p-3 text-center">
+          <div class="text-2xl font-bold text-blue-700">{{ selectedHistorico.totalLinhas }}</div>
+          <div class="text-sm text-gray-600">Total de Linhas</div>
+        </div>
+      </div>
+      <div class="col-12 md:col-4">
+        <div class="bg-green-50 border-round p-3 text-center">
+          <div class="text-2xl font-bold text-green-700">{{ selectedHistorico.linhasProcessadas }}</div>
+          <div class="text-sm text-gray-600">Processadas</div>
+        </div>
+      </div>
+      <div class="col-12 md:col-4">
+        <div class="bg-red-50 border-round p-3 text-center">
+          <div class="text-2xl font-bold text-red-700">{{ selectedHistorico.linhasComErro }}</div>
+          <div class="text-sm text-gray-600">Com Erro</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Erros -->
+    <div *ngIf="selectedHistorico.erros && selectedHistorico.erros.length > 0">
+      <div class="font-semibold mb-2 text-gray-700">Erros Encontrados:</div>
+      <p-table [value]="selectedHistorico.erros" [scrollable]="true" scrollHeight="300px">
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width: 80px">Linha</th>
+            <th style="width: 150px">Tipo</th>
+            <th>Descrição</th>
+            <th style="width: 200px">Valor Inválido</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-erro>
+          <tr>
+            <td class="text-center">{{ erro.numeroLinha }}</td>
+            <td>
+              <span [class]="'px-2 py-1 rounded text-xs font-semibold ' +
+                (erro.tipoErro.includes('Inválido') ? 'bg-orange-100 text-orange-800' :
+                 erro.tipoErro.includes('Vencida') ? 'bg-red-100 text-red-800' :
+                 erro.tipoErro.includes('Obrigatórios') ? 'bg-purple-100 text-purple-800' :
+                 'bg-gray-100 text-gray-800')">
+                {{ erro.tipoErro }}
+              </span>
+            </td>
+            <td class="text-sm">{{ erro.descricao }}</td>
+            <td class="text-sm font-mono">{{ erro.valorInvalido || '-' }}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+
+    <div *ngIf="!selectedHistorico.erros || selectedHistorico.erros.length === 0" class="text-center py-4">
+      <i class="pi pi-check-circle text-4xl text-green-500 mb-2"></i>
+      <p class="text-gray-600 m-0">Nenhum erro encontrado nesta importação</p>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button pButton type="button" label="Fechar" icon="pi pi-times"
+            (click)="displayDetalhesHistoricoDialog = false" class="p-button-text"></button>
+    <button pButton type="button" label="Baixar Erros" icon="pi pi-download"
+            *ngIf="selectedHistorico && selectedHistorico.erros && selectedHistorico.erros.length > 0"
+            (click)="exportarErrosHistorico(selectedHistorico)" class="p-button-outlined"></button>
+  </ng-template>
+</p-dialog>
+
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>

@@ -1,0 +1,34 @@
+/* Tailwind CSS */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* PrimeNG Theme */
+@import "primeng/resources/themes/lara-light-blue/theme.css";
+@import "primeng/resources/primeng.min.css";
+@import "primeicons/primeicons.css";
+@import "primeflex/primeflex.css";
+
+/* Quill Editor */
+@import "quill/dist/quill.core.css";
+@import "quill/dist/quill.snow.css";
+
+/* Global Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  @apply bg-gray-50 text-gray-900;
+}
+
+/* Mobile-first responsive utilities */
+@layer utilities {
+  .container-responsive {
+    @apply w-full px-4 mx-auto;
+    max-width: 1280px;
+  }
+}

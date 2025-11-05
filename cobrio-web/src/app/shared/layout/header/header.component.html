@@ -1,0 +1,101 @@
+<header class="app-header">
+  <div class="header-left">
+    <button class="menu-button" (click)="onToggleSidebar()" type="button">
+      <i class="pi pi-bars"></i>
+    </button>
+    <div class="app-logo">
+      <img src="assets/images/logo.png" alt="Cobrio" class="logo-image">
+    </div>
+  </div>
+
+  <div class="header-right">
+    <!-- Notificações -->
+    <div class="notification-menu" (clickOutside)="notificationPanelVisible = false">
+      <button class="notification-button" (click)="toggleNotificationPanel()" type="button">
+        <i class="pi pi-bell"></i>
+        <span class="notification-badge" *ngIf="unreadCount > 0">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+      </button>
+
+      <div class="notification-panel" *ngIf="notificationPanelVisible">
+        <div class="notification-header">
+          <h3>Notificações</h3>
+          <div class="notification-actions">
+            <button (click)="markAllNotificationsAsRead()" *ngIf="unreadCount > 0" type="button" class="text-button">
+              Marcar todas como lidas
+            </button>
+            <button (click)="clearAllNotifications()" *ngIf="notifications.length > 0" type="button" class="text-button">
+              Limpar tudo
+            </button>
+          </div>
+        </div>
+
+        <div class="notification-list" *ngIf="notifications.length > 0">
+          <div
+            *ngFor="let notification of notifications"
+            class="notification-item"
+            [class.unread]="!notification.read"
+            [class.severity-success]="notification.severity === 'success'"
+            [class.severity-info]="notification.severity === 'info'"
+            [class.severity-warning]="notification.severity === 'warning'"
+            [class.severity-danger]="notification.severity === 'danger'"
+            (click)="markNotificationAsRead(notification)"
+          >
+            <div class="notification-icon">
+              <i class="pi {{ getNotificationIcon(notification.type) }}"></i>
+            </div>
+            <div class="notification-content">
+              <div class="notification-title">{{ notification.title }}</div>
+              <div class="notification-message">{{ notification.message }}</div>
+              <div class="notification-time">{{ getNotificationTime(notification.timestamp) }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="notification-empty" *ngIf="notifications.length === 0">
+          <i class="pi pi-bell-slash"></i>
+          <p>Nenhuma notificação</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="user-menu" (clickOutside)="userMenuVisible = false">
+      <button class="user-button" (click)="toggleUserMenu()" type="button">
+        <div class="user-avatar">
+          {{ getUserInitials() }}
+        </div>
+        <div class="user-info">
+          <span class="user-name">{{ currentUser?.nome }}</span>
+          <span class="user-email">{{ currentUser?.email }}</span>
+        </div>
+        <i class="pi pi-chevron-down"></i>
+      </button>
+
+      <div class="user-dropdown" *ngIf="userMenuVisible">
+        <div class="dropdown-header">
+          <div class="user-avatar-large">
+            {{ getUserInitials() }}
+          </div>
+          <div class="user-details">
+            <strong>{{ currentUser?.nome }}</strong>
+            <small>{{ currentUser?.email }}</small>
+            <span class="user-role">{{ currentUser?.perfil }}</span>
+          </div>
+        </div>
+        <div class="dropdown-divider"></div>
+        <button class="dropdown-item" type="button">
+          <i class="pi pi-user"></i>
+          Meu Perfil
+        </button>
+        <button class="dropdown-item" type="button">
+          <i class="pi pi-cog"></i>
+          Configurações
+        </button>
+        <div class="dropdown-divider"></div>
+        <button class="dropdown-item logout" (click)="onLogout()" type="button">
+          <i class="pi pi-sign-out"></i>
+          Sair
+        </button>
+      </div>
+    </div>
+  </div>
+</header>

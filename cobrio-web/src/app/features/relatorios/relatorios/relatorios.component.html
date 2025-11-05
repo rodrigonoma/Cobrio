@@ -1,0 +1,166 @@
+<div class="container mx-auto">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold">Relatórios e Análises</h1>
+    <div class="flex gap-2">
+      <button pButton label="Exportar PDF" icon="pi pi-file-pdf" class="p-button-outlined"></button>
+      <button pButton label="Exportar Excel" icon="pi pi-file-excel" class="p-button-outlined p-button-success"></button>
+    </div>
+  </div>
+
+  <!-- Cards de Métricas -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div *ngFor="let metrica of metricas" class="card bg-white rounded-lg shadow p-6">
+      <div class="flex justify-between items-start mb-4">
+        <div>
+          <p class="text-gray-600 text-sm mb-1">{{ metrica.titulo }}</p>
+          <h3 class="text-2xl font-bold">{{ metrica.valor }}</h3>
+        </div>
+        <i class="pi {{ metrica.icon }} text-3xl {{ metrica.iconColor }}"></i>
+      </div>
+      <div class="flex items-center">
+        <i class="pi" [ngClass]="metrica.variacao >= 0 ? 'pi-arrow-up text-green-600' : 'pi-arrow-down text-red-600'"></i>
+        <span class="text-sm ml-1" [ngClass]="metrica.variacao >= 0 ? 'text-green-600' : 'text-red-600'">
+          {{ Math.abs(metrica.variacao) }}% vs mês anterior
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gráficos de Evolução -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <!-- Evolução de MRR -->
+    <div class="card bg-white rounded-lg shadow p-6">
+      <div class="mb-4">
+        <h2 class="text-xl font-semibold mb-2">Evolução de MRR</h2>
+        <p class="text-gray-600 text-sm">Crescimento de receita mensal recorrente (últimos 6 meses)</p>
+      </div>
+      <div class="chart-container" style="position: relative; height: 300px;">
+        <canvas baseChart
+          [data]="mrrChartData"
+          [options]="mrrChartOptions"
+          type="line">
+        </canvas>
+      </div>
+    </div>
+
+    <!-- Evolução de Churn Rate -->
+    <div class="card bg-white rounded-lg shadow p-6">
+      <div class="mb-4">
+        <h2 class="text-xl font-semibold mb-2">Evolução de Churn Rate</h2>
+        <p class="text-gray-600 text-sm">Taxa de cancelamento mensal (últimos 6 meses)</p>
+      </div>
+      <div class="chart-container" style="position: relative; height: 300px;">
+        <canvas baseChart
+          [data]="churnChartData"
+          [options]="churnChartOptions"
+          type="line">
+        </canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Análises Detalhadas -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <!-- Performance por Plano -->
+    <div class="card bg-white rounded-lg shadow p-6">
+      <h2 class="text-xl font-semibold mb-4">Performance por Plano</h2>
+      <div class="space-y-3">
+        <div *ngFor="let plano of planos" class="flex items-center justify-between p-3 border rounded-lg">
+          <div>
+            <p class="font-semibold">{{ plano.nome }}</p>
+            <p class="text-sm text-gray-500">{{ plano.tipoCiclo }}</p>
+          </div>
+          <div class="text-right">
+            <p class="font-bold text-green-600">{{ formatCurrency(plano.valor) }}</p>
+            <p class="text-xs text-gray-400">por {{ plano.tipoCiclo.toLowerCase() }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Indicadores de Saúde -->
+    <div class="card bg-white rounded-lg shadow p-6">
+      <h2 class="text-xl font-semibold mb-4">Indicadores de Saúde</h2>
+      <div class="space-y-4">
+        <div>
+          <div class="flex justify-between mb-2">
+            <span class="text-sm font-medium">Taxa de Conversão Trial → Pago</span>
+            <span class="text-sm font-semibold">85%</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-2">
+            <div class="bg-green-600 h-2 rounded-full" style="width: 85%"></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex justify-between mb-2">
+            <span class="text-sm font-medium">Customer Satisfaction Score</span>
+            <span class="text-sm font-semibold">92%</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-2">
+            <div class="bg-blue-600 h-2 rounded-full" style="width: 92%"></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex justify-between mb-2">
+            <span class="text-sm font-medium">Taxa de Reativação</span>
+            <span class="text-sm font-semibold">23%</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-2">
+            <div class="bg-purple-600 h-2 rounded-full" style="width: 23%"></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex justify-between mb-2">
+            <span class="text-sm font-medium">Net Promoter Score (NPS)</span>
+            <span class="text-sm font-semibold">67</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-2">
+            <div class="bg-yellow-500 h-2 rounded-full" style="width: 67%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resumo Executivo -->
+  <div class="card bg-white rounded-lg shadow p-6">
+    <h2 class="text-xl font-semibold mb-4">Resumo Executivo</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="p-4 bg-blue-50 rounded-lg">
+        <i class="pi pi-check-circle text-2xl text-blue-600 mb-2"></i>
+        <h3 class="font-semibold mb-2">Pontos Positivos</h3>
+        <ul class="text-sm space-y-1 text-gray-700">
+          <li>• MRR crescendo 15% ao mês</li>
+          <li>• Churn rate em queda</li>
+          <li>• Alta taxa de conversão</li>
+          <li>• NPS acima de 60</li>
+        </ul>
+      </div>
+
+      <div class="p-4 bg-yellow-50 rounded-lg">
+        <i class="pi pi-exclamation-triangle text-2xl text-yellow-600 mb-2"></i>
+        <h3 class="font-semibold mb-2">Pontos de Atenção</h3>
+        <ul class="text-sm space-y-1 text-gray-700">
+          <li>• Monitorar churn do plano básico</li>
+          <li>• Melhorar onboarding</li>
+          <li>• Aumentar upsell</li>
+          <li>• Reduzir inadimplência</li>
+        </ul>
+      </div>
+
+      <div class="p-4 bg-green-50 rounded-lg">
+        <i class="pi pi-chart-line text-2xl text-green-600 mb-2"></i>
+        <h3 class="font-semibold mb-2">Oportunidades</h3>
+        <ul class="text-sm space-y-1 text-gray-700">
+          <li>• Plano anual com desconto</li>
+          <li>• Programa de indicação</li>
+          <li>• Add-ons e upgrades</li>
+          <li>• Expansão de mercado</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
