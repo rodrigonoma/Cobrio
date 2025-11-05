@@ -105,11 +105,11 @@ public class PermissoesController : ControllerBase
             var moduloAcoesMap = new Dictionary<string, string[]>
             {
                 ["dashboard"] = new[] { "menu.view", "read" },
-                ["assinaturas"] = new[] { "menu.view", "read", "read.details", "create", "update", "delete" },
-                ["planos"] = new[] { "menu.view", "read", "read.details", "create", "update", "delete", "toggle" },
+                ["assinaturas"] = new[] { "menu.view", "read", "create", "delete" },
+                ["planos"] = new[] { "menu.view", "read", "create", "update", "delete", "toggle" },
                 ["financeiro"] = new[] { "menu.view", "read" },
                 ["regras-cobranca"] = new[] { "menu.view", "read", "create", "update", "delete", "export", "import" },
-                ["usuarios"] = new[] { "menu.view", "read", "create", "update", "delete", "reset-password" },
+                ["usuarios"] = new[] { "menu.view", "create", "update", "delete", "reset-password" },
                 ["relatorios"] = new[] { "menu.view", "read", "export" },
                 ["permissoes"] = new[] { "menu.view", "read", "config-permissions" }
             };

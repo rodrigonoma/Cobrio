@@ -93,6 +93,7 @@
                 class="p-button-rounded p-button-text p-button-info"
                 pTooltip="Ver Detalhes"
                 tooltipPosition="top"
+                [disabled]="!podeVisualizar"
                 (click)="showDetails(assinatura)">
               </button>
               <button

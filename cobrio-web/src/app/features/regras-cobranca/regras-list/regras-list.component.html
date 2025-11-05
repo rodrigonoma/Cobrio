@@ -64,7 +64,7 @@
                     class="p-button-rounded p-button-success p-button-text"
                     pTooltip="Envio em Massa" tooltipPosition="top"
                     (click)="mostrarImportDialog(regra)"
-                    [disabled]="!canEdit()"></button>
+                    [disabled]="!canImport()"></button>
 
             <button pButton type="button" icon="pi pi-history"
                     class="p-button-rounded p-button-help p-button-text"
@@ -636,12 +636,13 @@
             <button pButton type="button" icon="pi pi-eye"
                     class="p-button-rounded p-button-info p-button-text p-button-sm"
                     pTooltip="Ver Detalhes" tooltipPosition="top"
+                    [disabled]="!podeVisualizar"
                     (click)="verDetalhesHistorico(historico)"></button>
             <button pButton type="button" icon="pi pi-download"
                     class="p-button-rounded p-button-warning p-button-text p-button-sm"
                     [pTooltip]="historico.linhasComErro > 0 ? 'Baixar Erros' : 'Sem erros para baixar'"
                     tooltipPosition="top"
-                    [disabled]="!(historico.linhasComErro > 0 && historico.erros && historico.erros.length > 0)"
+                    [disabled]="!canExport() || !(historico.linhasComErro > 0 && historico.erros && historico.erros.length > 0)"
                     (click)="exportarErrosHistorico(historico)"></button>
           </div>
         </td>
@@ -663,7 +664,7 @@
   <ng-template pTemplate="footer">
     <button pButton type="button" label="Exportar para Excel" icon="pi pi-file-excel"
             class="p-button-success"
-            [disabled]="!historicoFiltrado || historicoFiltrado.length === 0"
+            [disabled]="!canExport() || !historicoFiltrado || historicoFiltrado.length === 0"
             (click)="exportarHistoricoExcel()"></button>
     <button pButton type="button" label="Fechar" icon="pi pi-times"
             (click)="displayHistoricoDialog = false" class="p-button-text"></button>

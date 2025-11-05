@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { UsuarioEmpresaService } from '../../../core/services/usuario-empresa.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { PermissaoService } from '../../../core/services/permissao.service';
 import { UsuarioEmpresa, PerfilUsuario } from '../../../core/models';
 import { MessageService, ConfirmationService } from 'primeng/api';
 
@@ -18,14 +20,25 @@ export class UsuariosListComponent implements OnInit {
   confirmSenha: string = '';
   PerfilUsuario = PerfilUsuario;
 
+  // Permissões
+  perfilUsuarioString: string = '';
+  podeVisualizar = false;
+  podeCriar = false;
+  podeEditar = false;
+  podeExcluir = false;
+  podeResetarSenha = false;
+
   constructor(
     private usuarioService: UsuarioEmpresaService,
     private router: Router,
     private messageService: MessageService,
-    private confirmationService: ConfirmationService
+    private confirmationService: ConfirmationService,
+    private authService: AuthService,
+    private permissaoService: PermissaoService
   ) { }
 
   ngOnInit(): void {
+    this.carregarPermissoes();
     this.loadUsuarios();
   }
 
@@ -49,10 +62,27 @@ export class UsuariosListComponent implements OnInit {
   }
 
   novoUsuario(): void {
+    if (!this.podeCriar) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Acesso Negado',
+        detail: 'Você não tem permissão para criar usuários'
+      });
+      return;
+    }
     this.router.navigate(['/usuarios/novo']);
   }
 
   editarUsuario(usuario: UsuarioEmpresa): void {
+    if (!this.podeEditar) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Acesso Negado',
+        detail: 'Você não tem permissão para editar usuários'
+      });
+      return;
+    }
+
     if (usuario.ehProprietario) {
       this.messageService.add({
         severity: 'warn',
@@ -65,6 +95,15 @@ export class UsuariosListComponent implements OnInit {
   }
 
   desativarUsuario(usuario: UsuarioEmpresa): void {
+    if (!this.podeExcluir) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Acesso Negado',
+        detail: 'Você não tem permissão para desativar usuários'
+      });
+      return;
+    }
+
     if (usuario.ehProprietario) {
       this.messageService.add({
         severity: 'warn',
@@ -113,6 +152,15 @@ export class UsuariosListComponent implements OnInit {
 
   resetarSenha(): void {
     if (!this.selectedUsuario) return;
+
+    if (!this.podeResetarSenha) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Acesso Negado',
+        detail: 'Você não tem permissão para resetar senhas'
+      });
+      return;
+    }
 
     if (this.novaSenha !== this.confirmSenha) {
       this.messageService.add({
@@ -163,7 +211,28 @@ export class UsuariosListComponent implements OnInit {
     return ativo ? 'Ativo' : 'Inativo';
   }
 
-  getPerfilClass(perfil: PerfilUsuario): string {
+  getPerfilLabel(usuario: UsuarioEmpresa): string {
+    if (usuario.ehProprietario) {
+      return 'Proprietário';
+    }
+    return usuario.perfilDescricao || this.getPerfilDescricaoPorEnum(usuario.perfil);
+  }
+
+  getPerfilDescricaoPorEnum(perfil: PerfilUsuario): string {
+    switch (perfil) {
+      case PerfilUsuario.Admin:
+        return 'Administrador';
+      case PerfilUsuario.Operador:
+        return 'Operador';
+      default:
+        return 'Desconhecido';
+    }
+  }
+
+  getPerfilClass(perfil: PerfilUsuario, ehProprietario: boolean = false): string {
+    if (ehProprietario) {
+      return 'bg-yellow-100 text-yellow-800';
+    }
     switch (perfil) {
       case PerfilUsuario.Admin:
         return 'bg-purple-100 text-purple-800';
@@ -172,5 +241,101 @@ export class UsuariosListComponent implements OnInit {
       default:
         return 'bg-gray-100 text-gray-800';
     }
+  }
+
+  carregarPermissoes(): void {
+    const currentUser = this.authService.currentUserValue;
+    if (!currentUser) {
+      this.router.navigate(['/auth/login']);
+      return;
+    }
+
+    this.perfilUsuarioString = currentUser.perfil;
+
+    // Verificar permissão de visualizar (read)
+    this.permissaoService.verificarPermissao(
+      this.perfilUsuarioString,
+      'usuarios',
+      'read'
+    ).subscribe({
+      next: (response) => {
+        this.podeVisualizar = response.permitido;
+      },
+      error: () => {
+        this.podeVisualizar = false;
+      }
+    });
+
+    // Verificar permissão de criar (create)
+    this.permissaoService.verificarPermissao(
+      this.perfilUsuarioString,
+      'usuarios',
+      'create'
+    ).subscribe({
+      next: (response) => {
+        this.podeCriar = response.permitido;
+      },
+      error: () => {
+        this.podeCriar = false;
+      }
+    });
+
+    // Verificar permissão de editar (update)
+    this.permissaoService.verificarPermissao(
+      this.perfilUsuarioString,
+      'usuarios',
+      'update'
+    ).subscribe({
+      next: (response) => {
+        this.podeEditar = response.permitido;
+      },
+      error: () => {
+        this.podeEditar = false;
+      }
+    });
+
+    // Verificar permissão de excluir (delete)
+    this.permissaoService.verificarPermissao(
+      this.perfilUsuarioString,
+      'usuarios',
+      'delete'
+    ).subscribe({
+      next: (response) => {
+        this.podeExcluir = response.permitido;
+      },
+      error: () => {
+        this.podeExcluir = false;
+      }
+    });
+
+    // Verificar permissão de resetar senha (reset-password)
+    this.permissaoService.verificarPermissao(
+      this.perfilUsuarioString,
+      'usuarios',
+      'reset-password'
+    ).subscribe({
+      next: (response) => {
+        this.podeResetarSenha = response.permitido;
+      },
+      error: () => {
+        this.podeResetarSenha = false;
+      }
+    });
+  }
+
+  canCreate(): boolean {
+    return this.podeCriar;
+  }
+
+  canEdit(): boolean {
+    return this.podeEditar;
+  }
+
+  canDelete(): boolean {
+    return this.podeExcluir;
+  }
+
+  canResetPassword(): boolean {
+    return this.podeResetarSenha;
   }
 }

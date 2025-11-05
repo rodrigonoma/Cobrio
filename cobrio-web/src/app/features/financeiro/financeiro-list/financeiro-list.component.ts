@@ -1,6 +1,10 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { AssinaturaService } from '../../../core/services/assinatura.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { PermissaoService } from '../../../core/services/permissao.service';
 import { Assinatura, STATUS_ASSINATURA_OPTIONS } from '../../../core/models/assinatura.models';
+import { MessageService } from 'primeng/api';
 import { ChartConfiguration, ChartData } from 'chart.js';
 
 interface FinanceiroMetrics {
@@ -39,6 +43,10 @@ export class FinanceiroListComponent implements OnInit {
     vencidos: 0,
     total: 0
   };
+
+  // Permissões
+  perfilUsuarioString: string = '';
+  podeVisualizar = false;
 
   // Filtros
   filtroStatus: string = 'todos';
@@ -101,10 +109,15 @@ export class FinanceiroListComponent implements OnInit {
   };
 
   constructor(
-    private assinaturaService: AssinaturaService
+    private assinaturaService: AssinaturaService,
+    private router: Router,
+    private authService: AuthService,
+    private permissaoService: PermissaoService,
+    private messageService: MessageService
   ) { }
 
   ngOnInit(): void {
+    this.carregarPermissoes();
     this.loadData();
   }
 
@@ -285,5 +298,29 @@ export class FinanceiroListComponent implements OnInit {
   getTicketMedio(): number {
     if (this.transacoes.length === 0) return 0;
     return this.metrics.total / this.transacoes.length;
+  }
+
+  carregarPermissoes(): void {
+    const currentUser = this.authService.currentUserValue;
+    if (!currentUser) {
+      this.router.navigate(['/auth/login']);
+      return;
+    }
+
+    this.perfilUsuarioString = currentUser.perfil;
+
+    // Verificar permissão de visualizar (read)
+    this.permissaoService.verificarPermissao(
+      this.perfilUsuarioString,
+      'financeiro',
+      'read'
+    ).subscribe({
+      next: (response) => {
+        this.podeVisualizar = response.permitido;
+      },
+      error: () => {
+        this.podeVisualizar = false;
+      }
+    });
   }
 }

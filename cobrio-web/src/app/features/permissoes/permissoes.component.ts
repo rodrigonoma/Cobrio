@@ -1,7 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { PermissaoService } from '../../core/services/permissao.service';
+import { AuthService } from '../../core/services/auth.service';
 import { MessageService } from 'primeng/api';
 import {
   Modulo,
@@ -31,6 +33,13 @@ interface PerfilOption {
   description: string;
 }
 
+interface AcaoEspecialInfo {
+  chave: string;
+  label: string;
+  icone: string;
+  descricao: string;
+}
+
 @Component({
   selector: 'app-permissoes',
   standalone: true,
@@ -57,10 +66,11 @@ export class PermissoesComponent implements OnInit {
 
   perfilSelecionado: PerfilUsuario = PerfilUsuario.Admin;
   permissoes: PermissaoPerfil | null = null;
+  permissoesOriginais: { [moduloId: string]: { [acaoId: string]: boolean } } = {};
 
-  // Dialog de ações especiais
-  mostrarDialogAcoesEspeciais = false;
-  moduloSelecionadoDialog: ModuloPermissao | null = null;
+  // Permissões
+  perfilUsuarioString: string = '';
+  podeVisualizar = false;
 
   perfisOptions: PerfilOption[] = [
     {
@@ -78,12 +88,49 @@ export class PermissoesComponent implements OnInit {
   // Estado temporário das permissões (modificado antes de salvar)
   permissoesEditadas: { [moduloId: string]: { [acaoId: string]: boolean } } = {};
 
+  // Mapeamento de ações especiais com informações visuais
+  acoesEspeciaisInfo: { [chave: string]: AcaoEspecialInfo } = {
+    'toggle': {
+      chave: 'toggle',
+      label: 'Ativar/Desativar',
+      icone: 'pi-power-off',
+      descricao: 'Ativar ou desativar registros'
+    },
+    'export': {
+      chave: 'export',
+      label: 'Exportar',
+      icone: 'pi-download',
+      descricao: 'Exportar dados para arquivos'
+    },
+    'import': {
+      chave: 'import',
+      label: 'Importar',
+      icone: 'pi-upload',
+      descricao: 'Importar dados de arquivos'
+    },
+    'reset-password': {
+      chave: 'reset-password',
+      label: 'Resetar Senha',
+      icone: 'pi-key',
+      descricao: 'Resetar senha de usuários'
+    },
+    'config-permissions': {
+      chave: 'config-permissions',
+      label: 'Configurar',
+      icone: 'pi-cog',
+      descricao: 'Configurar permissões de perfis'
+    }
+  };
+
   constructor(
     private permissaoService: PermissaoService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private router: Router,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
+    this.verificarPermissaoAcesso();
     this.carregarPermissoes();
   }
 
@@ -109,12 +156,15 @@ export class PermissoesComponent implements OnInit {
 
   inicializarPermissoesEditadas(): void {
     this.permissoesEditadas = {};
+    this.permissoesOriginais = {};
     if (!this.permissoes) return;
 
     this.permissoes.modulos.forEach(modulo => {
       this.permissoesEditadas[modulo.moduloId] = {};
+      this.permissoesOriginais[modulo.moduloId] = {};
       modulo.acoes.forEach(acao => {
         this.permissoesEditadas[modulo.moduloId][acao.acaoId] = acao.permitido;
+        this.permissoesOriginais[modulo.moduloId][acao.acaoId] = acao.permitido;
       });
     });
   }
@@ -200,27 +250,111 @@ export class PermissoesComponent implements OnInit {
   }
 
   /**
-   * Retorna todas as ações especiais (que não são CRUD básicas nem menu.view)
+   * Retorna todas as ações especiais únicas do sistema (não CRUD básicas)
    */
-  getAcoesEspeciais(modulo: ModuloPermissao): AcaoPermissao[] {
+  getAcoesEspeciaisUnicas(): AcaoEspecialInfo[] {
+    if (!this.permissoes) return [];
+
     const acoesBasicas = ['menu.view', 'read', 'create', 'update', 'delete'];
-    return modulo.acoes.filter(a => !acoesBasicas.includes(a.acaoChave));
+    const acoesUnicas = new Set<string>();
+
+    // Coletar todas as ações especiais únicas de todos os módulos
+    this.permissoes.modulos.forEach(modulo => {
+      modulo.acoes.forEach(acao => {
+        if (!acoesBasicas.includes(acao.acaoChave)) {
+          acoesUnicas.add(acao.acaoChave);
+        }
+      });
+    });
+
+    // Retornar informações formatadas para cada ação especial
+    return Array.from(acoesUnicas)
+      .map(chave => this.acoesEspeciaisInfo[chave])
+      .filter(info => info !== undefined); // Remove undefined se houver ações não mapeadas
   }
 
   /**
-   * Conta quantas ações especiais estão ativas para um módulo
+   * Verifica se há mudanças pendentes não salvas
    */
-  getCountAcoesEspeciaisAtivas(modulo: ModuloPermissao): number {
-    return this.getAcoesEspeciais(modulo).filter(acao =>
-      this.isPermitido(modulo.moduloId, acao.acaoId)
-    ).length;
+  temMudancasPendentes(): boolean {
+    if (!this.permissoes) return false;
+
+    for (const modulo of this.permissoes.modulos) {
+      for (const acao of modulo.acoes) {
+        const valorOriginal = this.permissoesOriginais[modulo.moduloId]?.[acao.acaoId] ?? false;
+        const valorEditado = this.permissoesEditadas[modulo.moduloId]?.[acao.acaoId] ?? false;
+        if (valorOriginal !== valorEditado) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   /**
-   * Mostra dialog com ações especiais de um módulo
+   * Conta quantas mudanças pendentes existem
    */
-  mostrarAcoesEspeciais(modulo: ModuloPermissao): void {
-    this.moduloSelecionadoDialog = modulo;
-    this.mostrarDialogAcoesEspeciais = true;
+  getCountMudancasPendentes(): number {
+    if (!this.permissoes) return 0;
+
+    let count = 0;
+    for (const modulo of this.permissoes.modulos) {
+      for (const acao of modulo.acoes) {
+        const valorOriginal = this.permissoesOriginais[modulo.moduloId]?.[acao.acaoId] ?? false;
+        const valorEditado = this.permissoesEditadas[modulo.moduloId]?.[acao.acaoId] ?? false;
+        if (valorOriginal !== valorEditado) {
+          count++;
+        }
+      }
+    }
+
+    return count;
+  }
+
+  /**
+   * Verifica se um módulo específico tem mudanças
+   */
+  moduloTemMudancas(moduloId: string): boolean {
+    const moduloOriginal = this.permissoesOriginais[moduloId];
+    const moduloEditado = this.permissoesEditadas[moduloId];
+
+    if (!moduloOriginal || !moduloEditado) return false;
+
+    for (const acaoId in moduloOriginal) {
+      if (moduloOriginal[acaoId] !== moduloEditado[acaoId]) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Verifica se o usuário tem permissão para acessar o módulo de Permissões
+   */
+  verificarPermissaoAcesso(): void {
+    const currentUser = this.authService.currentUserValue;
+    if (!currentUser) {
+      this.router.navigate(['/auth/login']);
+      return;
+    }
+
+    this.perfilUsuarioString = currentUser.perfil;
+
+    // Verificar permissão de visualizar (read)
+    this.permissaoService.verificarPermissao(
+      this.perfilUsuarioString,
+      'permissoes',
+      'read'
+    ).subscribe({
+      next: (response) => {
+        this.podeVisualizar = response.permitido;
+      },
+      error: () => {
+        this.podeVisualizar = false;
+        this.router.navigate(['/dashboard']);
+      }
+    });
   }
 }

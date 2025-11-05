@@ -89,6 +89,7 @@
                 class="p-button-rounded p-button-text p-button-info"
                 pTooltip="Visualizar"
                 tooltipPosition="top"
+                [disabled]="!podeVisualizar"
                 (click)="showDetails(plano)"
               ></button>
               <button

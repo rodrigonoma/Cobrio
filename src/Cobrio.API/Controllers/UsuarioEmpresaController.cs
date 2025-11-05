@@ -7,7 +7,7 @@ namespace Cobrio.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Admin")] // Apenas Admin pode gerenciar usuários
+[Authorize]
 public class UsuarioEmpresaController : ControllerBase
 {
     private readonly UsuarioEmpresaService _usuarioService;

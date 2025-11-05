@@ -1,6 +1,10 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { AssinaturaService } from '../../../core/services/assinatura.service';
 import { PlanoOfertaService } from '../../../core/services/plano-oferta.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { PermissaoService } from '../../../core/services/permissao.service';
+import { MessageService } from 'primeng/api';
 import { Assinatura } from '../../../core/models/assinatura.models';
 import { PlanoOferta } from '../../../core/models/plano-oferta.models';
 import { ChartConfiguration, ChartData } from 'chart.js';
@@ -25,6 +29,11 @@ export class RelatoriosComponent implements OnInit {
   Math = Math; // Expose Math for template use
 
   metricas: MetricaRelatorio[] = [];
+
+  // Permissões
+  perfilUsuarioString: string = '';
+  podeVisualizar = false;
+  podeExportar = false;
 
   // Gráfico de Evolução de MRR (simulado - últimos 6 meses)
   mrrChartData: ChartData<'line'> = {
@@ -109,10 +118,15 @@ export class RelatoriosComponent implements OnInit {
 
   constructor(
     private assinaturaService: AssinaturaService,
-    private planoService: PlanoOfertaService
+    private planoService: PlanoOfertaService,
+    private router: Router,
+    private authService: AuthService,
+    private permissaoService: PermissaoService,
+    private messageService: MessageService
   ) { }
 
   ngOnInit(): void {
+    this.carregarPermissoes();
     this.loadData();
   }
 
@@ -256,5 +270,79 @@ export class RelatoriosComponent implements OnInit {
       style: 'currency',
       currency: 'BRL'
     }).format(value / 100);
+  }
+
+  carregarPermissoes(): void {
+    const currentUser = this.authService.currentUserValue;
+    if (!currentUser) {
+      this.router.navigate(['/auth/login']);
+      return;
+    }
+
+    this.perfilUsuarioString = currentUser.perfil;
+
+    // Verificar permissão de visualizar (read)
+    this.permissaoService.verificarPermissao(
+      this.perfilUsuarioString,
+      'relatorios',
+      'read'
+    ).subscribe({
+      next: (response) => {
+        this.podeVisualizar = response.permitido;
+      },
+      error: () => {
+        this.podeVisualizar = false;
+      }
+    });
+
+    // Verificar permissão de exportar
+    this.permissaoService.verificarPermissao(
+      this.perfilUsuarioString,
+      'relatorios',
+      'export'
+    ).subscribe({
+      next: (response) => {
+        this.podeExportar = response.permitido;
+      },
+      error: () => {
+        this.podeExportar = false;
+      }
+    });
+  }
+
+  exportarPDF(): void {
+    if (!this.podeExportar) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Acesso Negado',
+        detail: 'Você não tem permissão para exportar relatórios'
+      });
+      return;
+    }
+
+    // TODO: Implementar exportação de PDF
+    this.messageService.add({
+      severity: 'info',
+      summary: 'Em Desenvolvimento',
+      detail: 'Funcionalidade de exportação em PDF em desenvolvimento'
+    });
+  }
+
+  exportarExcel(): void {
+    if (!this.podeExportar) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Acesso Negado',
+        detail: 'Você não tem permissão para exportar relatórios'
+      });
+      return;
+    }
+
+    // TODO: Implementar exportação de Excel
+    this.messageService.add({
+      severity: 'info',
+      summary: 'Em Desenvolvimento',
+      detail: 'Funcionalidade de exportação em Excel em desenvolvimento'
+    });
   }
 }

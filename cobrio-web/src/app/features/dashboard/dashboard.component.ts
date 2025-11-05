@@ -2,9 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { DashboardService, DashboardMetrics } from '../../core/services/dashboard.service';
 import { PlanoOfertaService } from '../../core/services/plano-oferta.service';
 import { AssinaturaService } from '../../core/services/assinatura.service';
+import { AuthService } from '../../core/services/auth.service';
+import { PermissaoService } from '../../core/services/permissao.service';
 import { PlanoOferta } from '../../core/models/plano-oferta.models';
 import { Assinatura, STATUS_ASSINATURA_OPTIONS } from '../../core/models/assinatura.models';
 import { Router } from '@angular/router';
+import { MessageService } from 'primeng/api';
 import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
 
 @Component({
@@ -26,6 +29,10 @@ export class DashboardComponent implements OnInit {
   recentAssinaturas: Assinatura[] = [];
   loading = true;
   statusOptions = STATUS_ASSINATURA_OPTIONS;
+
+  // Permissões
+  perfilUsuarioString: string = '';
+  podeVisualizar = false;
 
   // Chart data
   statusChartData: ChartData<'pie'> = {
@@ -84,10 +91,14 @@ export class DashboardComponent implements OnInit {
     private dashboardService: DashboardService,
     private planoService: PlanoOfertaService,
     private assinaturaService: AssinaturaService,
-    private router: Router
+    private router: Router,
+    private authService: AuthService,
+    private permissaoService: PermissaoService,
+    private messageService: MessageService
   ) { }
 
   ngOnInit(): void {
+    this.carregarPermissoes();
     this.loadDashboard();
   }
 
@@ -210,5 +221,29 @@ export class DashboardComponent implements OnInit {
 
   navigateToAssinaturas(): void {
     this.router.navigate(['/assinaturas']);
+  }
+
+  carregarPermissoes(): void {
+    const currentUser = this.authService.currentUserValue;
+    if (!currentUser) {
+      this.router.navigate(['/auth/login']);
+      return;
+    }
+
+    this.perfilUsuarioString = currentUser.perfil;
+
+    // Verificar permissão de visualizar (read)
+    this.permissaoService.verificarPermissao(
+      this.perfilUsuarioString,
+      'dashboard',
+      'read'
+    ).subscribe({
+      next: (response) => {
+        this.podeVisualizar = response.permitido;
+      },
+      error: () => {
+        this.podeVisualizar = false;
+      }
+    });
   }
 }

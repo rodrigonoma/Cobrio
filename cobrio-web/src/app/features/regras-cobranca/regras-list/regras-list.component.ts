@@ -22,6 +22,8 @@ export class RegrasListComponent implements OnInit {
   podeCriar = false;
   podeEditar = false;
   podeExcluir = false;
+  podeExportar = false;
+  podeImportar = false;
 
   displayUrlDialog = false;
   displayPayloadDialog = false;
@@ -84,19 +86,10 @@ export class RegrasListComponent implements OnInit {
   carregarPermissoes(): void {
     const moduloChave = 'regras-cobranca';
 
-    // Verificar permissão de visualizar (read) - CRÍTICO: Redireciona se não tiver
+    // Verificar permissão de visualizar detalhes (read) - Controla botão de ver detalhes
     this.permissaoService.verificarPermissao(this.perfilUsuarioString, moduloChave, 'read').subscribe({
       next: (result) => {
         this.podeVisualizar = result.permitido;
-        // Se não pode visualizar, redireciona para dashboard
-        if (!result.permitido) {
-          this.messageService.add({
-            severity: 'warn',
-            summary: 'Acesso Negado',
-            detail: 'Você não tem permissão para visualizar regras de cobrança'
-          });
-          this.router.navigate(['/dashboard']);
-        }
       },
       error: (err) => console.error('Erro ao verificar permissão de visualização:', err)
     });
@@ -118,6 +111,18 @@ export class RegrasListComponent implements OnInit {
       next: (result) => this.podeExcluir = result.permitido,
       error: (err) => console.error('Erro ao verificar permissão de exclusão:', err)
     });
+
+    // Verificar permissão de exportar (export)
+    this.permissaoService.verificarPermissao(this.perfilUsuarioString, moduloChave, 'export').subscribe({
+      next: (result) => this.podeExportar = result.permitido,
+      error: (err) => console.error('Erro ao verificar permissão de exportação:', err)
+    });
+
+    // Verificar permissão de importar (import)
+    this.permissaoService.verificarPermissao(this.perfilUsuarioString, moduloChave, 'import').subscribe({
+      next: (result) => this.podeImportar = result.permitido,
+      error: (err) => console.error('Erro ao verificar permissão de importação:', err)
+    });
   }
 
   // Métodos helper para verificar permissões
@@ -131,6 +136,14 @@ export class RegrasListComponent implements OnInit {
 
   canCreate(): boolean {
     return this.podeCriar;
+  }
+
+  canExport(): boolean {
+    return this.podeExportar;
+  }
+
+  canImport(): boolean {
+    return this.podeImportar;
   }
 
   loadRegras(): void {
@@ -511,6 +524,15 @@ export class RegrasListComponent implements OnInit {
   }
 
   mostrarImportDialog(regra: RegraCobranca): void {
+    if (!this.podeImportar) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Acesso Negado',
+        detail: 'Você não tem permissão para importar cobranças'
+      });
+      return;
+    }
+
     this.selectedRegra = regra;
     this.selectedFile = null;
     this.tipoImportacao = 'excel';
@@ -581,6 +603,15 @@ export class RegrasListComponent implements OnInit {
   }
 
   exportarErros(): void {
+    if (!this.podeExportar) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Acesso Negado',
+        detail: 'Você não tem permissão para exportar dados'
+      });
+      return;
+    }
+
     if (this.errosValidacao.length === 0) {
       return;
     }
@@ -875,6 +906,15 @@ export class RegrasListComponent implements OnInit {
   }
 
   exportarErrosHistorico(historico: HistoricoImportacao): void {
+    if (!this.podeExportar) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Acesso Negado',
+        detail: 'Você não tem permissão para exportar dados'
+      });
+      return;
+    }
+
     if (!historico.erros || historico.erros.length === 0) {
       return;
     }
@@ -913,6 +953,15 @@ export class RegrasListComponent implements OnInit {
   }
 
   exportarHistoricoExcel(): void {
+    if (!this.podeExportar) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Acesso Negado',
+        detail: 'Você não tem permissão para exportar dados'
+      });
+      return;
+    }
+
     if (!this.historicoFiltrado || this.historicoFiltrado.length === 0) {
       return;
     }

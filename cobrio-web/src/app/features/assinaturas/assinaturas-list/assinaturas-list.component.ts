@@ -68,19 +68,10 @@ export class AssinaturasListComponent implements OnInit {
   carregarPermissoes(): void {
     const moduloChave = 'assinaturas';
 
-    // Verificar permissão de visualizar (read) - CRÍTICO: Redireciona se não tiver
+    // Verificar permissão de visualizar detalhes (read) - Controla botão de ver detalhes
     this.permissaoService.verificarPermissao(this.perfilUsuarioString, moduloChave, 'read').subscribe({
       next: (result) => {
         this.podeVisualizar = result.permitido;
-        // Se não pode visualizar, redireciona para dashboard
-        if (!result.permitido) {
-          this.messageService.add({
-            severity: 'warn',
-            summary: 'Acesso Negado',
-            detail: 'Você não tem permissão para visualizar assinaturas'
-          });
-          this.router.navigate(['/dashboard']);
-        }
       },
       error: (err) => console.error('Erro ao verificar permissão de visualização:', err)
     });

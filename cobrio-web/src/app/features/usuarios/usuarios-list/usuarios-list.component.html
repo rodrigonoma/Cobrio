@@ -2,6 +2,7 @@
   <div class="flex justify-content-between align-items-center mb-4">
     <h2 class="text-2xl font-semibold m-0">Gerenciar Usuários</h2>
     <button pButton type="button" icon="pi pi-plus" label="Novo Usuário"
+            [disabled]="!canCreate()"
             (click)="novoUsuario()" class="p-button-success"></button>
   </div>
 
@@ -32,8 +33,8 @@
         </td>
         <td>{{ usuario.email }}</td>
         <td>
-          <span [class]="'px-2 py-1 border-round text-sm font-semibold ' + getPerfilClass(usuario.perfil)">
-            {{ usuario.perfilDescricao }}
+          <span [class]="'px-2 py-1 border-round text-sm font-semibold ' + getPerfilClass(usuario.perfil, usuario.ehProprietario)">
+            {{ getPerfilLabel(usuario) }}
           </span>
         </td>
         <td>
@@ -52,17 +53,18 @@
                   [pTooltip]="usuario.ehProprietario ? 'Proprietário não pode ser editado' : 'Editar'"
                   tooltipPosition="top"
                   class="p-button-rounded p-button-text p-button-primary mr-2"
-                  [disabled]="usuario.ehProprietario"
+                  [disabled]="!canEdit() || usuario.ehProprietario"
                   (click)="editarUsuario(usuario)"></button>
           <button pButton type="button" icon="pi pi-key" pTooltip="Resetar Senha"
                   tooltipPosition="top"
                   class="p-button-rounded p-button-text p-button-warning mr-2"
+                  [disabled]="!canResetPassword()"
                   (click)="mostrarDialogResetarSenha(usuario)"></button>
           <button pButton type="button" icon="pi pi-ban"
                   [pTooltip]="usuario.ehProprietario ? 'Proprietário não pode ser desativado' : 'Desativar'"
                   tooltipPosition="top"
                   class="p-button-rounded p-button-text p-button-danger"
-                  [disabled]="!usuario.ativo || usuario.ehProprietario"
+                  [disabled]="!canDelete() || !usuario.ativo || usuario.ehProprietario"
                   (click)="desativarUsuario(usuario)"></button>
         </td>
       </tr>

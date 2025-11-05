@@ -2,8 +2,10 @@
   <div class="flex justify-between items-center mb-6">
     <h1 class="text-3xl font-bold">Relatórios e Análises</h1>
     <div class="flex gap-2">
-      <button pButton label="Exportar PDF" icon="pi pi-file-pdf" class="p-button-outlined"></button>
-      <button pButton label="Exportar Excel" icon="pi pi-file-excel" class="p-button-outlined p-button-success"></button>
+      <button pButton label="Exportar PDF" icon="pi pi-file-pdf" class="p-button-outlined"
+        [disabled]="!podeExportar" (click)="exportarPDF()"></button>
+      <button pButton label="Exportar Excel" icon="pi pi-file-excel" class="p-button-outlined p-button-success"
+        [disabled]="!podeExportar" (click)="exportarExcel()"></button>
     </div>
   </div>
 

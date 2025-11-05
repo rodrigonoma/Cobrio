@@ -50,6 +50,17 @@
 
   <!-- Tabela de Permissões -->
   <div *ngIf="!loading && permissoes">
+    <!-- Indicador de mudanças não salvas -->
+    <div *ngIf="temMudancasPendentes()" class="p-3 mb-3 border-round" style="background-color: #fff4e6; border: 1px solid #ffd699;">
+      <div class="flex align-items-center gap-2">
+        <i class="pi pi-exclamation-triangle" style="color: #ff9800;"></i>
+        <span class="font-semibold" style="color: #ff9800;">Você tem alterações não salvas</span>
+      </div>
+      <p class="text-sm m-0 mt-2" style="color: #666;">
+        Marque ou desmarque as permissões desejadas e clique em "Salvar Permissões" para aplicar as alterações.
+      </p>
+    </div>
+
     <!-- Ações -->
     <div class="flex justify-content-end gap-2 mb-4">
       <p-button
@@ -69,206 +80,205 @@
     </div>
 
     <!-- Tabela Matricial -->
-    <p-table
-      [value]="permissoes.modulos"
-      responsiveLayout="scroll"
-      styleClass="p-datatable-sm"
-    >
-      <ng-template pTemplate="header">
-        <tr>
-          <th style="width: 200px">Módulo</th>
-          <th class="text-center" style="width: 100px">
-            <div class="flex flex-column align-items-center">
-              <i class="pi pi-eye mb-1"></i>
-              <span class="text-xs">Menu</span>
-            </div>
-          </th>
-          <th class="text-center" style="width: 100px">
-            <div class="flex flex-column align-items-center">
-              <i class="pi pi-book mb-1"></i>
-              <span class="text-xs">Visualizar</span>
-            </div>
-          </th>
-          <th class="text-center" style="width: 100px">
-            <div class="flex flex-column align-items-center">
-              <i class="pi pi-plus mb-1"></i>
-              <span class="text-xs">Criar</span>
-            </div>
-          </th>
-          <th class="text-center" style="width: 100px">
-            <div class="flex flex-column align-items-center">
-              <i class="pi pi-pencil mb-1"></i>
-              <span class="text-xs">Editar</span>
-            </div>
-          </th>
-          <th class="text-center" style="width: 100px">
-            <div class="flex flex-column align-items-center">
-              <i class="pi pi-trash mb-1"></i>
-              <span class="text-xs">Excluir</span>
-            </div>
-          </th>
-          <th class="text-center" style="width: 120px">
-            <div class="flex flex-column align-items-center">
-              <i class="pi pi-cog mb-1"></i>
-              <span class="text-xs">Outras Ações</span>
-            </div>
-          </th>
-          <th class="text-center" style="width: 80px">
-            <span class="text-xs font-semibold">Todas</span>
-          </th>
-        </tr>
-      </ng-template>
+    <div class="table-responsive">
+      <p-table
+        [value]="permissoes.modulos"
+        responsiveLayout="scroll"
+        styleClass="p-datatable-sm"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width: 180px; min-width: 180px;">
+              <div class="font-semibold">Módulo</div>
+            </th>
+            <th class="text-center" style="width: 90px">
+              <div class="flex flex-column align-items-center gap-1">
+                <i class="pi pi-bars" style="font-size: 1.1rem;"></i>
+                <span class="text-xs font-semibold">Menu</span>
+              </div>
+            </th>
+            <th class="text-center" style="width: 90px">
+              <div class="flex flex-column align-items-center gap-1">
+                <i class="pi pi-eye" style="font-size: 1.1rem;"></i>
+                <span class="text-xs font-semibold">Visualizar</span>
+              </div>
+            </th>
+            <th class="text-center" style="width: 90px">
+              <div class="flex flex-column align-items-center gap-1">
+                <i class="pi pi-plus-circle" style="font-size: 1.1rem;"></i>
+                <span class="text-xs font-semibold">Criar</span>
+              </div>
+            </th>
+            <th class="text-center" style="width: 90px">
+              <div class="flex flex-column align-items-center gap-1">
+                <i class="pi pi-pencil" style="font-size: 1.1rem;"></i>
+                <span class="text-xs font-semibold">Editar</span>
+              </div>
+            </th>
+            <th class="text-center" style="width: 90px">
+              <div class="flex flex-column align-items-center gap-1">
+                <i class="pi pi-trash" style="font-size: 1.1rem;"></i>
+                <span class="text-xs font-semibold">Excluir</span>
+              </div>
+            </th>
+            <!-- Colunas dinâmicas para ações especiais -->
+            <th *ngFor="let acaoEspecial of getAcoesEspeciaisUnicas()" class="text-center" style="width: 90px">
+              <div class="flex flex-column align-items-center gap-1">
+                <i [class]="'pi ' + acaoEspecial.icone" style="font-size: 1.1rem;"></i>
+                <span class="text-xs font-semibold">{{ acaoEspecial.label }}</span>
+              </div>
+            </th>
+            <th class="text-center" style="width: 90px">
+              <div class="flex flex-column align-items-center gap-1">
+                <i class="pi pi-check-square" style="font-size: 1.1rem;"></i>
+                <span class="text-xs font-semibold">Todas</span>
+              </div>
+            </th>
+          </tr>
+        </ng-template>
 
-      <ng-template pTemplate="body" let-modulo>
-        <tr>
-          <!-- Nome do Módulo -->
-          <td>
-            <div class="flex align-items-center gap-2">
-              <i [class]="'pi ' + modulo.moduloIcone" style="color: #6366f1;"></i>
-              <span class="font-semibold">{{ modulo.moduloNome }}</span>
-            </div>
-          </td>
+        <ng-template pTemplate="body" let-modulo>
+          <tr [class.surface-50]="moduloTemMudancas(modulo.moduloId)">
+            <!-- Nome do Módulo -->
+            <td>
+              <div class="flex align-items-center gap-2">
+                <i [class]="'pi ' + modulo.moduloIcone" style="color: #6366f1; font-size: 1.2rem;"></i>
+                <div>
+                  <div class="font-semibold">{{ modulo.moduloNome }}</div>
+                  <span *ngIf="moduloTemMudancas(modulo.moduloId)" class="text-xs" style="color: #ff9800;">
+                    <i class="pi pi-circle-fill" style="font-size: 0.4rem;"></i> Alterado
+                  </span>
+                </div>
+              </div>
+            </td>
 
-          <!-- Menu -->
-          <td class="text-center">
-            <p-checkbox
-              *ngIf="getAcaoPorChave(modulo, 'menu.view') as acao"
-              [binary]="true"
-              [ngModel]="isPermitido(modulo.moduloId, acao.acaoId)"
-              (onChange)="togglePermissao(modulo.moduloId, acao.acaoId)"
-            ></p-checkbox>
-            <span *ngIf="!getAcaoPorChave(modulo, 'menu.view')" class="text-gray-400">-</span>
-          </td>
+            <!-- Menu -->
+            <td class="text-center">
+              <p-checkbox
+                *ngIf="getAcaoPorChave(modulo, 'menu.view') as acao"
+                [binary]="true"
+                [ngModel]="isPermitido(modulo.moduloId, acao.acaoId)"
+                (onChange)="togglePermissao(modulo.moduloId, acao.acaoId)"
+                [pTooltip]="'Exibir módulo no menu lateral'"
+                tooltipPosition="top"
+              ></p-checkbox>
+              <span *ngIf="!getAcaoPorChave(modulo, 'menu.view')" class="text-gray-400">-</span>
+            </td>
 
-          <!-- Read -->
-          <td class="text-center">
-            <p-checkbox
-              *ngIf="getAcaoPorChave(modulo, 'read') as acao"
-              [binary]="true"
-              [ngModel]="isPermitido(modulo.moduloId, acao.acaoId)"
-              (onChange)="togglePermissao(modulo.moduloId, acao.acaoId)"
-            ></p-checkbox>
-            <span *ngIf="!getAcaoPorChave(modulo, 'read')" class="text-gray-400">-</span>
-          </td>
+            <!-- Read -->
+            <td class="text-center">
+              <p-checkbox
+                *ngIf="getAcaoPorChave(modulo, 'read') as acao"
+                [binary]="true"
+                [ngModel]="isPermitido(modulo.moduloId, acao.acaoId)"
+                (onChange)="togglePermissao(modulo.moduloId, acao.acaoId)"
+                [pTooltip]="'Ver detalhes dos registros (ícone de olho)'"
+                tooltipPosition="top"
+              ></p-checkbox>
+              <span *ngIf="!getAcaoPorChave(modulo, 'read')" class="text-gray-400">-</span>
+            </td>
 
-          <!-- Create -->
-          <td class="text-center">
-            <p-checkbox
-              *ngIf="getAcaoPorChave(modulo, 'create') as acao"
-              [binary]="true"
-              [ngModel]="isPermitido(modulo.moduloId, acao.acaoId)"
-              (onChange)="togglePermissao(modulo.moduloId, acao.acaoId)"
-            ></p-checkbox>
-            <span *ngIf="!getAcaoPorChave(modulo, 'create')" class="text-gray-400">-</span>
-          </td>
+            <!-- Create -->
+            <td class="text-center">
+              <p-checkbox
+                *ngIf="getAcaoPorChave(modulo, 'create') as acao"
+                [binary]="true"
+                [ngModel]="isPermitido(modulo.moduloId, acao.acaoId)"
+                (onChange)="togglePermissao(modulo.moduloId, acao.acaoId)"
+                [pTooltip]="'Criar novos registros'"
+                tooltipPosition="top"
+              ></p-checkbox>
+              <span *ngIf="!getAcaoPorChave(modulo, 'create')" class="text-gray-400">-</span>
+            </td>
 
-          <!-- Update -->
-          <td class="text-center">
-            <p-checkbox
-              *ngIf="getAcaoPorChave(modulo, 'update') as acao"
-              [binary]="true"
-              [ngModel]="isPermitido(modulo.moduloId, acao.acaoId)"
-              (onChange)="togglePermissao(modulo.moduloId, acao.acaoId)"
-            ></p-checkbox>
-            <span *ngIf="!getAcaoPorChave(modulo, 'update')" class="text-gray-400">-</span>
-          </td>
+            <!-- Update -->
+            <td class="text-center">
+              <p-checkbox
+                *ngIf="getAcaoPorChave(modulo, 'update') as acao"
+                [binary]="true"
+                [ngModel]="isPermitido(modulo.moduloId, acao.acaoId)"
+                (onChange)="togglePermissao(modulo.moduloId, acao.acaoId)"
+                [pTooltip]="'Editar registros existentes'"
+                tooltipPosition="top"
+              ></p-checkbox>
+              <span *ngIf="!getAcaoPorChave(modulo, 'update')" class="text-gray-400">-</span>
+            </td>
 
-          <!-- Delete -->
-          <td class="text-center">
-            <p-checkbox
-              *ngIf="getAcaoPorChave(modulo, 'delete') as acao"
-              [binary]="true"
-              [ngModel]="isPermitido(modulo.moduloId, acao.acaoId)"
-              (onChange)="togglePermissao(modulo.moduloId, acao.acaoId)"
-            ></p-checkbox>
-            <span *ngIf="!getAcaoPorChave(modulo, 'delete')" class="text-gray-400">-</span>
-          </td>
+            <!-- Delete -->
+            <td class="text-center">
+              <p-checkbox
+                *ngIf="getAcaoPorChave(modulo, 'delete') as acao"
+                [binary]="true"
+                [ngModel]="isPermitido(modulo.moduloId, acao.acaoId)"
+                (onChange)="togglePermissao(modulo.moduloId, acao.acaoId)"
+                [pTooltip]="'Excluir registros'"
+                tooltipPosition="top"
+              ></p-checkbox>
+              <span *ngIf="!getAcaoPorChave(modulo, 'delete')" class="text-gray-400">-</span>
+            </td>
 
-          <!-- Outras Ações -->
-          <td class="text-center">
-            <p-button
-              *ngIf="getAcoesEspeciais(modulo).length > 0"
-              icon="pi pi-ellipsis-v"
-              styleClass="p-button-text p-button-rounded p-button-secondary p-button-sm"
-              [pTooltip]="getCountAcoesEspeciaisAtivas(modulo) + ' de ' + getAcoesEspeciais(modulo).length + ' ativas'"
-              (onClick)="mostrarAcoesEspeciais(modulo)"
-            ></p-button>
-            <span *ngIf="getAcoesEspeciais(modulo).length === 0" class="text-gray-400">-</span>
-          </td>
+            <!-- Colunas dinâmicas para ações especiais -->
+            <td *ngFor="let acaoEspecial of getAcoesEspeciaisUnicas()" class="text-center">
+              <p-checkbox
+                *ngIf="getAcaoPorChave(modulo, acaoEspecial.chave) as acao"
+                [binary]="true"
+                [ngModel]="isPermitido(modulo.moduloId, acao.acaoId)"
+                (onChange)="togglePermissao(modulo.moduloId, acao.acaoId)"
+                [pTooltip]="acaoEspecial.descricao"
+                tooltipPosition="top"
+              ></p-checkbox>
+              <span *ngIf="!getAcaoPorChave(modulo, acaoEspecial.chave)" class="text-gray-400">-</span>
+            </td>
 
-          <!-- Toggle Todas -->
-          <td class="text-center">
-            <p-checkbox
-              [binary]="true"
-              [ngModel]="todasAcoesPermitidas(modulo)"
-              (onChange)="toggleTodasAcoesModulo(modulo)"
-            ></p-checkbox>
-          </td>
-        </tr>
-      </ng-template>
+            <!-- Toggle Todas -->
+            <td class="text-center">
+              <p-checkbox
+                [binary]="true"
+                [ngModel]="todasAcoesPermitidas(modulo)"
+                (onChange)="toggleTodasAcoesModulo(modulo)"
+                [pTooltip]="'Marcar/desmarcar todas as ações'"
+                tooltipPosition="top"
+              ></p-checkbox>
+            </td>
+          </tr>
+        </ng-template>
 
-      <ng-template pTemplate="emptymessage">
-        <tr>
-          <td colspan="8" class="text-center py-4 text-gray-600">
-            Nenhum módulo encontrado
-          </td>
-        </tr>
-      </ng-template>
-    </p-table>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td [attr.colspan]="7 + getAcoesEspeciaisUnicas().length" class="text-center py-4 text-gray-600">
+              Nenhum módulo encontrado
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
 
     <!-- Ações Footer -->
-    <div class="flex justify-content-end gap-2 mt-4 pt-4 border-top-1 border-gray-200">
-      <p-button
-        label="Cancelar"
-        icon="pi pi-times"
-        styleClass="p-button-secondary p-button-outlined"
-        (onClick)="cancelar()"
-        [disabled]="saving"
-      ></p-button>
-      <p-button
-        label="Salvar Permissões"
-        icon="pi pi-check"
-        (onClick)="salvarPermissoes()"
-        [loading]="saving"
-        [disabled]="saving"
-      ></p-button>
+    <div class="flex justify-content-between align-items-center mt-4 pt-4 border-top-1 border-gray-200">
+      <div *ngIf="temMudancasPendentes()" class="text-sm" style="color: #ff9800;">
+        <i class="pi pi-info-circle mr-1"></i>
+        <strong>{{ getCountMudancasPendentes() }}</strong> alteração(ões) pendente(s)
+      </div>
+      <div *ngIf="!temMudancasPendentes()" class="text-sm text-gray-600">
+        <i class="pi pi-check-circle mr-1"></i>
+        Todas as alterações salvas
+      </div>
+      <div class="flex gap-2">
+        <p-button
+          label="Cancelar"
+          icon="pi pi-times"
+          styleClass="p-button-secondary p-button-outlined"
+          (onClick)="cancelar()"
+          [disabled]="saving"
+        ></p-button>
+        <p-button
+          label="Salvar Permissões"
+          icon="pi pi-check"
+          (onClick)="salvarPermissoes()"
+          [loading]="saving"
+          [disabled]="saving"
+        ></p-button>
+      </div>
     </div>
   </div>
 </div>
-
-<!-- Dialog para Ações Especiais -->
-<p-dialog
-  [(visible)]="mostrarDialogAcoesEspeciais"
-  [header]="moduloSelecionadoDialog?.moduloNome + ' - Ações Especiais'"
-  [modal]="true"
-  [style]="{ width: '500px' }"
-  [draggable]="false"
-  [resizable]="false"
->
-  <div *ngIf="moduloSelecionadoDialog" class="flex flex-column gap-3">
-    <div
-      *ngFor="let acao of getAcoesEspeciais(moduloSelecionadoDialog)"
-      class="flex align-items-center gap-3 p-3 border-round hover:surface-100 transition-colors transition-duration-150"
-    >
-      <p-checkbox
-        [binary]="true"
-        [ngModel]="isPermitido(moduloSelecionadoDialog.moduloId, acao.acaoId)"
-        (onChange)="togglePermissao(moduloSelecionadoDialog.moduloId, acao.acaoId)"
-        [inputId]="'dialog_' + acao.acaoId"
-      ></p-checkbox>
-      <label [for]="'dialog_' + acao.acaoId" class="flex-1 cursor-pointer">
-        <div class="font-semibold">{{ acao.acaoNome }}</div>
-        <div class="text-sm text-gray-600">{{ acao.acaoChave }}</div>
-      </label>
-    </div>
-  </div>
-
-  <ng-template pTemplate="footer">
-    <p-button
-      label="Fechar"
-      icon="pi pi-times"
-      (onClick)="mostrarDialogAcoesEspeciais = false"
-      styleClass="p-button-text"
-    ></p-button>
-  </ng-template>
-</p-dialog>
