@@ -52,7 +52,13 @@
       "Bash(FILTER_BRANCH_SQUELCH_WARNING=1 git filter-branch:*)",
       "Bash(git push:*)",
       "Bash(git branch:*)",
-      "Bash(tasklist:*)"
+      "Bash(tasklist:*)",
+      "WebFetch(domain:api.brevo.com)",
+      "WebFetch(domain:developers.brevo.com)",
+      "Bash(timeout /t 5 /nobreak)",
+      "Bash(del \"C:\\Cobrio\\src\\Cobrio.Application\\Services\\AnalyticsService.cs\")",
+      "Bash(if exist .angular rmdir /s /q .angular)",
+      "Bash(if exist cobrio-web.angular rmdir /s /q cobrio-web.angular)"
     ],
     "deny": [],
     "ask": []

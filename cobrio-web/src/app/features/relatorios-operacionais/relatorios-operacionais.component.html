@@ -1,0 +1,386 @@
+<div class="relatorios-operacionais-container">
+  <div class="header">
+    <h1>Relatórios Operacionais</h1>
+    <p class="subtitle">Monitoramento em tempo real da operação de cobrança</p>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filters-card">
+    <h3>Filtros</h3>
+    <div class="filters-grid">
+      <div class="filter-item">
+        <label for="dataInicio">Data Início</label>
+        <input
+          type="date"
+          id="dataInicio"
+          [(ngModel)]="dataInicio"
+          class="form-control"
+        />
+      </div>
+
+      <div class="filter-item">
+        <label for="dataFim">Data Fim</label>
+        <input
+          type="date"
+          id="dataFim"
+          [(ngModel)]="dataFim"
+          class="form-control"
+        />
+      </div>
+
+      <div class="filter-item">
+        <label for="canalFiltro">Canal (Opcional)</label>
+        <select
+          id="canalFiltro"
+          [(ngModel)]="canalFiltro"
+          class="form-control"
+        >
+          <option [ngValue]="undefined">Todos os canais</option>
+          <option [ngValue]="CanalNotificacao.Email">Email</option>
+          <option [ngValue]="CanalNotificacao.SMS">SMS</option>
+          <option [ngValue]="CanalNotificacao.WhatsApp">WhatsApp</option>
+        </select>
+      </div>
+
+      <div class="filter-actions">
+        <button class="btn btn-primary" (click)="carregarTodosRelatorios()">
+          Aplicar Filtros
+        </button>
+        <button class="btn btn-secondary" (click)="limparFiltros()">
+          Limpar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard Operacional (KPIs) -->
+  <div class="section">
+    <h2>Dashboard Operacional</h2>
+
+    <div *ngIf="loadingDashboard" class="loading">
+      <p>Carregando dados...</p>
+    </div>
+
+    <div *ngIf="!loadingDashboard && dashboard" class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-icon">📊</div>
+        <div class="kpi-content">
+          <span class="kpi-label">Total de Cobranças</span>
+          <span class="kpi-value">{{ dashboard.totalCobrancas }}</span>
+        </div>
+      </div>
+
+      <div class="kpi-card success">
+        <div class="kpi-icon">✅</div>
+        <div class="kpi-content">
+          <span class="kpi-label">Processadas</span>
+          <span class="kpi-value">{{ dashboard.cobrancasProcessadas }}</span>
+          <span class="kpi-trend" [class.positive]="dashboard.variacaoProcessadas > 0"
+                                   [class.negative]="dashboard.variacaoProcessadas < 0">
+            {{ dashboard.variacaoProcessadas > 0 ? '+' : '' }}{{ dashboard.variacaoProcessadas }}%
+          </span>
+        </div>
+      </div>
+
+      <div class="kpi-card danger">
+        <div class="kpi-icon">❌</div>
+        <div class="kpi-content">
+          <span class="kpi-label">Falhas</span>
+          <span class="kpi-value">{{ dashboard.cobrancasFalhas }}</span>
+        </div>
+      </div>
+
+      <div class="kpi-card warning">
+        <div class="kpi-icon">⏳</div>
+        <div class="kpi-content">
+          <span class="kpi-label">Pendentes</span>
+          <span class="kpi-value">{{ dashboard.cobrancasPendentes }}</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon">💰</div>
+        <div class="kpi-content">
+          <span class="kpi-label">Valor Total</span>
+          <span class="kpi-value">{{ formatCurrency(dashboard.valorTotal) }}</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon">💵</div>
+        <div class="kpi-content">
+          <span class="kpi-label">Valor Processado</span>
+          <span class="kpi-value">{{ formatCurrency(dashboard.valorProcessado) }}</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon">🔄</div>
+        <div class="kpi-content">
+          <span class="kpi-label">Média de Tentativas</span>
+          <span class="kpi-value">{{ dashboard.mediaTentativas.toFixed(2) }}</span>
+        </div>
+      </div>
+
+      <div class="kpi-card info">
+        <div class="kpi-icon">📈</div>
+        <div class="kpi-content">
+          <span class="kpi-label">Taxa de Sucesso</span>
+          <span class="kpi-value">{{ formatPercentage(dashboard.taxaSucesso) }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Execução de Réguas -->
+  <div class="section">
+    <h2>Execução de Réguas por Dia e Canal</h2>
+
+    <div *ngIf="loadingExecucao" class="loading">
+      <p>Carregando dados...</p>
+    </div>
+
+    <div *ngIf="!loadingExecucao && execucaoReguas.length > 0" class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Régua</th>
+            <th>Canal</th>
+            <th>Total Envios</th>
+            <th>Sucessos</th>
+            <th>Falhas</th>
+            <th>Taxa Sucesso</th>
+            <th>Cobranças Processadas</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of execucaoReguas">
+            <td>{{ formatDate(item.data) }}</td>
+            <td>{{ item.nomeRegra }}</td>
+            <td>
+              <span class="badge" [ngClass]="getCanalBadgeClass(item.canal)">
+                {{ getCanalLabel(item.canal) }}
+              </span>
+            </td>
+            <td>{{ item.totalEnvios }}</td>
+            <td class="success-text">{{ item.sucessos }}</td>
+            <td class="danger-text">{{ item.falhas }}</td>
+            <td>
+              <span class="percentage" [class.high]="item.taxaSucesso >= 80"
+                                       [class.medium]="item.taxaSucesso >= 50 && item.taxaSucesso < 80"
+                                       [class.low]="item.taxaSucesso < 50">
+                {{ formatPercentage(item.taxaSucesso) }}
+              </span>
+            </td>
+            <td>{{ item.cobrancasProcessadas }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="!loadingExecucao && execucaoReguas.length === 0" class="no-data">
+      <p>Nenhum dado encontrado para o período selecionado</p>
+    </div>
+  </div>
+
+  <!-- Cobranças vs Recebimentos -->
+  <div class="section">
+    <h2>Cobranças Enviadas vs Recebimentos</h2>
+
+    <div *ngIf="loadingCobrancas" class="loading">
+      <p>Carregando dados...</p>
+    </div>
+
+    <div *ngIf="!loadingCobrancas && cobrancasRecebimentos.length > 0" class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Cobranças Enviadas</th>
+            <th>Valor Cobrado</th>
+            <th>Faturas Geradas</th>
+            <th>Faturas Pagas</th>
+            <th>Valor Recebido</th>
+            <th>Taxa Recuperação</th>
+            <th>Média Horas p/ Pagamento</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of cobrancasRecebimentos">
+            <td>{{ formatDate(item.data) }}</td>
+            <td>{{ item.totalCobrancasEnviadas }}</td>
+            <td>{{ formatCurrency(item.valorCobrado) }}</td>
+            <td>{{ item.totalFaturasGeradas }}</td>
+            <td class="success-text">{{ item.faturasPagas }}</td>
+            <td class="success-text">{{ formatCurrency(item.valorRecebido) }}</td>
+            <td>
+              <span class="percentage" [class.high]="item.taxaRecuperacao >= 70"
+                                       [class.medium]="item.taxaRecuperacao >= 40 && item.taxaRecuperacao < 70"
+                                       [class.low]="item.taxaRecuperacao < 40">
+                {{ formatPercentage(item.taxaRecuperacao) }}
+              </span>
+            </td>
+            <td>{{ item.mediaHorasAtePagamento.toFixed(1) }}h</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="!loadingCobrancas && cobrancasRecebimentos.length === 0" class="no-data">
+      <p>Nenhum dado encontrado para o período selecionado</p>
+    </div>
+  </div>
+
+  <!-- Valores por Régua -->
+  <div class="section">
+    <h2>Valores Recuperados por Régua de Cobrança</h2>
+
+    <div *ngIf="loadingValores" class="loading">
+      <p>Carregando dados...</p>
+    </div>
+
+    <div *ngIf="!loadingValores && valoresPorRegua.length > 0" class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Régua</th>
+            <th>Canal</th>
+            <th>Timing</th>
+            <th>Total Cobranças</th>
+            <th>Valor Cobrado</th>
+            <th>Faturas Pagas</th>
+            <th>Valor Recuperado</th>
+            <th>Taxa Recuperação</th>
+            <th>Custo Estimado</th>
+            <th>ROI</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of valoresPorRegua">
+            <td>{{ item.nomeRegra }}</td>
+            <td>
+              <span class="badge" [ngClass]="getCanalBadgeClass(item.canal)">
+                {{ getCanalLabel(item.canal) }}
+              </span>
+            </td>
+            <td class="timing">{{ item.descricaoTiming }}</td>
+            <td>{{ item.totalCobrancas }}</td>
+            <td>{{ formatCurrency(item.valorCobrado) }}</td>
+            <td>{{ item.faturasPagas }}</td>
+            <td class="success-text">{{ formatCurrency(item.valorRecuperado) }}</td>
+            <td>{{ formatPercentage(item.taxaRecuperacao) }}</td>
+            <td>{{ formatCurrency(item.custoEstimado) }}</td>
+            <td>
+              <span class="roi" [class.positive]="item.roi > 0"
+                                [class.negative]="item.roi < 0">
+                {{ formatPercentage(item.roi) }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="!loadingValores && valoresPorRegua.length === 0" class="no-data">
+      <p>Nenhum dado encontrado para o período selecionado</p>
+    </div>
+  </div>
+
+  <!-- Pagamentos por Faixa de Atraso -->
+  <div class="section">
+    <h2>Pagamentos por Faixa de Atraso</h2>
+
+    <div *ngIf="loadingPagamentos" class="loading">
+      <p>Carregando dados...</p>
+    </div>
+
+    <div *ngIf="!loadingPagamentos && pagamentosPorAtraso.length > 0" class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Faixa de Atraso</th>
+            <th>Quantidade de Faturas</th>
+            <th>Valor Total</th>
+            <th>Ticket Médio</th>
+            <th>Média Cobranças Enviadas</th>
+            <th>Média Dias até Recuperação</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of pagamentosPorAtraso">
+            <td><strong>{{ item.faixaAtraso }}</strong></td>
+            <td>{{ item.quantidadeFaturas }}</td>
+            <td>{{ formatCurrency(item.valorTotal) }}</td>
+            <td>{{ formatCurrency(item.ticketMedio) }}</td>
+            <td>{{ item.mediaCobrancasEnviadas.toFixed(1) }}</td>
+            <td>{{ item.mediaDiasAteRecuperacao.toFixed(0) }} dias</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="!loadingPagamentos && pagamentosPorAtraso.length === 0" class="no-data">
+      <p>Nenhum dado encontrado para o período selecionado</p>
+    </div>
+  </div>
+
+  <!-- Entregas e Falhas -->
+  <div class="section" *ngIf="entregasFalhas">
+    <h2>Entregas, Falhas e Pendências</h2>
+
+    <div *ngIf="loadingEntregas" class="loading">
+      <p>Carregando dados...</p>
+    </div>
+
+    <div *ngIf="!loadingEntregas" class="two-columns">
+      <!-- Falhas por Tipo -->
+      <div class="column">
+        <h3>Falhas por Tipo de Erro</h3>
+        <div *ngIf="entregasFalhas.falhasPorTipo.length > 0" class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Tipo de Erro</th>
+                <th>Quantidade</th>
+                <th>Réguas Afetadas</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let falha of entregasFalhas.falhasPorTipo">
+                <td>{{ formatDate(falha.data) }}</td>
+                <td class="danger-text"><strong>{{ falha.tipoErro }}</strong></td>
+                <td>{{ falha.quantidade }}</td>
+                <td>{{ falha.regrasAfetadas.length }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Pendências por Tempo -->
+      <div class="column">
+        <h3>Pendências por Tempo de Espera</h3>
+        <div *ngIf="entregasFalhas.pendenciasPorTempo.length > 0" class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Faixa de Tempo</th>
+                <th>Quantidade</th>
+                <th>Valor Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let pendencia of entregasFalhas.pendenciasPorTempo">
+                <td><strong>{{ pendencia.faixaTempo }}</strong></td>
+                <td class="warning-text">{{ pendencia.quantidade }}</td>
+                <td>{{ formatCurrency(pendencia.valorTotal) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

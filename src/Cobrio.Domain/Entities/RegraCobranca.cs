@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Cobrio.Domain.Enums;
+using Cobrio.Domain.Validators;
 
 namespace Cobrio.Domain.Entities;
 
@@ -24,6 +25,9 @@ public class RegraCobranca : BaseEntity
 
     // Template da notificação com variáveis {{NomeVariavel}}
     public string TemplateNotificacao { get; private set; }
+
+    // Subject do email (apenas para canal Email)
+    public string? SubjectEmail { get; private set; }
 
     // Lista de variáveis obrigatórias extraídas do template (JSON array) - vão dentro de payload
     public string VariaveisObrigatorias { get; private set; }
@@ -50,7 +54,8 @@ public class RegraCobranca : BaseEntity
         CanalNotificacao canalNotificacao,
         string templateNotificacao,
         List<string>? variaveisObrigatoriasSistema = null,
-        string? descricao = null)
+        string? descricao = null,
+        string? subjectEmail = null)
     {
         if (empresaClienteId == Guid.Empty)
             throw new ArgumentException("EmpresaClienteId inválido", nameof(empresaClienteId));
@@ -72,6 +77,7 @@ public class RegraCobranca : BaseEntity
         UnidadeTempo = unidadeTempo;
         CanalNotificacao = canalNotificacao;
         TemplateNotificacao = templateNotificacao.Trim();
+        SubjectEmail = string.IsNullOrWhiteSpace(subjectEmail) ? null : subjectEmail.Trim();
         VariaveisObrigatorias = JsonSerializer.Serialize(ExtrairVariaveis(templateNotificacao));
         VariaveisObrigatoriasSistema = variaveisObrigatoriasSistema != null && variaveisObrigatoriasSistema.Any()
             ? JsonSerializer.Serialize(variaveisObrigatoriasSistema)
@@ -144,7 +150,8 @@ public class RegraCobranca : BaseEntity
         UnidadeTempo? unidadeTempo = null,
         CanalNotificacao? canalNotificacao = null,
         string? templateNotificacao = null,
-        List<string>? variaveisObrigatoriasSistema = null)
+        List<string>? variaveisObrigatoriasSistema = null,
+        string? subjectEmail = null)
     {
         // Regras padrão não podem ter nome, descrição ou tempo alterados
         if (EhPadrao)
@@ -191,6 +198,11 @@ public class RegraCobranca : BaseEntity
                 : null;
         }
 
+        if (subjectEmail != null)
+        {
+            SubjectEmail = string.IsNullOrWhiteSpace(subjectEmail) ? null : subjectEmail.Trim();
+        }
+
         AtualizarDataModificacao();
     }
 
@@ -207,7 +219,15 @@ public class RegraCobranca : BaseEntity
 
     public string ProcessarTemplate(Dictionary<string, object> valores)
     {
-        var resultado = TemplateNotificacao;
+        return ProcessarTemplate(valores, TemplateNotificacao);
+    }
+
+    /// <summary>
+    /// Processa um template customizado (útil para processar o Subject do email separadamente)
+    /// </summary>
+    public string ProcessarTemplate(Dictionary<string, object> valores, string template)
+    {
+        var resultado = template;
 
         // Padrão para capturar todo o conteúdo dentro de {{}}
         var pattern = @"\{\{(.+?)\}\}";
@@ -256,6 +276,28 @@ public class RegraCobranca : BaseEntity
     }
 
     /// <summary>
+    /// Valida o assunto do email contra palavras e padrões de spam
+    /// </summary>
+    public SubjectEmailValidator.ValidationResult ValidarSubjectEmail()
+    {
+        if (CanalNotificacao != CanalNotificacao.Email)
+        {
+            return new SubjectEmailValidator.ValidationResult { IsValid = true };
+        }
+
+        if (string.IsNullOrWhiteSpace(SubjectEmail))
+        {
+            return new SubjectEmailValidator.ValidationResult
+            {
+                IsValid = false,
+                Errors = { "O assunto do email é obrigatório quando o canal de notificação é Email" }
+            };
+        }
+
+        return SubjectEmailValidator.Validate(SubjectEmail);
+    }
+
+    /// <summary>
     /// Cria uma regra padrão de "Envio Imediato" que não pode ser deletada
     /// </summary>
     public static RegraCobranca CriarRegraPadrao(Guid empresaClienteId, CanalNotificacao canal = CanalNotificacao.Email)
@@ -274,11 +316,17 @@ public class RegraCobranca : BaseEntity
             TemplateNotificacao = canal == CanalNotificacao.Email
                 ? "Prezado(a) {{nome}},\n\nEste é um lembrete sobre a cobrança no valor de {{valor}}.\n\nAtenciosamente,\nEquipe de Cobrança"
                 : "Olá {{nome}}! Lembrete sobre a cobrança de {{valor}}. Entre em contato para mais informações.",
+            SubjectEmail = canal == CanalNotificacao.Email ? "Lembrete de Cobrança - {{valor}}" : null,
             TokenWebhook = $"{Guid.NewGuid():N}"
         };
 
         // Extrair variáveis do template
-        regra.VariaveisObrigatorias = JsonSerializer.Serialize(regra.ExtrairVariaveis(regra.TemplateNotificacao));
+        var variaveisTemplate = regra.ExtrairVariaveis(regra.TemplateNotificacao);
+        regra.VariaveisObrigatorias = JsonSerializer.Serialize(variaveisTemplate);
+
+        // Definir campos obrigatórios do sistema (Email sempre é obrigatório para envio)
+        var camposObrigatoriosSistema = new List<string> { "Email" };
+        regra.VariaveisObrigatoriasSistema = JsonSerializer.Serialize(camposObrigatoriosSistema);
 
         return regra;
     }

@@ -6,9 +6,9 @@ import { DashboardComponent } from './features/dashboard/dashboard.component';
 import { AuthGuard } from './core/guards/auth.guard';
 import { AssinaturasListComponent } from './features/assinaturas/assinaturas-list/assinaturas-list.component';
 import { PlanosListComponent } from './features/planos/planos-list/planos-list.component';
-import { FinanceiroListComponent } from './features/financeiro/financeiro-list/financeiro-list.component';
 import { RelatoriosComponent } from './features/relatorios/relatorios/relatorios.component';
 import { PermissoesComponent } from './features/permissoes/permissoes.component';
+import { RelatoriosAvancadosComponent } from './features/relatorios/relatorios-avancados/relatorios-avancados.component';
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -21,8 +21,7 @@ const routes: Routes = [
       { path: 'dashboard', component: DashboardComponent },
       { path: 'assinaturas', component: AssinaturasListComponent },
       { path: 'planos', component: PlanosListComponent },
-      { path: 'financeiro', component: FinanceiroListComponent },
-      { path: 'relatorios', component: RelatoriosComponent },
+      { path: 'relatorios', component: RelatoriosAvancadosComponent },
       { path: 'permissoes', component: PermissoesComponent },
       {
         path: 'regras-cobranca',
@@ -31,6 +30,10 @@ const routes: Routes = [
       {
         path: 'usuarios',
         loadChildren: () => import('./features/usuarios/usuarios.module').then(m => m.UsuariosModule)
+      },
+      {
+        path: 'configuracoes',
+        loadChildren: () => import('./features/configuracoes/configuracoes.module').then(m => m.ConfiguracoesModule)
       }
     ]
   },

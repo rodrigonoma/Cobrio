@@ -97,3 +97,4 @@ C:\Cobrio\tests\Cobrio.UnitTests\obj\Debug\net8.0\refint\Cobrio.UnitTests.dll
 C:\Cobrio\tests\Cobrio.UnitTests\obj\Debug\net8.0\Cobrio.UnitTests.pdb
 C:\Cobrio\tests\Cobrio.UnitTests\obj\Debug\net8.0\Cobrio.UnitTests.genruntimeconfig.cache
 C:\Cobrio\tests\Cobrio.UnitTests\obj\Debug\net8.0\ref\Cobrio.UnitTests.dll
+C:\Cobrio\tests\Cobrio.UnitTests\obj\Debug\net8.0\Cobrio.UnitTests.sourcelink.json

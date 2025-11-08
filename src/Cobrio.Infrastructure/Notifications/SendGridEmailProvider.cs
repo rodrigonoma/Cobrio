@@ -44,17 +44,22 @@ public class SendGridEmailProvider : IEmailProvider
         string assunto,
         string corpo,
         bool isHtml = true,
+        string? remetenteEmail = null,
         string? remetenteNome = null,
+        string? replyTo = null,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Enviando email via SendGrid para {Destinatario}", destinatario);
+            // Usar parâmetros se fornecidos, senão usar configuração padrão
+            var fromEmail = remetenteEmail ?? _settings.RemetenteEmail;
+            var fromName = remetenteNome ?? _settings.RemetenteNome;
 
-            var from = new EmailAddress(
-                _settings.RemetenteEmail,
-                remetenteNome ?? _settings.RemetenteNome);
+            _logger.LogInformation(
+                "Enviando email via SendGrid para {Destinatario} de {FromName} <{FromEmail}>",
+                destinatario, fromName, fromEmail);
 
+            var from = new EmailAddress(fromEmail, fromName);
             var to = new EmailAddress(destinatario);
 
             var msg = MailHelper.CreateSingleEmail(
@@ -63,6 +68,13 @@ public class SendGridEmailProvider : IEmailProvider
                 assunto,
                 isHtml ? null : corpo,
                 isHtml ? corpo : null);
+
+            // Adicionar Reply-To se fornecido
+            if (!string.IsNullOrWhiteSpace(replyTo))
+            {
+                msg.ReplyTo = new EmailAddress(replyTo);
+                _logger.LogInformation("Reply-To configurado para: {ReplyTo}", replyTo);
+            }
 
             var response = await _client.SendEmailAsync(msg, cancellationToken);
 

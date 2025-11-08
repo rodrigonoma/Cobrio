@@ -1,0 +1,49 @@
+<div class="relatorios-avancados-wrapper">
+  <div class="header">
+    <h1>Relatórios Avançados</h1>
+    <p class="subtitle">Análise completa de performance e operação</p>
+  </div>
+
+  <!-- Verificar se o usuário tem alguma permissão -->
+  <div *ngIf="!hasAnyPermission()" class="no-permission">
+    <div class="no-permission-icon">🔒</div>
+    <h3>Acesso Negado</h3>
+    <p>Você não tem permissão para acessar nenhum relatório avançado.</p>
+    <p class="help-text">Entre em contato com o administrador do sistema para solicitar acesso.</p>
+  </div>
+
+  <!-- Tabs de Navegação -->
+  <div *ngIf="hasAnyPermission()" class="tabs-container">
+    <div class="tabs-header">
+      <button
+        *ngFor="let tab of tabs; let i = index"
+        [class.active]="activeTabIndex === i"
+        [class.hidden]="!isTabVisible(i)"
+        (click)="selectTab(i)"
+        class="tab-button"
+      >
+        <span class="tab-icon" *ngIf="i === 0">📊</span>
+        <span class="tab-icon" *ngIf="i === 1">📈</span>
+        {{ tab.label }}
+      </button>
+    </div>
+
+    <div class="tabs-content">
+      <!-- Tab Relatórios Operacionais -->
+      <div
+        *ngIf="activeTabIndex === 0 && isTabVisible(0)"
+        class="tab-panel active"
+      >
+        <app-relatorios-operacionais></app-relatorios-operacionais>
+      </div>
+
+      <!-- Tab Relatórios Gerenciais -->
+      <div
+        *ngIf="activeTabIndex === 1 && isTabVisible(1)"
+        class="tab-panel active"
+      >
+        <app-relatorios-gerenciais></app-relatorios-gerenciais>
+      </div>
+    </div>
+  </div>
+</div>

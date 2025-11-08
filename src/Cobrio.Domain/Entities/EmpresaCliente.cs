@@ -18,6 +18,11 @@ public class EmpresaCliente : BaseEntity
     // Endereco (Value Object)
     public Endereco? Endereco { get; private set; }
 
+    // Configurações de Email para Notificações
+    public string? EmailRemetente { get; private set; }  // FROM: cobranca@empresa.com
+    public string? NomeRemetente { get; private set; }   // Display Name: "Empresa - Financeiro"
+    public string? EmailReplyTo { get; private set; }    // Reply-To: financeiro@empresa.com
+
     // Navegação
     private readonly List<UsuarioEmpresa> _usuarios = new();
     public IReadOnlyCollection<UsuarioEmpresa> Usuarios => _usuarios.AsReadOnly();
@@ -79,6 +84,53 @@ public class EmpresaCliente : BaseEntity
     {
         Endereco = endereco;
         AtualizarDataModificacao();
+    }
+
+    public void ConfigurarEmail(string? emailRemetente, string? nomeRemetente, string? emailReplyTo)
+    {
+        // Validar email remetente se fornecido
+        if (!string.IsNullOrWhiteSpace(emailRemetente))
+        {
+            if (!IsValidEmail(emailRemetente))
+                throw new ArgumentException("Email remetente inválido", nameof(emailRemetente));
+
+            EmailRemetente = emailRemetente.Trim().ToLower();
+        }
+        else
+        {
+            EmailRemetente = null;
+        }
+
+        // Nome do remetente (Display Name)
+        NomeRemetente = string.IsNullOrWhiteSpace(nomeRemetente) ? null : nomeRemetente.Trim();
+
+        // Validar reply-to se fornecido
+        if (!string.IsNullOrWhiteSpace(emailReplyTo))
+        {
+            if (!IsValidEmail(emailReplyTo))
+                throw new ArgumentException("Email reply-to inválido", nameof(emailReplyTo));
+
+            EmailReplyTo = emailReplyTo.Trim().ToLower();
+        }
+        else
+        {
+            EmailReplyTo = null;
+        }
+
+        AtualizarDataModificacao();
+    }
+
+    private bool IsValidEmail(string email)
+    {
+        try
+        {
+            var addr = new System.Net.Mail.MailAddress(email);
+            return addr.Address == email;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     public void Suspender()

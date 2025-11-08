@@ -1,168 +1,384 @@
-<div class="container mx-auto">
-  <div class="flex justify-between items-center mb-6">
-    <h1 class="text-3xl font-bold">Relatórios e Análises</h1>
-    <div class="flex gap-2">
-      <button pButton label="Exportar PDF" icon="pi pi-file-pdf" class="p-button-outlined"
-        [disabled]="!podeExportar" (click)="exportarPDF()"></button>
-      <button pButton label="Exportar Excel" icon="pi pi-file-excel" class="p-button-outlined p-button-success"
-        [disabled]="!podeExportar" (click)="exportarExcel()"></button>
+<div class="p-4">
+  <!-- Header Compacto -->
+  <div class="flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="text-3xl font-bold m-0">Relatórios</h1>
+      <p class="text-sm text-500 m-0">Dashboard de desempenho</p>
+    </div>
+    <div class="flex gap-2 align-items-center">
+      <p-dropdown [options]="periodosOptions" [(ngModel)]="periodoSelecionado"
+                  (onChange)="carregarDados()" optionLabel="label" optionValue="value"
+                  [style]="{'width': '180px'}"></p-dropdown>
+      <button pButton icon="pi pi-file-pdf" class="p-button-outlined p-button-danger p-button-sm"
+        [disabled]="!podeExportar" (click)="exportarPDF()" pTooltip="Exportar PDF"></button>
+      <button pButton icon="pi pi-file-excel" class="p-button-outlined p-button-success p-button-sm"
+        [disabled]="!podeExportar" (click)="exportarExcel()" pTooltip="Exportar Excel"></button>
     </div>
   </div>
 
-  <!-- Cards de Métricas -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-    <div *ngFor="let metrica of metricas" class="card bg-white rounded-lg shadow p-6">
-      <div class="flex justify-between items-start mb-4">
-        <div>
-          <p class="text-gray-600 text-sm mb-1">{{ metrica.titulo }}</p>
-          <h3 class="text-2xl font-bold">{{ metrica.valor }}</h3>
-        </div>
-        <i class="pi {{ metrica.icon }} text-3xl {{ metrica.iconColor }}"></i>
-      </div>
-      <div class="flex items-center">
-        <i class="pi" [ngClass]="metrica.variacao >= 0 ? 'pi-arrow-up text-green-600' : 'pi-arrow-down text-red-600'"></i>
-        <span class="text-sm ml-1" [ngClass]="metrica.variacao >= 0 ? 'text-green-600' : 'text-red-600'">
-          {{ Math.abs(metrica.variacao) }}% vs mês anterior
-        </span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Gráficos de Evolução -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-    <!-- Evolução de MRR -->
-    <div class="card bg-white rounded-lg shadow p-6">
-      <div class="mb-4">
-        <h2 class="text-xl font-semibold mb-2">Evolução de MRR</h2>
-        <p class="text-gray-600 text-sm">Crescimento de receita mensal recorrente (últimos 6 meses)</p>
-      </div>
-      <div class="chart-container" style="position: relative; height: 300px;">
-        <canvas baseChart
-          [data]="mrrChartData"
-          [options]="mrrChartOptions"
-          type="line">
-        </canvas>
-      </div>
-    </div>
-
-    <!-- Evolução de Churn Rate -->
-    <div class="card bg-white rounded-lg shadow p-6">
-      <div class="mb-4">
-        <h2 class="text-xl font-semibold mb-2">Evolução de Churn Rate</h2>
-        <p class="text-gray-600 text-sm">Taxa de cancelamento mensal (últimos 6 meses)</p>
-      </div>
-      <div class="chart-container" style="position: relative; height: 300px;">
-        <canvas baseChart
-          [data]="churnChartData"
-          [options]="churnChartOptions"
-          type="line">
-        </canvas>
-      </div>
-    </div>
-  </div>
-
-  <!-- Análises Detalhadas -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-    <!-- Performance por Plano -->
-    <div class="card bg-white rounded-lg shadow p-6">
-      <h2 class="text-xl font-semibold mb-4">Performance por Plano</h2>
-      <div class="space-y-3">
-        <div *ngFor="let plano of planos" class="flex items-center justify-between p-3 border rounded-lg">
-          <div>
-            <p class="font-semibold">{{ plano.nome }}</p>
-            <p class="text-sm text-gray-500">{{ plano.tipoCiclo }}</p>
+  <!-- KPIs Principais - Linha Única -->
+  <div class="grid mb-3">
+    <div class="col-12 lg:col-4">
+      <div class="card p-3 bg-primary-50 border-1 border-primary-100">
+        <div class="flex align-items-center justify-content-between">
+          <div class="flex-1">
+            <span class="text-xs text-500 block mb-1">Total Cobrado</span>
+            <div class="text-2xl font-bold text-primary mb-1">{{ formatCurrency(metricas.totalCobrado) }}</div>
+            <span class="text-xs" [class]="metricas.variacaoTotalCobrado >= 0 ? 'text-green-600' : 'text-red-600'">
+              <i [class]="metricas.variacaoTotalCobrado >= 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" class="text-xs"></i>
+              {{ Math.abs(metricas.variacaoTotalCobrado) }}%
+            </span>
           </div>
-          <div class="text-right">
-            <p class="font-bold text-green-600">{{ formatCurrency(plano.valor) }}</p>
-            <p class="text-xs text-gray-400">por {{ plano.tipoCiclo.toLowerCase() }}</p>
-          </div>
+          <i class="pi pi-dollar text-primary text-3xl"></i>
         </div>
       </div>
     </div>
 
-    <!-- Indicadores de Saúde -->
-    <div class="card bg-white rounded-lg shadow p-6">
-      <h2 class="text-xl font-semibold mb-4">Indicadores de Saúde</h2>
-      <div class="space-y-4">
-        <div>
-          <div class="flex justify-between mb-2">
-            <span class="text-sm font-medium">Taxa de Conversão Trial → Pago</span>
-            <span class="text-sm font-semibold">85%</span>
+    <div class="col-12 lg:col-4">
+      <div class="card p-3 bg-green-50 border-1 border-green-100">
+        <div class="flex align-items-center justify-content-between">
+          <div class="flex-1">
+            <span class="text-xs text-500 block mb-1">Cobranças Processadas</span>
+            <div class="text-2xl font-bold text-green-700 mb-1">{{ metricas.totalEnviadas }}</div>
+            <span class="text-xs" [class]="metricas.variacaoEnviadas >= 0 ? 'text-green-600' : 'text-red-600'">
+              <i [class]="metricas.variacaoEnviadas >= 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" class="text-xs"></i>
+              {{ Math.abs(metricas.variacaoEnviadas) }}%
+            </span>
           </div>
-          <div class="w-full bg-gray-200 rounded-full h-2">
-            <div class="bg-green-600 h-2 rounded-full" style="width: 85%"></div>
-          </div>
+          <i class="pi pi-send text-green-600 text-3xl"></i>
         </div>
+      </div>
+    </div>
 
-        <div>
-          <div class="flex justify-between mb-2">
-            <span class="text-sm font-medium">Customer Satisfaction Score</span>
-            <span class="text-sm font-semibold">92%</span>
+    <div class="col-12 lg:col-4">
+      <div class="card p-3 bg-purple-50 border-1 border-purple-100">
+        <div class="flex align-items-center justify-content-between">
+          <div class="flex-1">
+            <span class="text-xs text-500 block mb-1">Taxa de Abertura de Emails</span>
+            <div class="text-2xl font-bold text-purple-700 mb-1">{{ metricas.taxaAbertura }}%</div>
+            <span class="text-xs text-500">{{ metricas.emailsAbertos }}/{{ metricas.emailsEnviados }} emails abertos</span>
           </div>
-          <div class="w-full bg-gray-200 rounded-full h-2">
-            <div class="bg-blue-600 h-2 rounded-full" style="width: 92%"></div>
-          </div>
-        </div>
-
-        <div>
-          <div class="flex justify-between mb-2">
-            <span class="text-sm font-medium">Taxa de Reativação</span>
-            <span class="text-sm font-semibold">23%</span>
-          </div>
-          <div class="w-full bg-gray-200 rounded-full h-2">
-            <div class="bg-purple-600 h-2 rounded-full" style="width: 23%"></div>
-          </div>
-        </div>
-
-        <div>
-          <div class="flex justify-between mb-2">
-            <span class="text-sm font-medium">Net Promoter Score (NPS)</span>
-            <span class="text-sm font-semibold">67</span>
-          </div>
-          <div class="w-full bg-gray-200 rounded-full h-2">
-            <div class="bg-yellow-500 h-2 rounded-full" style="width: 67%"></div>
-          </div>
+          <i class="pi pi-envelope-open text-purple-600 text-3xl"></i>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Resumo Executivo -->
-  <div class="card bg-white rounded-lg shadow p-6">
-    <h2 class="text-xl font-semibold mb-4">Resumo Executivo</h2>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div class="p-4 bg-blue-50 rounded-lg">
-        <i class="pi pi-check-circle text-2xl text-blue-600 mb-2"></i>
-        <h3 class="font-semibold mb-2">Pontos Positivos</h3>
-        <ul class="text-sm space-y-1 text-gray-700">
-          <li>• MRR crescendo 15% ao mês</li>
-          <li>• Churn rate em queda</li>
-          <li>• Alta taxa de conversão</li>
-          <li>• NPS acima de 60</li>
-        </ul>
-      </div>
+  <!-- Tabs para organizar conteúdo -->
+  <p-tabView>
+    <!-- Tab 1: Emails -->
+    <p-tabPanel header="Performance de Emails" leftIcon="pi pi-envelope">
+      <div class="grid">
+        <!-- Estatísticas de Email -->
+        <div class="col-12 lg:col-8">
+          <div class="card">
+            <h3 class="text-lg font-semibold mb-3 flex align-items-center">
+              <i class="pi pi-chart-pie mr-2 text-primary"></i>
+              Distribuição de Aberturas
+            </h3>
+            <div class="grid">
+              <div class="col-12 md:col-7">
+                <div style="position: relative; height: 280px;">
+                  <canvas baseChart
+                    [data]="performanceEmailsChart"
+                    [options]="performanceEmailsOptions"
+                    type="doughnut">
+                  </canvas>
+                </div>
+              </div>
+              <div class="col-12 md:col-5">
+                <div class="flex flex-column gap-3 h-full justify-content-center">
+                  <div class="p-3 border-1 border-round border-green-200 bg-green-50">
+                    <div class="flex align-items-center justify-content-between">
+                      <div class="flex align-items-center gap-2">
+                        <i class="pi pi-check-circle text-green-600"></i>
+                        <span class="font-semibold text-green-700">Abertos</span>
+                      </div>
+                      <span class="text-2xl font-bold text-green-700">{{ metricas.emailsAbertos }}</span>
+                    </div>
+                    <div class="text-xs text-500 mt-1">{{ metricas.taxaAbertura }}% do total</div>
+                  </div>
 
-      <div class="p-4 bg-yellow-50 rounded-lg">
-        <i class="pi pi-exclamation-triangle text-2xl text-yellow-600 mb-2"></i>
-        <h3 class="font-semibold mb-2">Pontos de Atenção</h3>
-        <ul class="text-sm space-y-1 text-gray-700">
-          <li>• Monitorar churn do plano básico</li>
-          <li>• Melhorar onboarding</li>
-          <li>• Aumentar upsell</li>
-          <li>• Reduzir inadimplência</li>
-        </ul>
-      </div>
+                  <div class="p-3 border-1 border-round border-red-200 bg-red-50">
+                    <div class="flex align-items-center justify-content-between">
+                      <div class="flex align-items-center gap-2">
+                        <i class="pi pi-times-circle text-red-600"></i>
+                        <span class="font-semibold text-red-700">Não Abertos</span>
+                      </div>
+                      <span class="text-2xl font-bold text-red-700">{{ metricas.emailsEnviados - metricas.emailsAbertos }}</span>
+                    </div>
+                    <div class="text-xs text-500 mt-1">{{ 100 - metricas.taxaAbertura }}% do total</div>
+                  </div>
 
-      <div class="p-4 bg-green-50 rounded-lg">
-        <i class="pi pi-chart-line text-2xl text-green-600 mb-2"></i>
-        <h3 class="font-semibold mb-2">Oportunidades</h3>
-        <ul class="text-sm space-y-1 text-gray-700">
-          <li>• Plano anual com desconto</li>
-          <li>• Programa de indicação</li>
-          <li>• Add-ons e upgrades</li>
-          <li>• Expansão de mercado</li>
-        </ul>
+                  <div class="p-3 border-1 border-round border-blue-200 bg-blue-50">
+                    <div class="flex align-items-center justify-content-between">
+                      <div class="flex align-items-center gap-2">
+                        <i class="pi pi-send text-blue-600"></i>
+                        <span class="font-semibold text-blue-700">Total Enviados</span>
+                      </div>
+                      <span class="text-2xl font-bold text-blue-700">{{ metricas.emailsEnviados }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Insights -->
+        <div class="col-12 lg:col-4">
+          <div class="card h-full">
+            <h3 class="text-lg font-semibold mb-3 flex align-items-center">
+              <i class="pi pi-lightbulb mr-2 text-yellow-600"></i>
+              Insights
+            </h3>
+            <div class="flex flex-column gap-2">
+              <div class="p-3 border-round"
+                   [class]="metricas.taxaAbertura >= 25 ? 'bg-green-50 border-1 border-green-200' :
+                            metricas.taxaAbertura >= 15 ? 'bg-yellow-50 border-1 border-yellow-200' :
+                            'bg-red-50 border-1 border-red-200'">
+                <div class="flex align-items-start gap-2">
+                  <i class="pi pi-chart-line mt-1"
+                     [class]="metricas.taxaAbertura >= 25 ? 'text-green-600' :
+                              metricas.taxaAbertura >= 15 ? 'text-yellow-600' :
+                              'text-red-600'"></i>
+                  <div>
+                    <div class="font-semibold text-sm mb-1">Performance</div>
+                    <div class="text-xs text-600">
+                      <span *ngIf="metricas.taxaAbertura >= 25">Excelente! Acima da média do mercado (20-25%).</span>
+                      <span *ngIf="metricas.taxaAbertura < 25 && metricas.taxaAbertura >= 15">Adequada. Dentro da faixa aceitável.</span>
+                      <span *ngIf="metricas.taxaAbertura < 15">Abaixo do esperado. Revise sua estratégia.</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="p-3 border-round bg-blue-50 border-1 border-blue-200">
+                <div class="flex align-items-start gap-2">
+                  <i class="pi pi-info-circle text-blue-600 mt-1"></i>
+                  <div>
+                    <div class="font-semibold text-sm mb-1">Recomendação</div>
+                    <div class="text-xs text-600">
+                      <span *ngIf="metricas.taxaAbertura < 20">
+                        Teste diferentes horários de envio e assuntos mais atrativos.
+                      </span>
+                      <span *ngIf="metricas.taxaAbertura >= 20">
+                        Mantenha a consistência. Considere testes A/B para otimizar ainda mais.
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="p-3 border-round bg-purple-50 border-1 border-purple-200">
+                <div class="flex align-items-start gap-2">
+                  <i class="pi pi-users text-purple-600 mt-1"></i>
+                  <div>
+                    <div class="font-semibold text-sm mb-1">Alcance</div>
+                    <div class="text-xs text-600">
+                      Suas mensagens alcançaram {{ metricas.emailsEnviados }} destinatários únicos neste período.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
+    </p-tabPanel>
+
+    <!-- Tab 2: Cobranças -->
+    <p-tabPanel header="Análise de Cobranças" leftIcon="pi pi-chart-bar">
+      <div class="grid">
+        <div class="col-12 lg:col-8">
+          <div class="card">
+            <h3 class="text-lg font-semibold mb-3 flex align-items-center">
+              <i class="pi pi-chart-line mr-2 text-primary"></i>
+              Evolução Diária
+            </h3>
+            <div style="position: relative; height: 300px;">
+              <canvas baseChart
+                [data]="evolucaoCobrancasChart"
+                [options]="evolucaoCobrancasOptions"
+                type="line">
+              </canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 lg:col-4">
+          <div class="card h-full">
+            <h3 class="text-lg font-semibold mb-3 flex align-items-center">
+              <i class="pi pi-chart-pie mr-2 text-primary"></i>
+              Status
+            </h3>
+            <div style="position: relative; height: 180px;">
+              <canvas baseChart
+                [data]="statusCobrancasChart"
+                [options]="statusCobrancasOptions"
+                type="doughnut">
+              </canvas>
+            </div>
+            <div class="mt-3 flex flex-column gap-1">
+              <div *ngFor="let status of statusCobrancas"
+                   class="flex justify-content-between align-items-center p-2 border-round surface-100">
+                <div class="flex align-items-center gap-2">
+                  <div [style.background-color]="getStatusColor(status.status)"
+                       class="border-circle" style="width: 10px; height: 10px;"></div>
+                  <span class="text-sm">{{ status.status }}</span>
+                </div>
+                <span class="font-semibold text-sm">{{ status.quantidade }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 lg:col-6">
+          <div class="card">
+            <h3 class="text-lg font-semibold mb-3 flex align-items-center">
+              <i class="pi pi-list mr-2 text-primary"></i>
+              Top Regras de Cobrança
+            </h3>
+            <div style="position: relative; height: 280px;">
+              <canvas baseChart
+                [data]="enviosPorRegraChart"
+                [options]="enviosPorRegraOptions"
+                type="bar">
+              </canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 lg:col-6">
+          <div class="card">
+            <h3 class="text-lg font-semibold mb-3 flex align-items-center">
+              <i class="pi pi-table mr-2 text-primary"></i>
+              Detalhamento
+            </h3>
+            <p-table [value]="topRegras" [scrollable]="true" scrollHeight="280px" styleClass="p-datatable-sm">
+              <ng-template pTemplate="header">
+                <tr>
+                  <th style="width: 40px">#</th>
+                  <th>Regra</th>
+                  <th class="text-right">Envios</th>
+                  <th class="text-right">Valor</th>
+                </tr>
+              </ng-template>
+              <ng-template pTemplate="body" let-regra let-i="rowIndex">
+                <tr>
+                  <td>
+                    <span class="flex align-items-center justify-content-center bg-primary text-white border-circle font-bold text-xs"
+                          style="width: 1.5rem; height: 1.5rem;">{{ i + 1 }}</span>
+                  </td>
+                  <td class="text-sm">{{ regra.nome }}</td>
+                  <td class="text-right">
+                    <span class="font-semibold text-sm px-2 py-1 border-round bg-blue-100 text-blue-800">
+                      {{ regra.envios }}
+                    </span>
+                  </td>
+                  <td class="text-right font-semibold text-sm text-green-600">{{ formatCurrency(regra.valor) }}</td>
+                </tr>
+              </ng-template>
+              <ng-template pTemplate="emptymessage">
+                <tr>
+                  <td colspan="4" class="text-center text-500 text-sm py-3">
+                    Nenhum dado disponível
+                  </td>
+                </tr>
+              </ng-template>
+            </p-table>
+          </div>
+        </div>
+      </div>
+    </p-tabPanel>
+
+    <!-- Tab 3: Importações -->
+    <p-tabPanel header="Histórico de Importações" leftIcon="pi pi-upload">
+      <div class="card">
+        <h3 class="text-lg font-semibold mb-3 flex align-items-center">
+          <i class="pi pi-upload mr-2 text-primary"></i>
+          Histórico de Importações de Cobranças
+        </h3>
+        <p-table [value]="historicoImportacoes" [paginator]="true" [rows]="10"
+                 [rowsPerPageOptions]="[10, 20, 50]" [scrollable]="true"
+                 styleClass="p-datatable-sm p-datatable-striped">
+          <ng-template pTemplate="header">
+            <tr>
+              <th pSortableColumn="dataImportacao">
+                Data/Hora
+                <p-sortIcon field="dataImportacao"></p-sortIcon>
+              </th>
+              <th>Arquivo</th>
+              <th>Regra de Cobrança</th>
+              <th class="text-center" pSortableColumn="totalLinhas">
+                Total Linhas
+                <p-sortIcon field="totalLinhas"></p-sortIcon>
+              </th>
+              <th class="text-center" pSortableColumn="linhasProcessadas">
+                Processadas
+                <p-sortIcon field="linhasProcessadas"></p-sortIcon>
+              </th>
+              <th class="text-center" pSortableColumn="linhasComErro">
+                Com Erro
+                <p-sortIcon field="linhasComErro"></p-sortIcon>
+              </th>
+              <th class="text-center">Taxa Sucesso</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-importacao>
+            <tr>
+              <td>
+                <div class="text-sm font-semibold">{{ importacao.dataImportacao | date:'dd/MM/yyyy' }}</div>
+                <div class="text-xs text-500">{{ importacao.dataImportacao | date:'HH:mm:ss' }}</div>
+              </td>
+              <td>
+                <div class="flex align-items-center gap-2">
+                  <i class="pi pi-file-excel text-green-600"></i>
+                  <span class="text-sm">{{ importacao.nomeArquivo }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="px-2 py-1 border-round bg-blue-100 text-blue-800 text-xs font-medium">
+                  {{ importacao.nomeRegra }}
+                </span>
+              </td>
+              <td class="text-center">
+                <span class="font-semibold text-sm">{{ importacao.totalLinhas }}</span>
+              </td>
+              <td class="text-center">
+                <span class="text-sm font-semibold px-2 py-1 border-round bg-green-100 text-green-700">
+                  {{ importacao.linhasProcessadas }}
+                </span>
+              </td>
+              <td class="text-center">
+                <span class="text-sm font-semibold px-2 py-1 border-round bg-red-100 text-red-700">
+                  {{ importacao.linhasComErro }}
+                </span>
+              </td>
+              <td class="text-center">
+                <div class="flex align-items-center justify-content-center gap-2">
+                  <span class="font-semibold text-sm" [class]="getTaxaSucessoClass(importacao)">
+                    {{ getTaxaSucesso(importacao) }}%
+                  </span>
+                  <i *ngIf="getTaxaSucesso(importacao) >= 90" class="pi pi-check-circle text-green-600"></i>
+                  <i *ngIf="getTaxaSucesso(importacao) < 90 && getTaxaSucesso(importacao) >= 70" class="pi pi-exclamation-triangle text-yellow-600"></i>
+                  <i *ngIf="getTaxaSucesso(importacao) < 70" class="pi pi-times-circle text-red-600"></i>
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="7" class="text-center py-5">
+                <i class="pi pi-inbox text-5xl text-400 block mb-3"></i>
+                <div class="text-600 font-medium">Nenhuma importação encontrada no período selecionado</div>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </p-tabPanel>
+  </p-tabView>
+
+  <p-toast></p-toast>
 </div>

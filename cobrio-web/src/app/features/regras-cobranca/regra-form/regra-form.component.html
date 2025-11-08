@@ -8,13 +8,15 @@
   </div>
 
   <!-- Aviso para Regra Padrão -->
-  <div class="bg-yellow-50 border-1 border-yellow-200 border-round p-3 mb-4" *ngIf="editMode && ehPadrao">
+  <div class="bg-blue-50 border-1 border-blue-200 border-round p-3 mb-4" *ngIf="editMode && ehPadrao">
     <div class="flex align-items-start gap-2">
-      <i class="pi pi-info-circle text-yellow-600 text-xl mt-1"></i>
-      <div class="text-sm text-yellow-800">
-        <strong>Regra Padrão:</strong> Esta é a regra padrão "Envio Imediato" que não pode ser deletada.
+      <i class="pi pi-info-circle text-blue-600 text-xl mt-1"></i>
+      <div class="text-sm text-blue-800">
+        <strong>Regra de Envio Imediato:</strong> Esta é a regra padrão para envio imediato de cobranças.
+        <br>
+        Os campos de <strong>Momento, Valor e Unidade</strong> ficam vazios pois o envio é instantâneo, sem considerar data de vencimento.
+        <br>
         Você pode alterar apenas o <strong>Canal de Notificação</strong> (Email, SMS ou WhatsApp).
-        Outras configurações como nome, descrição, momento de disparo e template não podem ser modificadas.
       </div>
     </div>
   </div>
@@ -37,9 +39,10 @@
       <!-- Tipo de Momento -->
       <div class="col-12 md:col-2">
         <div class="field">
-          <label for="tipoMomento" class="font-semibold">Momento *</label>
+          <label for="tipoMomento" class="font-semibold">Momento {{ ehPadrao ? '' : '*' }}</label>
           <p-dropdown id="tipoMomento" formControlName="tipoMomento"
                       [options]="tiposMomento" optionLabel="label" optionValue="value"
+                      [placeholder]="ehPadrao ? 'N/A (Envio Imediato)' : 'Selecione'"
                       class="w-full" [class.ng-invalid]="isFieldInvalid('tipoMomento')">
           </p-dropdown>
           <small class="p-error" *ngIf="isFieldInvalid('tipoMomento')">
@@ -51,9 +54,10 @@
       <!-- Valor Tempo -->
       <div class="col-12 md:col-2">
         <div class="field">
-          <label for="valorTempo" class="font-semibold">Valor *</label>
+          <label for="valorTempo" class="font-semibold">Valor {{ ehPadrao ? '' : '*' }}</label>
           <p-inputNumber id="valorTempo" formControlName="valorTempo"
-                         [min]="1" [max]="9999" [showButtons]="true"
+                         [min]="ehPadrao ? 0 : 1" [max]="9999" [showButtons]="!ehPadrao"
+                         [placeholder]="ehPadrao ? 'N/A' : ''"
                          class="w-full" [class.ng-invalid]="isFieldInvalid('valorTempo')">
           </p-inputNumber>
           <small class="p-error" *ngIf="isFieldInvalid('valorTempo')">
@@ -65,9 +69,10 @@
       <!-- Unidade de Tempo -->
       <div class="col-12 md:col-2">
         <div class="field">
-          <label for="unidadeTempo" class="font-semibold">Unidade *</label>
+          <label for="unidadeTempo" class="font-semibold">Unidade {{ ehPadrao ? '' : '*' }}</label>
           <p-dropdown id="unidadeTempo" formControlName="unidadeTempo"
                       [options]="unidadesTempo" optionLabel="label" optionValue="value"
+                      [placeholder]="ehPadrao ? 'N/A (Envio Imediato)' : 'Selecione'"
                       class="w-full" [class.ng-invalid]="isFieldInvalid('unidadeTempo')">
           </p-dropdown>
           <small class="p-error" *ngIf="isFieldInvalid('unidadeTempo')">
@@ -84,6 +89,53 @@
                       [options]="canaisNotificacao" optionLabel="label" optionValue="value"
                       class="w-full" [class.ng-invalid]="isFieldInvalid('canalNotificacao')">
           </p-dropdown>
+        </div>
+      </div>
+
+      <!-- Subject do Email (apenas para canal Email) -->
+      <div class="col-12" *ngIf="form.get('canalNotificacao')?.value === 1">
+        <div class="field">
+          <label for="subjectEmail" class="font-semibold">
+            <i class="pi pi-envelope mr-2"></i>
+            Assunto do Email *
+          </label>
+          <small class="block mb-2 text-600">
+            Defina o assunto que aparecerá no email. Você pode usar variáveis como {{'{{'}}Valor{{'}}'}}, {{'{{'}}DataVencimento{{'}}'}}, etc.
+            Evite palavras como "URGENTE", "GRÁTIS", "CLIQUE AQUI" para não ser marcado como spam.
+          </small>
+          <input id="subjectEmail" type="text" pInputText formControlName="subjectEmail"
+                 class="w-full" [class.ng-invalid]="isFieldInvalid('subjectEmail')"
+                 [placeholder]="'Ex: Cobrança ' + '{{' + 'Valor' + '}}' + ' - Vencimento ' + '{{' + 'DataVencimento' + '}}'"
+                 maxlength="150">
+          <small class="p-error" *ngIf="isFieldInvalid('subjectEmail')">
+            {{ getFieldError('subjectEmail') }}
+          </small>
+          <small class="block mt-2 text-500">
+            <i class="pi pi-info-circle mr-1"></i>
+            Máximo de 150 caracteres. Assuntos curtos (5-50 caracteres) têm melhor taxa de abertura.
+          </small>
+
+          <!-- Botões para inserir variáveis comuns no subject -->
+          <div class="mt-3 bg-gray-50 border-1 border-gray-200 border-round p-3" *ngIf="!ehPadrao">
+            <div class="font-semibold mb-2 text-gray-900">
+              <i class="pi pi-plus-circle mr-2"></i>
+              Inserir Variáveis no Assunto
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button pButton type="button" label="{{'{{'}}Valor{{'}}'}}" icon="pi pi-plus"
+                      class="p-button-sm p-button-outlined"
+                      (click)="inserirVariavelNoSubject('Valor')"></button>
+              <button pButton type="button" label="{{'{{'}}DataVencimento{{'}}'}}" icon="pi pi-plus"
+                      class="p-button-sm p-button-outlined"
+                      (click)="inserirVariavelNoSubject('DataVencimento')"></button>
+              <button pButton type="button" label="{{'{{'}}NumeroFatura{{'}}'}}" icon="pi pi-plus"
+                      class="p-button-sm p-button-outlined"
+                      (click)="inserirVariavelNoSubject('NumeroFatura')"></button>
+              <button pButton type="button" label="{{'{{'}}NomeEmpresa{{'}}'}}" icon="pi pi-plus"
+                      class="p-button-sm p-button-outlined"
+                      (click)="inserirVariavelNoSubject('NomeEmpresa')"></button>
+            </div>
+          </div>
         </div>
       </div>
 

@@ -97,3 +97,4 @@ C:\Cobrio\tests\Cobrio.IntegrationTests\obj\Debug\net8.0\refint\Cobrio.Integrati
 C:\Cobrio\tests\Cobrio.IntegrationTests\obj\Debug\net8.0\Cobrio.IntegrationTests.pdb
 C:\Cobrio\tests\Cobrio.IntegrationTests\obj\Debug\net8.0\Cobrio.IntegrationTests.genruntimeconfig.cache
 C:\Cobrio\tests\Cobrio.IntegrationTests\obj\Debug\net8.0\ref\Cobrio.IntegrationTests.dll
+C:\Cobrio\tests\Cobrio.IntegrationTests\obj\Debug\net8.0\Cobrio.IntegrationTests.sourcelink.json

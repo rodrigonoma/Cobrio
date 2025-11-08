@@ -1,0 +1,498 @@
+<div class="relatorios-gerenciais-container">
+  <div class="header">
+    <h1>Relatórios Gerenciais</h1>
+    <p class="subtitle">Análise estratégica de performance e ROI</p>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filters-card">
+    <h3>Período de Análise</h3>
+    <div class="filters-grid">
+      <div class="filter-item">
+        <label for="dataInicio">Data Início</label>
+        <input
+          type="date"
+          id="dataInicio"
+          [(ngModel)]="dataInicio"
+          class="form-control"
+        />
+      </div>
+
+      <div class="filter-item">
+        <label for="dataFim">Data Fim</label>
+        <input
+          type="date"
+          id="dataFim"
+          [(ngModel)]="dataFim"
+          class="form-control"
+        />
+      </div>
+
+      <div class="filter-actions">
+        <button class="btn btn-primary" (click)="carregarTodosRelatorios()">
+          Aplicar Filtros
+        </button>
+        <button class="btn btn-secondary" (click)="limparFiltros()">
+          Limpar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Conversão por Canal (Funil) -->
+  <div class="section">
+    <h2>Funil de Conversão por Régua e Canal</h2>
+
+    <div *ngIf="loadingConversao" class="loading">
+      <p>Carregando dados...</p>
+    </div>
+
+    <div *ngIf="!loadingConversao && conversaoPorCanal.length > 0" class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Régua</th>
+            <th>Canal</th>
+            <th>Total Envios</th>
+            <th>Cobranças</th>
+            <th>Processadas</th>
+            <th>Pagas</th>
+            <th>Taxa Processamento</th>
+            <th>Taxa Conversão Final</th>
+            <th>Valor Recuperado</th>
+            <th>Ticket Médio</th>
+            <th>Média Horas</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of conversaoPorCanal">
+            <td>{{ item.nomeRegra }}</td>
+            <td>
+              <span class="badge" [ngClass]="getCanalBadgeClass(item.canal)">
+                {{ getCanalLabel(item.canal) }}
+              </span>
+            </td>
+            <td>{{ item.funil.totalEnvios }}</td>
+            <td>{{ item.funil.totalCobrancas }}</td>
+            <td>{{ item.funil.cobrancasProcessadas }}</td>
+            <td class="success-text">{{ item.funil.faturasPagas }}</td>
+            <td>
+              <span class="percentage" [class.high]="item.taxaProcessamento >= 80"
+                                       [class.medium]="item.taxaProcessamento >= 50 && item.taxaProcessamento < 80"
+                                       [class.low]="item.taxaProcessamento < 50">
+                {{ formatPercentage(item.taxaProcessamento) }}
+              </span>
+            </td>
+            <td>
+              <span class="percentage" [class.high]="item.taxaConversaoFinal >= 30"
+                                       [class.medium]="item.taxaConversaoFinal >= 15 && item.taxaConversaoFinal < 30"
+                                       [class.low]="item.taxaConversaoFinal < 15">
+                {{ formatPercentage(item.taxaConversaoFinal) }}
+              </span>
+            </td>
+            <td class="success-text">{{ formatCurrency(item.valorRecuperado) }}</td>
+            <td>{{ formatCurrency(item.ticketMedio) }}</td>
+            <td>{{ item.mediaHorasConversao.toFixed(1) }}h</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="!loadingConversao && conversaoPorCanal.length === 0" class="no-data">
+      <p>Nenhum dado encontrado para o período selecionado</p>
+    </div>
+  </div>
+
+  <!-- ROI das Réguas -->
+  <div class="section">
+    <h2>ROI das Réguas por Período</h2>
+
+    <div *ngIf="loadingROI" class="loading">
+      <p>Carregando dados...</p>
+    </div>
+
+    <div *ngIf="!loadingROI && roiReguas.length > 0" class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Período</th>
+            <th>Régua</th>
+            <th>Canal</th>
+            <th>Total Envios</th>
+            <th>Custo Total</th>
+            <th>Receita Recuperada</th>
+            <th>Lucro Líquido</th>
+            <th>ROI</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of roiReguas">
+            <td><strong>{{ item.periodo }}</strong></td>
+            <td>{{ item.nomeRegra }}</td>
+            <td>
+              <span class="badge" [ngClass]="getCanalBadgeClass(item.canal)">
+                {{ getCanalLabel(item.canal) }}
+              </span>
+            </td>
+            <td>{{ item.totalEnvios }}</td>
+            <td class="danger-text">{{ formatCurrency(item.custoTotal) }}</td>
+            <td class="success-text">{{ formatCurrency(item.receitaRecuperada) }}</td>
+            <td [class.success-text]="item.lucroLiquido > 0"
+                [class.danger-text]="item.lucroLiquido < 0">
+              {{ formatCurrency(item.lucroLiquido) }}
+            </td>
+            <td>
+              <span class="roi-badge" [class.positive]="item.roi > 0"
+                                      [class.negative]="item.roi < 0"
+                                      [class.excellent]="item.roi >= 200">
+                {{ formatPercentage(item.roi) }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="!loadingROI && roiReguas.length === 0" class="no-data">
+      <p>Nenhum dado encontrado para o período selecionado</p>
+    </div>
+  </div>
+
+  <!-- Evolução Mensal -->
+  <div class="section">
+    <h2>Evolução Mensal de Performance</h2>
+
+    <div *ngIf="loadingEvolucao" class="loading">
+      <p>Carregando dados...</p>
+    </div>
+
+    <div *ngIf="!loadingEvolucao && evolucaoMensal.length > 0" class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Período</th>
+            <th>Cobranças</th>
+            <th>Processadas</th>
+            <th>Valor Cobrado</th>
+            <th>Faturas Pagas</th>
+            <th>Valor Recebido</th>
+            <th>Taxa Sucesso</th>
+            <th>Taxa Conversão</th>
+            <th>Inadimplentes</th>
+            <th colspan="3">Breakdown por Canal</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of evolucaoMensal">
+            <td><strong>{{ item.periodo }}</strong></td>
+            <td>{{ item.totalCobrancas }}</td>
+            <td>{{ item.cobrancasProcessadas }}</td>
+            <td>{{ formatCurrency(item.valorCobrado) }}</td>
+            <td class="success-text">{{ item.faturasPagas }}</td>
+            <td class="success-text">{{ formatCurrency(item.valorRecebido) }}</td>
+            <td>{{ formatPercentage(item.taxaSucesso) }}</td>
+            <td>{{ formatPercentage(item.taxaConversao) }}</td>
+            <td class="danger-text">{{ item.faturasInadimplentes }}</td>
+            <td class="breakdown">
+              <span class="badge badge-email">Email: {{ item.breakdownCanal.enviosEmail }}</span>
+            </td>
+            <td class="breakdown">
+              <span class="badge badge-sms">SMS: {{ item.breakdownCanal.enviosSMS }}</span>
+            </td>
+            <td class="breakdown">
+              <span class="badge badge-whatsapp">WhatsApp: {{ item.breakdownCanal.enviosWhatsApp }}</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="!loadingEvolucao && evolucaoMensal.length === 0" class="no-data">
+      <p>Nenhum dado encontrado para o período selecionado</p>
+    </div>
+  </div>
+
+  <!-- Melhor Horário de Envio -->
+  <div class="section" *ngIf="melhorHorario">
+    <h2>Melhor Horário e Dia para Envio de Cobranças</h2>
+
+    <div *ngIf="loadingHorarios" class="loading">
+      <p>Carregando dados...</p>
+    </div>
+
+    <div *ngIf="!loadingHorarios" class="recommendation-grid">
+      <!-- Recomendação Destacada -->
+      <div class="recommendation-card">
+        <div class="recommendation-icon">⭐</div>
+        <div class="recommendation-content">
+          <h3>Recomendação de Envio</h3>
+          <p class="recommendation-text">
+            <strong>{{ melhorHorario.recomendacao.melhorDia }}</strong>
+            {{ melhorHorario.recomendacao.melhorPeriodo }}
+          </p>
+          <p class="recommendation-conversion">
+            Taxa de Conversão Esperada:
+            <span class="highlight">{{ formatPercentage(melhorHorario.recomendacao.taxaConversaoEsperada) }}</span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Performance por Dia da Semana -->
+      <div class="performance-card">
+        <h3>Performance por Dia da Semana</h3>
+        <div class="table-container">
+          <table class="data-table compact">
+            <thead>
+              <tr>
+                <th>Dia</th>
+                <th>Cobranças</th>
+                <th>Pagas</th>
+                <th>Taxa</th>
+                <th>Média Horas</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let dia of melhorHorario.porDiaSemana">
+                <td><strong>{{ dia.nomeDia }}</strong></td>
+                <td>{{ dia.totalCobrancas }}</td>
+                <td>{{ dia.faturasPagas }}</td>
+                <td>
+                  <span class="percentage" [class.high]="dia.taxaConversao >= 25"
+                                           [class.medium]="dia.taxaConversao >= 15 && dia.taxaConversao < 25"
+                                           [class.low]="dia.taxaConversao < 15">
+                    {{ formatPercentage(dia.taxaConversao) }}
+                  </span>
+                </td>
+                <td>{{ dia.mediaHorasConversao.toFixed(1) }}h</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Performance por Horário -->
+      <div class="performance-card">
+        <h3>Performance por Horário do Dia</h3>
+        <div class="table-container">
+          <table class="data-table compact">
+            <thead>
+              <tr>
+                <th>Horário</th>
+                <th>Período</th>
+                <th>Cobranças</th>
+                <th>Pagas</th>
+                <th>Taxa</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let hora of melhorHorario.porHoraDia">
+                <td><strong>{{ hora.hora }}h</strong></td>
+                <td class="periodo-text">{{ hora.periodo }}</td>
+                <td>{{ hora.totalCobrancas }}</td>
+                <td>{{ hora.faturasPagas }}</td>
+                <td>
+                  <span class="percentage" [class.high]="hora.taxaConversao >= 25"
+                                           [class.medium]="hora.taxaConversao >= 15 && hora.taxaConversao < 25"
+                                           [class.low]="hora.taxaConversao < 15">
+                    {{ formatPercentage(hora.taxaConversao) }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Redução de Inadimplência -->
+  <div class="section" *ngIf="reducaoInadimplencia">
+    <h2>Impacto das Réguas na Redução de Inadimplência</h2>
+
+    <div *ngIf="loadingReducao" class="loading">
+      <p>Carregando dados...</p>
+    </div>
+
+    <div *ngIf="!loadingReducao" class="comparison-grid">
+      <!-- Com Régua -->
+      <div class="comparison-card success-bg">
+        <h3>Com Régua de Cobrança</h3>
+        <div class="metrics-grid">
+          <div class="metric">
+            <span class="metric-label">Total de Faturas</span>
+            <span class="metric-value">{{ reducaoInadimplencia.comRegua.totalFaturas }}</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Faturas Pagas</span>
+            <span class="metric-value success-text">{{ reducaoInadimplencia.comRegua.faturasPagas }}</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Taxa de Pagamento</span>
+            <span class="metric-value">{{ formatPercentage(reducaoInadimplencia.comRegua.taxaPagamento) }}</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Média Dias em Atraso</span>
+            <span class="metric-value">{{ reducaoInadimplencia.comRegua.mediaDiasAtraso.toFixed(1) }} dias</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sem Régua -->
+      <div class="comparison-card danger-bg">
+        <h3>Sem Régua de Cobrança</h3>
+        <div class="metrics-grid">
+          <div class="metric">
+            <span class="metric-label">Total de Faturas</span>
+            <span class="metric-value">{{ reducaoInadimplencia.semRegua.totalFaturas }}</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Faturas Pagas</span>
+            <span class="metric-value">{{ reducaoInadimplencia.semRegua.faturasPagas }}</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Taxa de Pagamento</span>
+            <span class="metric-value">{{ formatPercentage(reducaoInadimplencia.semRegua.taxaPagamento) }}</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Média Dias em Atraso</span>
+            <span class="metric-value">{{ reducaoInadimplencia.semRegua.mediaDiasAtraso.toFixed(1) }} dias</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Impacto -->
+      <div class="impact-card" [ngClass]="getImpactoClass(reducaoInadimplencia.impacto.interpretacaoImpacto)">
+        <h3>Impacto Geral</h3>
+        <div class="impact-content">
+          <div class="impact-item">
+            <span class="impact-icon">📈</span>
+            <div>
+              <p class="impact-label">Melhoria na Taxa de Pagamento</p>
+              <p class="impact-value">+{{ reducaoInadimplencia.impacto.pontoPercentualMelhoria.toFixed(2) }} pontos percentuais</p>
+            </div>
+          </div>
+          <div class="impact-item">
+            <span class="impact-icon">⏱️</span>
+            <div>
+              <p class="impact-label">Redução de Dias em Atraso</p>
+              <p class="impact-value">-{{ reducaoInadimplencia.impacto.reducaoDiasAtraso.toFixed(1) }} dias</p>
+            </div>
+          </div>
+          <div class="impact-badge">
+            <span class="impact-interpretation">Impacto: {{ reducaoInadimplencia.impacto.interpretacaoImpacto }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tempo Envio → Pagamento (Omnichannel) -->
+  <div class="section">
+    <h2>Tempo Médio entre Envio e Pagamento</h2>
+
+    <div *ngIf="loadingTempo" class="loading">
+      <p>Carregando dados...</p>
+    </div>
+
+    <div *ngIf="!loadingTempo && tempoEnvioPagamento.length > 0" class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Régua</th>
+            <th>Tipo</th>
+            <th>Canais Utilizados</th>
+            <th>Qtd Canais</th>
+            <th>Média Horas (1º Envio)</th>
+            <th>Média Horas (Último Envio)</th>
+            <th>Faturas Pagas</th>
+            <th>Ticket Médio</th>
+            <th>Média Envios</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of tempoEnvioPagamento">
+            <td>{{ item.nomeRegua }}</td>
+            <td>
+              <span class="badge" [class.badge-omni]="item.ehOmnichannel" [class.badge-single]="!item.ehOmnichannel">
+                {{ item.ehOmnichannel ? 'Omnichannel' : 'Single-Channel' }}
+              </span>
+            </td>
+            <td class="canais-list">{{ getCanaisLabel(item.canaisUtilizados) }}</td>
+            <td class="text-center">{{ item.quantidadeCanais }}</td>
+            <td>{{ item.mediaHorasPrimeiroEnvio.toFixed(1) }}h</td>
+            <td>{{ item.mediaHorasUltimoEnvio.toFixed(1) }}h</td>
+            <td>{{ item.totalFaturasPagas }}</td>
+            <td>{{ formatCurrency(item.ticketMedio) }}</td>
+            <td>{{ item.mediaEnviosAtePagamento.toFixed(1) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="!loadingTempo && tempoEnvioPagamento.length === 0" class="no-data">
+      <p>Nenhum dado encontrado para o período selecionado</p>
+    </div>
+  </div>
+
+  <!-- Comparativo Omnichannel vs Single-Channel -->
+  <div class="section">
+    <h2>Comparativo Omnichannel vs Single-Channel</h2>
+
+    <div *ngIf="loadingOmnichannel" class="loading">
+      <p>Carregando dados...</p>
+    </div>
+
+    <div *ngIf="!loadingOmnichannel && comparativoOmnichannel.length > 0" class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Estratégia</th>
+            <th>Combinação de Canais</th>
+            <th>Cobranças</th>
+            <th>Faturas Pagas</th>
+            <th>Taxa Conversão</th>
+            <th>Valor Recuperado</th>
+            <th>Ticket Médio</th>
+            <th>Média Horas</th>
+            <th>Custo Total</th>
+            <th>ROI</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of comparativoOmnichannel">
+            <td>
+              <strong [class.omni-strategy]="item.tipoEstrategia.includes('Omnichannel')">
+                {{ item.tipoEstrategia }}
+              </strong>
+            </td>
+            <td class="canais-list">{{ getCanaisLabel(item.combinacaoCanais) }}</td>
+            <td>{{ item.totalCobrancas }}</td>
+            <td class="success-text">{{ item.faturasPagas }}</td>
+            <td>
+              <span class="percentage" [class.high]="item.taxaConversao >= 30"
+                                       [class.medium]="item.taxaConversao >= 15 && item.taxaConversao < 30"
+                                       [class.low]="item.taxaConversao < 15">
+                {{ formatPercentage(item.taxaConversao) }}
+              </span>
+            </td>
+            <td class="success-text">{{ formatCurrency(item.valorRecuperado) }}</td>
+            <td>{{ formatCurrency(item.ticketMedio) }}</td>
+            <td>{{ item.mediaHorasConversao.toFixed(1) }}h</td>
+            <td class="danger-text">{{ formatCurrency(item.custoTotal) }}</td>
+            <td>
+              <span class="roi-badge" [class.positive]="item.roi > 0"
+                                      [class.negative]="item.roi < 0"
+                                      [class.excellent]="item.roi >= 200">
+                {{ formatPercentage(item.roi) }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="!loadingOmnichannel && comparativoOmnichannel.length === 0" class="no-data">
+      <p>Nenhum dado encontrado para o período selecionado</p>
+    </div>
+  </div>
+</div>

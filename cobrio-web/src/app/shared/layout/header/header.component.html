@@ -16,7 +16,7 @@
         <span class="notification-badge" *ngIf="unreadCount > 0">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
       </button>
 
-      <div class="notification-panel" *ngIf="notificationPanelVisible">
+      <div class="notification-panel" *ngIf="notificationPanelVisible" [@dropdownAnimation]>
         <div class="notification-header">
           <h3>Notificações</h3>
           <div class="notification-actions">
@@ -66,11 +66,12 @@
         <div class="user-info">
           <span class="user-name">{{ currentUser?.nome }}</span>
           <span class="user-email">{{ currentUser?.email }}</span>
+          <span class="user-perfil">{{ getPerfilFormatado() }}</span>
         </div>
         <i class="pi pi-chevron-down"></i>
       </button>
 
-      <div class="user-dropdown" *ngIf="userMenuVisible">
+      <div class="user-dropdown" *ngIf="userMenuVisible" [@dropdownAnimation]>
         <div class="dropdown-header">
           <div class="user-avatar-large">
             {{ getUserInitials() }}
@@ -78,7 +79,7 @@
           <div class="user-details">
             <strong>{{ currentUser?.nome }}</strong>
             <small>{{ currentUser?.email }}</small>
-            <span class="user-role">{{ currentUser?.perfil }}</span>
+            <span class="user-role">{{ getPerfilFormatado() }}</span>
           </div>
         </div>
         <div class="dropdown-divider"></div>

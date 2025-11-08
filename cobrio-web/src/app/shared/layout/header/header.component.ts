@@ -1,4 +1,5 @@
 import { Component, OnInit, Output, EventEmitter } from '@angular/core';
+import { trigger, state, style, transition, animate } from '@angular/animations';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService, Notification } from '../../../core/services/notification.service';
 import { Usuario } from '../../../core/models';
@@ -6,7 +7,18 @@ import { Usuario } from '../../../core/models';
 @Component({
   selector: 'app-header',
   templateUrl: './header.component.html',
-  styleUrls: ['./header.component.scss']
+  styleUrls: ['./header.component.scss'],
+  animations: [
+    trigger('dropdownAnimation', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateY(-10px) scale(0.95)' }),
+        animate('200ms ease-out', style({ opacity: 1, transform: 'translateY(0) scale(1)' }))
+      ]),
+      transition(':leave', [
+        animate('150ms ease-in', style({ opacity: 0, transform: 'translateY(-10px) scale(0.95)' }))
+      ])
+    ])
+  ]
 })
 export class HeaderComponent implements OnInit {
   @Output() toggleSidebar = new EventEmitter<void>();
@@ -101,5 +113,22 @@ export class HeaderComponent implements OnInit {
     if (minutes < 60) return `${minutes}m atrás`;
     if (hours < 24) return `${hours}h atrás`;
     return `${days}d atrás`;
+  }
+
+  getPerfilFormatado(): string {
+    if (!this.currentUser) return '';
+
+    // Se for proprietário, mostrar "Proprietário"
+    if (this.currentUser.ehProprietario) {
+      return 'Proprietário';
+    }
+
+    // Formatar outros perfis
+    const perfis: { [key: string]: string } = {
+      'Admin': 'Administrador',
+      'Operador': 'Operador'
+    };
+
+    return perfis[this.currentUser.perfil] || this.currentUser.perfil;
   }
 }

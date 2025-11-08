@@ -23,6 +23,9 @@ public class NotificationService : INotificationService
         string destinatario,
         string mensagem,
         string? assunto = null,
+        string? remetenteEmail = null,
+        string? remetenteNome = null,
+        string? replyTo = null,
         CancellationToken cancellationToken = default)
     {
         try
@@ -34,6 +37,21 @@ public class NotificationService : INotificationService
 
             var provider = _channelFactory.ObterCanal(canal);
 
+            // Se for um email provider, usar o método específico com configurações
+            if (provider is IEmailProvider emailProvider)
+            {
+                return await emailProvider.EnviarEmailAsync(
+                    destinatario,
+                    assunto ?? "Notificação",
+                    mensagem,
+                    isHtml: true,
+                    remetenteEmail,
+                    remetenteNome,
+                    replyTo,
+                    cancellationToken);
+            }
+
+            // Para outros canais, usar o método genérico
             var resultado = await provider.EnviarAsync(
                 destinatario,
                 mensagem,

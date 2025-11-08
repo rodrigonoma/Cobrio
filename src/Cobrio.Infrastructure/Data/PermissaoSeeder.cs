@@ -24,11 +24,13 @@ public class PermissaoSeeder
             new Modulo("Dashboard", "dashboard", "Painel principal com métricas", "pi-home", "/dashboard", 1),
             new Modulo("Assinaturas", "assinaturas", "Gerenciar assinaturas de clientes", "pi-users", "/assinaturas", 2),
             new Modulo("Planos", "planos", "Gerenciar planos de oferta", "pi-tag", "/planos", 3),
-            new Modulo("Financeiro", "financeiro", "Controle financeiro e faturas", "pi-dollar", "/financeiro", 4),
-            new Modulo("Regras de Cobrança", "regras-cobranca", "Configurar regras de cobrança", "pi-bell", "/regras-cobranca", 5),
-            new Modulo("Usuários", "usuarios", "Gerenciar usuários do sistema", "pi-user-edit", "/usuarios", 6),
-            new Modulo("Relatórios", "relatorios", "Visualizar relatórios e dashboards", "pi-chart-bar", "/relatorios", 7),
-            new Modulo("Permissões", "permissoes", "Configurar permissões de perfis (Proprietário)", "pi-shield", "/permissoes", 8)
+            new Modulo("Regras de Cobrança", "regras-cobranca", "Configurar regras de cobrança", "pi-bell", "/regras-cobranca", 4),
+            new Modulo("Usuários", "usuarios", "Gerenciar usuários do sistema", "pi-user-edit", "/usuarios", 5),
+            new Modulo("Relatórios", "relatorios", "Visualizar relatórios e dashboards", "pi-chart-bar", "/relatorios", 6),
+            new Modulo("Relatórios Operacionais", "relatorios-operacionais", "Relatórios operacionais e execução de cobranças", "pi-chart-line", "/relatorios", 7),
+            new Modulo("Relatórios Gerenciais", "relatorios-gerenciais", "Relatórios gerenciais e análises estratégicas", "pi-chart-pie", "/relatorios", 8),
+            new Modulo("Configurações", "configuracoes", "Configurar sistema (email, integrações, etc)", "pi-cog", "/configuracoes/email", 9),
+            new Modulo("Permissões", "permissoes", "Configurar permissões de perfis (Proprietário)", "pi-shield", "/permissoes", 10)
         };
 
         await _context.Modulos.AddRangeAsync(modulos);
@@ -41,6 +43,7 @@ public class PermissaoSeeder
 
             // Ações CRUD
             new Acao("Listar", "read", "Visualizar listagem", TipoAcao.CRUD),
+            new Acao("Visualizar", "visualizar", "Visualizar conteúdo", TipoAcao.CRUD),
             new Acao("Visualizar Detalhes", "read.details", "Visualizar detalhes de um item", TipoAcao.CRUD),
             new Acao("Criar", "create", "Criar novo registro", TipoAcao.CRUD),
             new Acao("Editar", "update", "Editar registro existente", TipoAcao.CRUD),
@@ -75,17 +78,19 @@ public class PermissaoSeeder
             ["dashboard"] = new[] { "menu.view", "read" },
             ["assinaturas"] = new[] { "menu.view", "read", "read.details", "create", "update", "delete", "export" },
             ["planos"] = new[] { "menu.view", "read", "read.details", "create", "update", "delete", "toggle", "export" },
-            ["financeiro"] = new[] { "menu.view", "read", "read.details", "export" },
             ["regras-cobranca"] = new[] { "menu.view", "read", "read.details", "create", "update", "delete", "export", "import" },
             ["usuarios"] = new[] { "menu.view", "read", "read.details", "create", "update", "delete", "reset-password" },
             ["relatorios"] = new[] { "menu.view", "read", "export" },
+            ["relatorios-operacionais"] = new[] { "read", "export" },
+            ["relatorios-gerenciais"] = new[] { "read", "export" },
+            ["configuracoes"] = new[] { "menu.view", "read", "update" },
             ["permissoes"] = new[] { "menu.view", "read", "config-permissions" }
         };
 
         var permissoes = new List<PermissaoPerfil>();
 
-        // ADMIN: Acesso completo a todos os módulos (exceto Permissões)
-        foreach (var modulo in modulos.Where(m => m.Chave != "permissoes"))
+        // ADMIN: Acesso completo a todos os módulos (exceto Permissões e Configurações - apenas Proprietário)
+        foreach (var modulo in modulos.Where(m => m.Chave != "permissoes" && m.Chave != "configuracoes"))
         {
             // Obter ações válidas para este módulo
             if (!moduloAcoesMap.TryGetValue(modulo.Chave, out var acoesValidas))

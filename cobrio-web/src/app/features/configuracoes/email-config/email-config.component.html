@@ -1,0 +1,159 @@
+<div class="card">
+  <div class="flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="text-2xl font-semibold m-0 mb-2">
+        <i class="pi pi-cog mr-2"></i>
+        Configurações de Email
+      </h2>
+      <p class="text-600 m-0">
+        Configure o remetente dos emails de cobrança para manter a reputação do domínio
+      </p>
+    </div>
+  </div>
+
+  <!-- Alerta informativo -->
+  <div class="bg-blue-50 border-1 border-blue-200 border-round p-3 mb-4">
+    <div class="flex align-items-start gap-2">
+      <i class="pi pi-info-circle text-blue-600 text-xl mt-1"></i>
+      <div class="text-sm text-blue-800">
+        <strong>Por que configurar um único email remetente?</strong>
+        <ul class="mt-2 mb-0 pl-3">
+          <li>Melhora a <strong>reputação do domínio</strong> perante provedores de email</li>
+          <li>Reduz chances de emails serem marcados como spam</li>
+          <li>Permite configurar SPF, DKIM e DMARC corretamente</li>
+          <li>O assunto do email é personalizado por régua de cobrança</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="salvar()" *ngIf="!loading">
+    <div class="grid">
+      <!-- Email Remetente (FROM) -->
+      <div class="col-12 md:col-6">
+        <div class="field">
+          <label for="emailRemetente" class="font-semibold">
+            <i class="pi pi-send mr-2"></i>
+            Email Remetente (FROM)
+          </label>
+          <small class="block mb-2 text-600">
+            Email que aparecerá como remetente das cobranças. Exemplo: cobranca@suaempresa.com
+          </small>
+          <div class="p-inputgroup">
+            <input id="emailRemetente" type="email" pInputText formControlName="emailRemetente"
+                   class="w-full" [class.ng-invalid]="isFieldInvalid('emailRemetente')"
+                   placeholder="cobranca@suaempresa.com">
+            <button pButton type="button" icon="pi pi-times"
+                    class="p-button-outlined p-button-secondary"
+                    (click)="limparCampo('emailRemetente')"
+                    *ngIf="form.get('emailRemetente')?.value"
+                    pTooltip="Limpar campo"></button>
+          </div>
+          <small class="p-error" *ngIf="isFieldInvalid('emailRemetente')">
+            {{ getFieldError('emailRemetente') }}
+          </small>
+          <small class="block mt-2 text-500">
+            <i class="pi pi-exclamation-triangle mr-1"></i>
+            Certifique-se de ter configurado SPF e DKIM para este domínio
+          </small>
+        </div>
+      </div>
+
+      <!-- Nome do Remetente (Display Name) -->
+      <div class="col-12 md:col-6">
+        <div class="field">
+          <label for="nomeRemetente" class="font-semibold">
+            <i class="pi pi-user mr-2"></i>
+            Nome do Remetente (Display Name)
+          </label>
+          <small class="block mb-2 text-600">
+            Nome que aparecerá junto ao email. Exemplo: "Empresa - Financeiro"
+          </small>
+          <div class="p-inputgroup">
+            <input id="nomeRemetente" type="text" pInputText formControlName="nomeRemetente"
+                   class="w-full" [class.ng-invalid]="isFieldInvalid('nomeRemetente')"
+                   placeholder="Sua Empresa - Financeiro">
+            <button pButton type="button" icon="pi pi-times"
+                    class="p-button-outlined p-button-secondary"
+                    (click)="limparCampo('nomeRemetente')"
+                    *ngIf="form.get('nomeRemetente')?.value"
+                    pTooltip="Limpar campo"></button>
+          </div>
+          <small class="p-error" *ngIf="isFieldInvalid('nomeRemetente')">
+            {{ getFieldError('nomeRemetente') }}
+          </small>
+        </div>
+      </div>
+
+      <!-- Email Reply-To -->
+      <div class="col-12 md:col-6">
+        <div class="field">
+          <label for="emailReplyTo" class="font-semibold">
+            <i class="pi pi-reply mr-2"></i>
+            Email para Resposta (Reply-To)
+          </label>
+          <small class="block mb-2 text-600">
+            Email que receberá as respostas dos clientes. Exemplo: financeiro@suaempresa.com
+          </small>
+          <div class="p-inputgroup">
+            <input id="emailReplyTo" type="email" pInputText formControlName="emailReplyTo"
+                   class="w-full" [class.ng-invalid]="isFieldInvalid('emailReplyTo')"
+                   placeholder="financeiro@suaempresa.com">
+            <button pButton type="button" icon="pi pi-times"
+                    class="p-button-outlined p-button-secondary"
+                    (click)="limparCampo('emailReplyTo')"
+                    *ngIf="form.get('emailReplyTo')?.value"
+                    pTooltip="Limpar campo"></button>
+          </div>
+          <small class="p-error" *ngIf="isFieldInvalid('emailReplyTo')">
+            {{ getFieldError('emailReplyTo') }}
+          </small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Exemplo de como aparecerá -->
+    <div class="bg-gray-50 border-1 border-gray-200 border-round p-3 mt-4"
+         *ngIf="form.get('emailRemetente')?.value || form.get('nomeRemetente')?.value">
+      <div class="font-semibold mb-2 text-gray-900">
+        <i class="pi pi-eye mr-2"></i>
+        Prévia do Email
+      </div>
+      <div class="text-sm text-gray-700">
+        <strong>De:</strong>
+        <span *ngIf="form.get('nomeRemetente')?.value">
+          {{ form.get('nomeRemetente')?.value }}
+        </span>
+        <span *ngIf="form.get('emailRemetente')?.value">
+          &lt;{{ form.get('emailRemetente')?.value }}&gt;
+        </span>
+        <span *ngIf="!form.get('nomeRemetente')?.value && !form.get('emailRemetente')?.value">
+          (não configurado)
+        </span>
+      </div>
+      <div class="text-sm text-gray-700 mt-1" *ngIf="form.get('emailReplyTo')?.value">
+        <strong>Responder para:</strong> {{ form.get('emailReplyTo')?.value }}
+      </div>
+      <div class="text-sm text-gray-700 mt-1">
+        <strong>Assunto:</strong> <em>(definido por régua de cobrança)</em>
+      </div>
+    </div>
+
+    <!-- Botões de ação -->
+    <div class="flex justify-content-end gap-2 mt-4">
+      <button pButton type="button" label="Limpar Tudo" icon="pi pi-trash"
+              class="p-button-outlined p-button-secondary"
+              (click)="form.reset()"
+              [disabled]="salvando || !form.dirty"></button>
+      <button pButton type="submit" label="Salvar Configurações" icon="pi pi-save"
+              [loading]="salvando" [disabled]="salvando || form.invalid"></button>
+    </div>
+  </form>
+
+  <!-- Loading state -->
+  <div class="flex justify-content-center align-items-center" style="min-height: 400px;" *ngIf="loading">
+    <p-progressSpinner></p-progressSpinner>
+  </div>
+</div>
+
+<p-toast></p-toast>

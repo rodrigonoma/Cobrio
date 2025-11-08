@@ -31,30 +31,43 @@ public class BrevoEmailService : IEmailService
         string destinatario,
         string assunto,
         string corpoHtml,
+        string? remetenteEmail = null,
+        string? remetenteNome = null,
+        string? replyTo = null,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Enviando email via Brevo para {Destinatario} com assunto '{Assunto}'",
-                destinatario, assunto);
+            // Usar parâmetros se fornecidos, senão usar configuração padrão
+            var fromEmail = remetenteEmail ?? _settings.FromEmail;
+            var fromName = remetenteNome ?? _settings.FromName;
 
-            var payload = new
+            _logger.LogInformation(
+                "Enviando email via Brevo para {Destinatario} com assunto '{Assunto}' de {FromName} <{FromEmail}>",
+                destinatario, assunto, fromName, fromEmail);
+
+            // Construir payload base
+            var payload = new Dictionary<string, object>
             {
-                sender = new
+                ["sender"] = new
                 {
-                    name = _settings.FromName,
-                    email = _settings.FromEmail
+                    name = fromName,
+                    email = fromEmail
                 },
-                to = new[]
+                ["to"] = new[]
                 {
-                    new
-                    {
-                        email = destinatario
-                    }
+                    new { email = destinatario }
                 },
-                subject = assunto,
-                htmlContent = corpoHtml
+                ["subject"] = assunto,
+                ["htmlContent"] = corpoHtml
             };
+
+            // Adicionar Reply-To se fornecido
+            if (!string.IsNullOrWhiteSpace(replyTo))
+            {
+                payload["replyTo"] = new { email = replyTo };
+                _logger.LogInformation("Reply-To configurado para: {ReplyTo}", replyTo);
+            }
 
             var response = await _httpClient.PostAsJsonAsync("smtp/email", payload, cancellationToken);
             var content = await response.Content.ReadAsStringAsync(cancellationToken);

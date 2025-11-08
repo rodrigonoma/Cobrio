@@ -28,6 +28,7 @@ export interface RegraCobranca {
   unidadeTempo: UnidadeTempo;
   canalNotificacao: CanalNotificacao;
   templateNotificacao: string;
+  subjectEmail?: string;  // Assunto do email (apenas para canal Email)
   variaveisObrigatorias: string[];
   variaveisObrigatoriasSistema?: string;  // JSON string com lista de variáveis
   tokenWebhook: string;
@@ -43,6 +44,7 @@ export interface CreateRegraCobrancaRequest {
   unidadeTempo: UnidadeTempo;
   canalNotificacao: CanalNotificacao;
   templateNotificacao: string;
+  subjectEmail?: string;  // Assunto do email (obrigatório para canal Email)
   variaveisObrigatoriasSistema?: string[];
 }
 
@@ -54,6 +56,7 @@ export interface UpdateRegraCobrancaRequest {
   unidadeTempo?: UnidadeTempo;
   canalNotificacao?: CanalNotificacao;
   templateNotificacao?: string;
+  subjectEmail?: string;
   variaveisObrigatoriasSistema?: string[];
   ativa?: boolean;
 }

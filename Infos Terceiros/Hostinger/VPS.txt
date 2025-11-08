@@ -1,0 +1,11 @@
+Senha painel: @Rtn0511202025
+Senha Chave SSH: @Rtn051120
+Caminho onde foi criado chave publica: C:\Cobrio\Infos Terceiros\Hostinger\ed25519
+
+Acessar via ssh o servidor:
+ssh root@72.60.63.64
+Senha root SSH: @Rtn0511202025
+
+Acesso SSH para o backend end:
+Site User:cobrio
+Site User Password: NXNL40pNuBFKAfm38Dof

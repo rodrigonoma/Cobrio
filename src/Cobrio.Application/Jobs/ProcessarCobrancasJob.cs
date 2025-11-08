@@ -12,6 +12,7 @@ public class ProcessarCobrancasJob
     private readonly ICobrancaRepository _cobrancaRepository;
     private readonly IHistoricoNotificacaoRepository _historicoRepository;
     private readonly IRegraCobrancaRepository _regraRepository;
+    private readonly IEmpresaClienteRepository _empresaRepository;
     private readonly INotificationService _notificationService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<ProcessarCobrancasJob> _logger;
@@ -20,6 +21,7 @@ public class ProcessarCobrancasJob
         ICobrancaRepository cobrancaRepository,
         IHistoricoNotificacaoRepository historicoRepository,
         IRegraCobrancaRepository regraRepository,
+        IEmpresaClienteRepository empresaRepository,
         INotificationService notificationService,
         IUnitOfWork unitOfWork,
         ILogger<ProcessarCobrancasJob> logger)
@@ -27,6 +29,7 @@ public class ProcessarCobrancasJob
         _cobrancaRepository = cobrancaRepository;
         _historicoRepository = historicoRepository;
         _regraRepository = regraRepository;
+        _empresaRepository = empresaRepository;
         _notificationService = notificationService;
         _unitOfWork = unitOfWork;
         _logger = logger;
@@ -102,12 +105,43 @@ public class ProcessarCobrancasJob
                     $"Campo destinatário não encontrado no payload para canal {regra.CanalNotificacao}");
             }
 
+            // Carregar configurações de email da empresa (se for canal de email)
+            string? remetenteEmail = null;
+            string? remetenteNome = null;
+            string? replyTo = null;
+            string? assunto = null;
+
+            if (regra.CanalNotificacao == CanalNotificacao.Email)
+            {
+                var empresa = await _empresaRepository.GetByIdAsync(cobranca.EmpresaClienteId, cancellationToken);
+
+                if (empresa != null)
+                {
+                    remetenteEmail = empresa.EmailRemetente;
+                    remetenteNome = empresa.NomeRemetente;
+                    replyTo = empresa.EmailReplyTo;
+                }
+
+                // Processar subject do email com variáveis do payload
+                if (!string.IsNullOrWhiteSpace(regra.SubjectEmail))
+                {
+                    assunto = regra.ProcessarTemplate(payload, regra.SubjectEmail);
+                }
+                else
+                {
+                    assunto = "Cobrança"; // fallback se não tiver subject configurado
+                }
+            }
+
             // Enviar notificação usando provider real
             var resultado = await _notificationService.EnviarAsync(
                 regra.CanalNotificacao,
                 destinatario,
                 mensagem,
-                "Cobrança Cobrio", // assunto para email
+                assunto,
+                remetenteEmail,
+                remetenteNome,
+                replyTo,
                 cancellationToken);
 
             if (resultado.Sucesso)

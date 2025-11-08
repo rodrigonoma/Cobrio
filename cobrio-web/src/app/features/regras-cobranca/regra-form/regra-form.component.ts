@@ -72,7 +72,8 @@ export class RegraFormComponent implements OnInit {
       valorTempo: [3, [Validators.required, Validators.min(1), Validators.max(9999)]],
       unidadeTempo: [UnidadeTempo.Dias, Validators.required],
       canalNotificacao: [1, Validators.required],
-      templateNotificacao: ['', Validators.required]
+      templateNotificacao: ['', Validators.required],
+      subjectEmail: ['', [Validators.required, Validators.maxLength(150)]]
     });
 
     // Extrair variáveis ao mudar o template
@@ -80,13 +81,15 @@ export class RegraFormComponent implements OnInit {
       this.extrairVariaveis(value);
     });
 
-    // Atualizar variáveis obrigatórias ao mudar o canal de notificação
+    // Atualizar variáveis obrigatórias e validação de subject ao mudar o canal de notificação
     this.form.get('canalNotificacao')?.valueChanges.subscribe(canal => {
       this.atualizarVariavelObrigatoriaSistema(canal);
+      this.atualizarValidacaoSubject(canal);
     });
 
     // Inicializar variável obrigatória com base no canal padrão (Email)
     this.atualizarVariavelObrigatoriaSistema(1);
+    this.atualizarValidacaoSubject(1);
   }
 
   checkEditMode(): void {
@@ -105,24 +108,46 @@ export class RegraFormComponent implements OnInit {
       next: (regra) => {
         this.ehPadrao = regra.ehPadrao;
 
-        this.form.patchValue({
-          nome: regra.nome,
-          descricao: regra.descricao,
-          tipoMomento: regra.tipoMomento,
-          valorTempo: regra.valorTempo,
-          unidadeTempo: regra.unidadeTempo,
-          canalNotificacao: regra.canalNotificacao,
-          templateNotificacao: regra.templateNotificacao
-        });
-
-        // Se for regra padrão, desabilitar campos que não podem ser editados
+        // Se for regra padrão (Envio Imediato), limpar campos de momento/tempo
         if (this.ehPadrao) {
+          this.form.patchValue({
+            nome: regra.nome,
+            descricao: regra.descricao,
+            tipoMomento: null,
+            valorTempo: 0,
+            unidadeTempo: null,
+            canalNotificacao: regra.canalNotificacao,
+            templateNotificacao: regra.templateNotificacao,
+            subjectEmail: regra.subjectEmail || ''
+          });
+
+          // Desabilitar campos que não podem ser editados
           this.form.get('nome')?.disable();
           this.form.get('descricao')?.disable();
           this.form.get('tipoMomento')?.disable();
           this.form.get('valorTempo')?.disable();
           this.form.get('unidadeTempo')?.disable();
           this.form.get('templateNotificacao')?.disable();
+
+          // Remover validadores obrigatórios dos campos de tempo para régua padrão
+          this.form.get('tipoMomento')?.clearValidators();
+          this.form.get('valorTempo')?.clearValidators();
+          this.form.get('unidadeTempo')?.clearValidators();
+          this.form.get('tipoMomento')?.updateValueAndValidity();
+          this.form.get('valorTempo')?.updateValueAndValidity();
+          this.form.get('unidadeTempo')?.updateValueAndValidity();
+        } else {
+          // Régua normal - carregar valores normalmente
+          this.form.patchValue({
+            nome: regra.nome,
+            descricao: regra.descricao,
+            tipoMomento: regra.tipoMomento,
+            valorTempo: regra.valorTempo,
+            unidadeTempo: regra.unidadeTempo,
+            canalNotificacao: regra.canalNotificacao,
+            templateNotificacao: regra.templateNotificacao,
+            subjectEmail: regra.subjectEmail || ''
+          });
         }
 
         // Garantir que o editor Quill seja atualizado após inicialização
@@ -230,6 +255,27 @@ export class RegraFormComponent implements OnInit {
     }, 0);
   }
 
+  inserirVariavelNoSubject(variavel: string): void {
+    const control = this.form.get('subjectEmail');
+    if (!control) return;
+
+    const currentValue = control.value || '';
+    const newValue = currentValue + ` {{${variavel}}}`;
+
+    // Verificar se não ultrapassa o limite de 150 caracteres
+    if (newValue.length > 150) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Atenção',
+        detail: 'O assunto não pode ultrapassar 150 caracteres'
+      });
+      return;
+    }
+
+    control.setValue(newValue);
+    control.markAsTouched();
+  }
+
   gerarWebhookUrl(token: string): string {
     const baseUrl = window.location.origin.replace('4201', '5271');
     return `${baseUrl}/api/webhook/${token}`;
@@ -291,6 +337,18 @@ export class RegraFormComponent implements OnInit {
     }
   }
 
+  atualizarValidacaoSubject(canal: number): void {
+    const subjectControl = this.form.get('subjectEmail');
+
+    if (canal === 1) { // Email
+      subjectControl?.setValidators([Validators.required, Validators.maxLength(150)]);
+    } else {
+      subjectControl?.clearValidators();
+    }
+
+    subjectControl?.updateValueAndValidity();
+  }
+
   salvar(): void {
     if (this.form.invalid) {
       this.markFormGroupTouched(this.form);
@@ -335,9 +393,11 @@ export class RegraFormComponent implements OnInit {
 
         this.loading = false;
 
-        // Não voltar automaticamente se acabou de criar (para mostrar o webhook)
+        // Aguardar um pouco antes de voltar para dar tempo do toast aparecer
         if (this.editMode) {
-          this.voltar();
+          setTimeout(() => {
+            this.voltar();
+          }, 1500);
         }
       },
       error: (error) => {

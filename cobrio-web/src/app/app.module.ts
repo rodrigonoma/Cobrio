@@ -24,6 +24,8 @@ import { DropdownModule } from 'primeng/dropdown';
 import { InputSwitchModule } from 'primeng/inputswitch';
 import { InputTextareaModule } from 'primeng/inputtextarea';
 import { SkeletonModule } from 'primeng/skeleton';
+import { TabViewModule } from 'primeng/tabview';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { NgChartsModule } from 'ng2-charts';
 import { MainLayoutComponent } from './shared/layout/main-layout/main-layout.component';
@@ -32,9 +34,9 @@ import { HeaderComponent } from './shared/layout/header/header.component';
 import { DashboardComponent } from './features/dashboard/dashboard.component';
 import { AssinaturasListComponent } from './features/assinaturas/assinaturas-list/assinaturas-list.component';
 import { PlanosListComponent } from './features/planos/planos-list/planos-list.component';
-import { FinanceiroListComponent } from './features/financeiro/financeiro-list/financeiro-list.component';
 import { RelatoriosComponent } from './features/relatorios/relatorios/relatorios.component';
 import { PlanoFormComponent } from './features/planos/plano-form/plano-form.component';
+import { ClickOutsideDirective } from './shared/directives/click-outside.directive';
 
 @NgModule({
   declarations: [
@@ -46,7 +48,6 @@ import { PlanoFormComponent } from './features/planos/plano-form/plano-form.comp
     DashboardComponent,
     AssinaturasListComponent,
     PlanosListComponent,
-    FinanceiroListComponent,
     RelatoriosComponent,
     PlanoFormComponent
   ],
@@ -72,7 +73,11 @@ import { PlanoFormComponent } from './features/planos/plano-form/plano-form.comp
     InputSwitchModule,
     InputTextareaModule,
     SkeletonModule,
-    NgChartsModule
+    TabViewModule,
+    ProgressSpinnerModule,
+    NgChartsModule,
+    // Directives
+    ClickOutsideDirective
   ],
   providers: [
     MessageService,

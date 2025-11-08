@@ -7,3 +7,4 @@
 - corrigindo erro de 401
 - corrigindo permissões
 - retirar o visualizar do modulo Usuarios.
+- ultima solicitacao

@@ -79,6 +79,12 @@ builder.Services.AddScoped<CobrancaService>();
 builder.Services.AddScoped<ExcelImportService>();
 builder.Services.AddScoped<UsuarioEmpresaService>();
 
+// Reports Services
+builder.Services.AddHttpClient<BrevoEmailStatsService>();
+builder.Services.AddScoped<Cobrio.API.Services.RelatoriosService>();
+builder.Services.AddScoped<Cobrio.API.Services.RelatoriosAvancadosService>();
+builder.Services.AddScoped<IAnalyticsService, Cobrio.API.Services.AnalyticsService>();
+
 // Memory Cache
 builder.Services.AddMemoryCache();
 

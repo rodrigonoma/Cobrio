@@ -234,10 +234,19 @@ namespace Cobrio.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
 
+                    b.Property<string>("EmailRemetente")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("EmailReplyTo")
+                        .HasColumnType("longtext");
+
                     b.Property<string>("Nome")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
+
+                    b.Property<string>("NomeRemetente")
+                        .HasColumnType("longtext");
 
                     b.Property<int>("PlanoCobrioId")
                         .HasColumnType("int");
@@ -889,6 +898,9 @@ namespace Cobrio.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
+
+                    b.Property<string>("SubjectEmail")
+                        .HasColumnType("longtext");
 
                     b.Property<string>("TemplateNotificacao")
                         .IsRequired()

@@ -13,5 +13,8 @@ public interface INotificationService
         string destinatario,
         string mensagem,
         string? assunto = null,
+        string? remetenteEmail = null,
+        string? remetenteNome = null,
+        string? replyTo = null,
         CancellationToken cancellationToken = default);
 }

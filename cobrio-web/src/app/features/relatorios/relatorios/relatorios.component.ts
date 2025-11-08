@@ -1,20 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { AssinaturaService } from '../../../core/services/assinatura.service';
-import { PlanoOfertaService } from '../../../core/services/plano-oferta.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { PermissaoService } from '../../../core/services/permissao.service';
+import { RelatoriosService, MetricasGeraisResponse, EnvioPorRegraResponse, StatusCobrancaResponse, EvolucaoCobrancaResponse, StatusAssinaturasResponse, HistoricoImportacaoResponse } from '../../../core/services/relatorios.service';
 import { MessageService } from 'primeng/api';
-import { Assinatura } from '../../../core/models/assinatura.models';
-import { PlanoOferta } from '../../../core/models/plano-oferta.models';
 import { ChartConfiguration, ChartData } from 'chart.js';
+import { forkJoin } from 'rxjs';
 
-interface MetricaRelatorio {
-  titulo: string;
-  valor: string;
-  variacao: number;
-  icon: string;
-  iconColor: string;
+interface PeriodoOption {
+  label: string;
+  value: string;
 }
 
 @Component({
@@ -24,22 +19,107 @@ interface MetricaRelatorio {
 })
 export class RelatoriosComponent implements OnInit {
   loading = true;
-  assinaturas: Assinatura[] = [];
-  planos: PlanoOferta[] = [];
-  Math = Math; // Expose Math for template use
 
-  metricas: MetricaRelatorio[] = [];
+  // Métricas principais
+  metricas: MetricasGeraisResponse = {
+    totalCobrado: 0,
+    totalEnviadas: 0,
+    taxaAbertura: 0,
+    emailsAbertos: 0,
+    emailsEnviados: 0,
+    assinaturasAtivas: 0,
+    variacaoTotalCobrado: 0,
+    variacaoEnviadas: 0,
+    variacaoAssinaturas: 0
+  };
+
+  // Dados para gráficos e tabelas
+  enviosPorRegra: EnvioPorRegraResponse[] = [];
+  statusCobrancas: StatusCobrancaResponse[] = [];
+  evolucaoCobrancas: EvolucaoCobrancaResponse[] = [];
+  statusAssinaturas: StatusAssinaturasResponse = {
+    ativas: 0,
+    suspensas: 0,
+    canceladas: 0
+  };
+  historicoImportacoes: HistoricoImportacaoResponse[] = [];
+
+  // Top 5 regras para tabela
+  topRegras: any[] = [];
+
+  // Período selecionado
+  periodoSelecionado = 'ultimos_30_dias';
+  periodosOptions: PeriodoOption[] = [
+    { label: 'Hoje', value: 'hoje' },
+    { label: 'Últimos 7 dias', value: 'ultimos_7_dias' },
+    { label: 'Últimos 30 dias', value: 'ultimos_30_dias' },
+    { label: 'Últimos 90 dias', value: 'ultimos_90_dias' },
+    { label: 'Este mês', value: 'mes_atual' },
+    { label: 'Mês passado', value: 'mes_passado' }
+  ];
 
   // Permissões
   perfilUsuarioString: string = '';
   podeVisualizar = false;
   podeExportar = false;
 
-  // Gráfico de Evolução de MRR (simulado - últimos 6 meses)
-  mrrChartData: ChartData<'line'> = {
+  // Gráfico de Envios por Regra
+  enviosPorRegraChart: ChartData<'bar'> = {
     labels: [],
     datasets: [{
-      label: 'MRR',
+      label: 'Envios',
+      data: [],
+      backgroundColor: '#3B82F6'
+    }]
+  };
+
+  enviosPorRegraOptions: ChartConfiguration['options'] = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: (context) => `Envios: ${context.parsed.y}`
+        }
+      }
+    },
+    scales: {
+      y: { beginAtZero: true }
+    }
+  };
+
+  // Gráfico de Status de Cobranças
+  statusCobrancasChart: ChartData<'doughnut'> = {
+    labels: [],
+    datasets: [{
+      data: [],
+      backgroundColor: ['#10B981', '#F59E0B', '#EF4444']
+    }]
+  };
+
+  statusCobrancasOptions: ChartConfiguration['options'] = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'bottom' },
+      tooltip: {
+        callbacks: {
+          label: (context) => {
+            const label = context.label || '';
+            const value = context.parsed;
+            return `${label}: ${value} (${((value / context.dataset.data.reduce((a: any, b: any) => a + b, 0)) * 100).toFixed(1)}%)`;
+          }
+        }
+      }
+    }
+  };
+
+  // Gráfico de Evolução de Cobranças
+  evolucaoCobrancasChart: ChartData<'line'> = {
+    labels: [],
+    datasets: [{
+      label: 'Valor Cobrado',
       data: [],
       borderColor: '#3B82F6',
       backgroundColor: 'rgba(59, 130, 246, 0.1)',
@@ -48,18 +128,14 @@ export class RelatoriosComponent implements OnInit {
     }]
   };
 
-  mrrChartOptions: ChartConfiguration['options'] = {
+  evolucaoCobrancasOptions: ChartConfiguration['options'] = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: {
-        display: false
-      },
+      legend: { display: false },
       tooltip: {
         callbacks: {
-          label: (context) => {
-            return `R$ ${(context.parsed.y / 100).toFixed(2).replace('.', ',')}`;
-          }
+          label: (context) => this.formatCurrency(context.parsed.y)
         }
       }
     },
@@ -67,49 +143,33 @@ export class RelatoriosComponent implements OnInit {
       y: {
         beginAtZero: true,
         ticks: {
-          callback: (value) => {
-            return `R$ ${(Number(value) / 100).toFixed(0)}`;
-          }
+          callback: (value) => this.formatCurrency(Number(value))
         }
       }
     }
   };
 
-  // Gráfico de Churn Rate
-  churnChartData: ChartData<'line'> = {
-    labels: [],
+  // Gráfico de Performance de Emails
+  performanceEmailsChart: ChartData<'pie'> = {
+    labels: ['Abertos', 'Não Abertos'],
     datasets: [{
-      label: 'Churn Rate (%)',
       data: [],
-      borderColor: '#EF4444',
-      backgroundColor: 'rgba(239, 68, 68, 0.1)',
-      tension: 0.4,
-      fill: true
+      backgroundColor: ['#10B981', '#E5E7EB']
     }]
   };
 
-  churnChartOptions: ChartConfiguration['options'] = {
+  performanceEmailsOptions: ChartConfiguration['options'] = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: {
-        display: false
-      },
+      legend: { position: 'bottom' },
       tooltip: {
         callbacks: {
           label: (context) => {
-            return `${context.parsed.y.toFixed(1)}%`;
-          }
-        }
-      }
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        max: 100,
-        ticks: {
-          callback: (value) => {
-            return `${value}%`;
+            const label = context.label || '';
+            const value = context.parsed;
+            const total = context.dataset.data.reduce((a: any, b: any) => a + b, 0);
+            return `${label}: ${value} (${((value / total) * 100).toFixed(1)}%)`;
           }
         }
       }
@@ -117,8 +177,7 @@ export class RelatoriosComponent implements OnInit {
   };
 
   constructor(
-    private assinaturaService: AssinaturaService,
-    private planoService: PlanoOfertaService,
+    private relatoriosService: RelatoriosService,
     private router: Router,
     private authService: AuthService,
     private permissaoService: PermissaoService,
@@ -127,150 +186,203 @@ export class RelatoriosComponent implements OnInit {
 
   ngOnInit(): void {
     this.carregarPermissoes();
-    this.loadData();
+    this.carregarDados();
   }
 
-  loadData(): void {
+  carregarDados(): void {
     this.loading = true;
+    const { dataInicio, dataFim } = this.getPeriodoDatas();
 
-    this.assinaturaService.getAll().subscribe({
-      next: (assinaturas) => {
-        this.assinaturas = assinaturas;
-        this.prepareMetrics();
-        this.prepareMrrChart();
-        this.prepareChurnChart();
+    forkJoin({
+      metricas: this.relatoriosService.getMetricasGerais(dataInicio, dataFim),
+      enviosPorRegra: this.relatoriosService.getEnviosPorRegra(dataInicio, dataFim),
+      statusCobrancas: this.relatoriosService.getStatusCobrancas(dataInicio, dataFim),
+      evolucaoCobrancas: this.relatoriosService.getEvolucaoCobrancas(dataInicio, dataFim),
+      statusAssinaturas: this.relatoriosService.getStatusAssinaturas(),
+      historicoImportacoes: this.relatoriosService.getHistoricoImportacoes(dataInicio, dataFim)
+    }).subscribe({
+      next: (data) => {
+        this.metricas = data.metricas;
+        this.enviosPorRegra = data.enviosPorRegra;
+        this.statusCobrancas = data.statusCobrancas;
+        this.evolucaoCobrancas = data.evolucaoCobrancas;
+        this.statusAssinaturas = data.statusAssinaturas;
+        this.historicoImportacoes = data.historicoImportacoes;
+
+        this.prepareCharts();
+        this.prepareTopRegras();
         this.loading = false;
       },
       error: (error) => {
-        console.error('Erro ao carregar dados', error);
+        console.error('Erro ao carregar relatórios', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erro',
+          detail: 'Erro ao carregar relatórios'
+        });
         this.loading = false;
       }
     });
-
-    this.planoService.getAll().subscribe({
-      next: (planos) => {
-        this.planos = planos;
-      }
-    });
   }
 
-  prepareMetrics(): void {
-    // MRR Atual
-    const mrrAtual = this.calculateMRR(this.assinaturas.filter(a =>
-      a.status === 'Ativa' || a.status === 'EmTrial'
-    ));
+  prepareCharts(): void {
+    // Gráfico de Envios por Regra
+    this.enviosPorRegraChart = {
+      labels: this.enviosPorRegra.map(e => e.nomeRegra),
+      datasets: [{
+        label: 'Envios',
+        data: this.enviosPorRegra.map(e => e.totalEnvios),
+        backgroundColor: '#3B82F6'
+      }]
+    };
 
-    // ARR (Annual Recurring Revenue)
-    const arr = mrrAtual * 12;
+    // Gráfico de Status de Cobranças
+    this.statusCobrancasChart = {
+      labels: this.statusCobrancas.map(s => s.status),
+      datasets: [{
+        data: this.statusCobrancas.map(s => s.quantidade),
+        backgroundColor: ['#10B981', '#F59E0B', '#EF4444']
+      }]
+    };
 
-    // Churn Rate do mês
-    const canceladas = this.assinaturas.filter(a => a.status === 'Cancelada').length;
-    const churnRate = this.assinaturas.length > 0
-      ? (canceladas / this.assinaturas.length) * 100
-      : 0;
+    // Gráfico de Evolução de Cobranças
+    this.evolucaoCobrancasChart = {
+      labels: this.evolucaoCobrancas.map(e => new Date(e.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })),
+      datasets: [{
+        label: 'Valor Cobrado',
+        data: this.evolucaoCobrancas.map(e => e.valor),
+        borderColor: '#3B82F6',
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        tension: 0.4,
+        fill: true
+      }]
+    };
 
-    // Lifetime Value (LTV) estimado
-    const ltv = churnRate > 0 ? (mrrAtual / (churnRate / 100)) : 0;
-
-    this.metricas = [
-      {
-        titulo: 'MRR',
-        valor: this.formatCurrency(mrrAtual),
-        variacao: 15.3,
-        icon: 'pi-chart-line',
-        iconColor: 'text-blue-600'
-      },
-      {
-        titulo: 'ARR',
-        valor: this.formatCurrency(arr),
-        variacao: 12.5,
-        icon: 'pi-calendar',
-        iconColor: 'text-green-600'
-      },
-      {
-        titulo: 'Churn Rate',
-        valor: `${churnRate.toFixed(1)}%`,
-        variacao: -2.1,
-        icon: 'pi-users',
-        iconColor: 'text-red-600'
-      },
-      {
-        titulo: 'LTV Estimado',
-        valor: this.formatCurrency(ltv),
-        variacao: 8.7,
-        icon: 'pi-dollar',
-        iconColor: 'text-purple-600'
-      }
-    ];
+    // Gráfico de Performance de Emails
+    const emailsNaoAbertos = this.metricas.emailsEnviados - this.metricas.emailsAbertos;
+    this.performanceEmailsChart = {
+      labels: ['Abertos', 'Não Abertos'],
+      datasets: [{
+        data: [this.metricas.emailsAbertos, emailsNaoAbertos],
+        backgroundColor: ['#10B981', '#E5E7EB']
+      }]
+    };
   }
 
-  prepareMrrChart(): void {
-    // Simula evolução dos últimos 6 meses
-    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'];
-    const mrrAtual = this.calculateMRR(this.assinaturas.filter(a =>
-      a.status === 'Ativa' || a.status === 'EmTrial'
-    ));
+  prepareTopRegras(): void {
+    this.topRegras = this.enviosPorRegra.slice(0, 5).map(regra => ({
+      nome: regra.nomeRegra,
+      envios: regra.totalEnvios,
+      valor: regra.valorTotal
+    }));
+  }
 
-    // Simula crescimento de 15% ao mês (para demonstração)
-    const valores = [];
-    let valorBase = mrrAtual / 1.15 / 1.15 / 1.15 / 1.15 / 1.15 / 1.15;
+  getPeriodoDatas(): { dataInicio: Date, dataFim: Date } {
+    const hoje = new Date();
+    const dataFim = new Date(hoje);
+    dataFim.setHours(23, 59, 59, 999);
+    let dataInicio = new Date(hoje);
 
-    for (let i = 0; i < 6; i++) {
-      valores.push(Math.round(valorBase));
-      valorBase *= 1.15;
+    switch (this.periodoSelecionado) {
+      case 'hoje':
+        dataInicio.setHours(0, 0, 0, 0);
+        break;
+      case 'ultimos_7_dias':
+        dataInicio.setDate(hoje.getDate() - 7);
+        dataInicio.setHours(0, 0, 0, 0);
+        break;
+      case 'ultimos_30_dias':
+        dataInicio.setDate(hoje.getDate() - 30);
+        dataInicio.setHours(0, 0, 0, 0);
+        break;
+      case 'ultimos_90_dias':
+        dataInicio.setDate(hoje.getDate() - 90);
+        dataInicio.setHours(0, 0, 0, 0);
+        break;
+      case 'mes_atual':
+        dataInicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+        dataInicio.setHours(0, 0, 0, 0);
+        break;
+      case 'mes_passado':
+        dataInicio = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
+        dataInicio.setHours(0, 0, 0, 0);
+        dataFim.setDate(0); // Último dia do mês anterior
+        dataFim.setHours(23, 59, 59, 999);
+        break;
     }
 
-    this.mrrChartData = {
-      ...this.mrrChartData,
-      labels: meses,
-      datasets: [{
-        ...this.mrrChartData.datasets[0],
-        data: valores
-      }]
-    };
+    return { dataInicio, dataFim };
   }
 
-  prepareChurnChart(): void {
-    // Simula churn rate dos últimos 6 meses
-    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'];
-
-    // Simula valores de churn variando entre 5% e 15%
-    const valores = [12.5, 10.2, 8.7, 9.5, 7.3, 6.8];
-
-    this.churnChartData = {
-      ...this.churnChartData,
-      labels: meses,
-      datasets: [{
-        ...this.churnChartData.datasets[0],
-        data: valores
-      }]
-    };
-  }
-
-  calculateMRR(assinaturas: Assinatura[]): number {
-    return assinaturas.reduce((sum, a) => {
-      let valorMensal = a.valor;
-      switch (a.tipoCiclo) {
-        case 'Anual':
-          valorMensal = a.valor / 12;
-          break;
-        case 'Semestral':
-          valorMensal = a.valor / 6;
-          break;
-        case 'Trimestral':
-          valorMensal = a.valor / 3;
-          break;
-      }
-      return sum + valorMensal;
-    }, 0);
+  getPeriodoDescricao(): string {
+    const { dataInicio, dataFim } = this.getPeriodoDatas();
+    return `${dataInicio.toLocaleDateString('pt-BR')} até ${dataFim.toLocaleDateString('pt-BR')}`;
   }
 
   formatCurrency(value: number): string {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
-    }).format(value / 100);
+    }).format(value);
   }
+
+  getStatusImportacao(importacao: HistoricoImportacaoResponse): string {
+    if (importacao.linhasComErro === 0) {
+      return 'Sucesso';
+    } else if (importacao.linhasProcessadas > 0) {
+      return 'Parcial';
+    } else {
+      return 'Falha';
+    }
+  }
+
+  getStatusImportacaoSeverity(importacao: HistoricoImportacaoResponse): string {
+    if (importacao.linhasComErro === 0) {
+      return 'success';
+    } else if (importacao.linhasProcessadas > 0) {
+      return 'warning';
+    } else {
+      return 'danger';
+    }
+  }
+
+  getTaxaSucesso(importacao: HistoricoImportacaoResponse): number {
+    if (importacao.totalLinhas === 0) return 0;
+    return Math.round((importacao.linhasProcessadas / importacao.totalLinhas) * 100);
+  }
+
+  getTaxaSucessoClass(importacao: HistoricoImportacaoResponse): string {
+    const taxa = this.getTaxaSucesso(importacao);
+    if (taxa >= 90) return 'text-green-600';
+    if (taxa >= 70) return 'text-yellow-600';
+    return 'text-red-600';
+  }
+
+  getPercentualAssinaturas(quantidade: number): number {
+    const total = this.statusAssinaturas.ativas +
+                  this.statusAssinaturas.suspensas +
+                  this.statusAssinaturas.canceladas;
+    if (total === 0) return 0;
+    return Math.round((quantidade / total) * 100);
+  }
+
+  getStatusColor(status: string): string {
+    switch (status.toLowerCase()) {
+      case 'pendente':
+        return '#fbbf24'; // yellow
+      case 'processada':
+        return '#10b981'; // green
+      case 'falha':
+        return '#ef4444'; // red
+      case 'cancelada':
+        return '#6b7280'; // gray
+      default:
+        return '#3b82f6'; // blue
+    }
+  }
+
+  // Expor Math para o template
+  Math = Math;
 
   carregarPermissoes(): void {
     const currentUser = this.authService.currentUserValue;

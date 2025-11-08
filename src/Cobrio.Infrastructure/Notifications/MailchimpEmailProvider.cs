@@ -34,6 +34,8 @@ public class BrevoEmailProvider : IEmailProvider
             mensagem,
             true,
             null,
+            null,
+            null,
             cancellationToken);
     }
 
@@ -42,7 +44,9 @@ public class BrevoEmailProvider : IEmailProvider
         string assunto,
         string corpo,
         bool isHtml = true,
+        string? remetenteEmail = null,
         string? remetenteNome = null,
+        string? replyTo = null,
         CancellationToken cancellationToken = default)
     {
         try
@@ -56,6 +60,9 @@ public class BrevoEmailProvider : IEmailProvider
                 destinatario,
                 assunto,
                 corpo,
+                remetenteEmail,
+                remetenteNome,
+                replyTo,
                 cancellationToken);
 
             if (sucesso)

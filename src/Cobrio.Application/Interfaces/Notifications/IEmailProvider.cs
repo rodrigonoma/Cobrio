@@ -18,6 +18,8 @@ public interface IEmailProvider : INotificationChannel
         string assunto,
         string corpo,
         bool isHtml = true,
+        string? remetenteEmail = null,
         string? remetenteNome = null,
+        string? replyTo = null,
         CancellationToken cancellationToken = default);
 }
