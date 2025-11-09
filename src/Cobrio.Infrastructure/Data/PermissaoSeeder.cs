@@ -26,11 +26,12 @@ public class PermissaoSeeder
             new Modulo("Planos", "planos", "Gerenciar planos de oferta", "pi-tag", "/planos", 3),
             new Modulo("Regras de Cobrança", "regras-cobranca", "Configurar regras de cobrança", "pi-bell", "/regras-cobranca", 4),
             new Modulo("Usuários", "usuarios", "Gerenciar usuários do sistema", "pi-user-edit", "/usuarios", 5),
-            new Modulo("Relatórios", "relatorios", "Visualizar relatórios e dashboards", "pi-chart-bar", "/relatorios", 6),
-            new Modulo("Relatórios Operacionais", "relatorios-operacionais", "Relatórios operacionais e execução de cobranças", "pi-chart-line", "/relatorios", 7),
-            new Modulo("Relatórios Gerenciais", "relatorios-gerenciais", "Relatórios gerenciais e análises estratégicas", "pi-chart-pie", "/relatorios", 8),
-            new Modulo("Configurações", "configuracoes", "Configurar sistema (email, integrações, etc)", "pi-cog", "/configuracoes/email", 9),
-            new Modulo("Permissões", "permissoes", "Configurar permissões de perfis (Proprietário)", "pi-shield", "/permissoes", 10)
+            new Modulo("Templates", "templates", "Gerenciar templates de email", "pi-file", "/templates", 6),
+            new Modulo("Relatórios", "relatorios", "Visualizar relatórios e dashboards", "pi-chart-bar", "/relatorios", 7),
+            new Modulo("Relatórios Operacionais", "relatorios-operacionais", "Relatórios operacionais e execução de cobranças", "pi-chart-line", "/relatorios", 8),
+            new Modulo("Relatórios Gerenciais", "relatorios-gerenciais", "Relatórios gerenciais e análises estratégicas", "pi-chart-pie", "/relatorios", 9),
+            new Modulo("Configurações", "configuracoes", "Configurar sistema (email, integrações, etc)", "pi-cog", "/configuracoes/email", 10),
+            new Modulo("Permissões", "permissoes", "Configurar permissões de perfis (Proprietário)", "pi-shield", "/permissoes", 11)
         };
 
         await _context.Modulos.AddRangeAsync(modulos);
@@ -80,6 +81,7 @@ public class PermissaoSeeder
             ["planos"] = new[] { "menu.view", "read", "read.details", "create", "update", "delete", "toggle", "export" },
             ["regras-cobranca"] = new[] { "menu.view", "read", "read.details", "create", "update", "delete", "export", "import" },
             ["usuarios"] = new[] { "menu.view", "read", "read.details", "create", "update", "delete", "reset-password" },
+            ["templates"] = new[] { "menu.view", "read", "read.details", "create", "update", "delete" },
             ["relatorios"] = new[] { "menu.view", "read", "export" },
             ["relatorios-operacionais"] = new[] { "read", "export" },
             ["relatorios-gerenciais"] = new[] { "read", "export" },

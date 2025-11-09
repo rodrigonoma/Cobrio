@@ -1,0 +1,161 @@
+<div class="card">
+  <div class="flex justify-content-between align-items-center mb-4">
+    <h2 class="text-2xl font-semibold m-0">
+      <i class="pi pi-file mr-2"></i>
+      Templates de Email
+    </h2>
+    <button pButton type="button" label="Novo Template" icon="pi pi-plus"
+            (click)="novoTemplate()" class="p-button-success"></button>
+  </div>
+
+  <p-table [value]="templates" [loading]="loading" [paginator]="true" [rows]="10"
+           [rowsPerPageOptions]="[10,25,50]" [showCurrentPageReport]="true"
+           currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} templates"
+           [globalFilterFields]="['nome','descricao']"
+           styleClass="p-datatable-sm p-datatable-striped">
+
+    <ng-template pTemplate="caption">
+      <div class="flex">
+        <span class="p-input-icon-left ml-auto">
+          <i class="pi pi-search"></i>
+          <input pInputText type="text" (input)="loadTemplates()"
+                 placeholder="Buscar template..." />
+        </span>
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="header">
+      <tr>
+        <th style="width: 25%">Nome</th>
+        <th style="width: 30%">Descrição</th>
+        <th style="width: 15%">Canal</th>
+        <th style="width: 15%">Variáveis</th>
+        <th style="width: 15%">Ações</th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-template>
+      <tr>
+        <td>
+          <div class="font-semibold">{{ template.nome }}</div>
+          <small class="text-500" *ngIf="template.subjectEmail">
+            <i class="pi pi-envelope text-xs mr-1"></i>
+            {{ template.subjectEmail }}
+          </small>
+        </td>
+        <td>
+          <span class="text-600">{{ template.descricao || '-' }}</span>
+        </td>
+        <td>
+          <p-tag [value]="getCanalLabel(template.canalSugerido)"
+                 [icon]="getCanalIcon(template.canalSugerido)"
+                 [severity]="getCanalSeverity(template.canalSugerido)">
+          </p-tag>
+        </td>
+        <td>
+          <div class="flex align-items-center gap-2">
+            <p-chip [label]="template.variaveisObrigatorias?.length.toString() || '0'"
+                    styleClass="text-xs"
+                    [pTooltip]="'Variáveis extraídas: ' + (template.variaveisObrigatorias?.join(', ') || 'Nenhuma')">
+            </p-chip>
+            <p-chip [label]="template.variaveisObrigatoriasSistema?.length.toString() || '0'"
+                    styleClass="text-xs bg-orange-100 text-orange-900"
+                    [pTooltip]="'Variáveis do sistema: ' + (template.variaveisObrigatoriasSistema?.join(', ') || 'Nenhuma')">
+            </p-chip>
+          </div>
+        </td>
+        <td>
+          <div class="flex gap-2">
+            <button pButton pRipple type="button" icon="pi pi-eye"
+                    class="p-button-rounded p-button-text p-button-info"
+                    (click)="visualizarTemplate(template)"
+                    pTooltip="Visualizar"></button>
+            <button pButton pRipple type="button" icon="pi pi-pencil"
+                    class="p-button-rounded p-button-text p-button-warning"
+                    (click)="editarTemplate(template.id)"
+                    pTooltip="Editar"></button>
+            <button pButton pRipple type="button" icon="pi pi-trash"
+                    class="p-button-rounded p-button-text p-button-danger"
+                    (click)="confirmarExclusao(template)"
+                    pTooltip="Excluir"></button>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="5" class="text-center py-6">
+          <div class="text-500">
+            <i class="pi pi-inbox text-4xl mb-3 block"></i>
+            <p class="text-xl mb-2">Nenhum template encontrado</p>
+            <p class="text-sm">Crie seu primeiro template clicando no botão "Novo Template"</p>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<!-- Dialog de Visualização -->
+<p-dialog header="Visualizar Template" [(visible)]="showPreviewDialog"
+          [modal]="true" [style]="{width: '800px'}" [draggable]="false" [resizable]="false">
+
+  <div *ngIf="selectedTemplate">
+    <div class="grid mb-4">
+      <div class="col-12 md:col-6">
+        <div class="font-semibold text-600 mb-1">Nome</div>
+        <div>{{ selectedTemplate.nome }}</div>
+      </div>
+      <div class="col-12 md:col-6">
+        <div class="font-semibold text-600 mb-1">Canal Sugerido</div>
+        <div>
+          <p-tag [value]="getCanalLabel(selectedTemplate.canalSugerido)"
+                 [icon]="getCanalIcon(selectedTemplate.canalSugerido)">
+          </p-tag>
+        </div>
+      </div>
+      <div class="col-12" *ngIf="selectedTemplate.descricao">
+        <div class="font-semibold text-600 mb-1">Descrição</div>
+        <div>{{ selectedTemplate.descricao }}</div>
+      </div>
+      <div class="col-12" *ngIf="selectedTemplate.subjectEmail">
+        <div class="font-semibold text-600 mb-1">Assunto do Email</div>
+        <div>{{ selectedTemplate.subjectEmail }}</div>
+      </div>
+    </div>
+
+    <div class="mb-4" *ngIf="selectedTemplate.variaveisObrigatorias && selectedTemplate.variaveisObrigatorias.length > 0">
+      <div class="font-semibold text-600 mb-2">Variáveis Extraídas ({{ selectedTemplate.variaveisObrigatorias.length }})</div>
+      <div class="flex flex-wrap gap-2">
+        <p-chip *ngFor="let variavel of selectedTemplate.variaveisObrigatorias"
+                [label]="variavel" styleClass="bg-blue-100 text-blue-900">
+        </p-chip>
+      </div>
+    </div>
+
+    <div class="mb-4" *ngIf="selectedTemplate.variaveisObrigatoriasSistema && selectedTemplate.variaveisObrigatoriasSistema.length > 0">
+      <div class="font-semibold text-600 mb-2">Variáveis do Sistema ({{ selectedTemplate.variaveisObrigatoriasSistema.length }})</div>
+      <div class="flex flex-wrap gap-2">
+        <p-chip *ngFor="let variavel of selectedTemplate.variaveisObrigatoriasSistema"
+                [label]="variavel" styleClass="bg-orange-100 text-orange-900">
+        </p-chip>
+      </div>
+    </div>
+
+    <div>
+      <div class="font-semibold text-600 mb-2">Conteúdo HTML</div>
+      <div class="border-1 border-200 border-round p-3 bg-gray-50" [innerHTML]="selectedTemplate.conteudoHtml"></div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button pButton type="button" label="Fechar" icon="pi pi-times"
+            class="p-button-text" (click)="closePreviewDialog()"></button>
+    <button pButton type="button" label="Editar" icon="pi pi-pencil"
+            (click)="editarTemplate(selectedTemplate!.id); closePreviewDialog()"></button>
+  </ng-template>
+</p-dialog>
+
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>

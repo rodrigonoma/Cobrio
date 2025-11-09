@@ -91,10 +91,10 @@ C:\Cobrio\tests\Cobrio.UnitTests\obj\Debug\net8.0\Cobrio.UnitTests.GeneratedMSBu
 C:\Cobrio\tests\Cobrio.UnitTests\obj\Debug\net8.0\Cobrio.UnitTests.AssemblyInfoInputs.cache
 C:\Cobrio\tests\Cobrio.UnitTests\obj\Debug\net8.0\Cobrio.UnitTests.AssemblyInfo.cs
 C:\Cobrio\tests\Cobrio.UnitTests\obj\Debug\net8.0\Cobrio.UnitTests.csproj.CoreCompileInputs.cache
+C:\Cobrio\tests\Cobrio.UnitTests\obj\Debug\net8.0\Cobrio.UnitTests.sourcelink.json
 C:\Cobrio\tests\Cobrio.UnitTests\obj\Debug\net8.0\Cobrio.U.F80DC22D.Up2Date
 C:\Cobrio\tests\Cobrio.UnitTests\obj\Debug\net8.0\Cobrio.UnitTests.dll
 C:\Cobrio\tests\Cobrio.UnitTests\obj\Debug\net8.0\refint\Cobrio.UnitTests.dll
 C:\Cobrio\tests\Cobrio.UnitTests\obj\Debug\net8.0\Cobrio.UnitTests.pdb
 C:\Cobrio\tests\Cobrio.UnitTests\obj\Debug\net8.0\Cobrio.UnitTests.genruntimeconfig.cache
 C:\Cobrio\tests\Cobrio.UnitTests\obj\Debug\net8.0\ref\Cobrio.UnitTests.dll
-C:\Cobrio\tests\Cobrio.UnitTests\obj\Debug\net8.0\Cobrio.UnitTests.sourcelink.json

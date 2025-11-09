@@ -9,3 +9,52 @@ Senha root SSH: @Rtn0511202025
 Acesso SSH para o backend end:
 Site User:cobrio
 Site User Password: NXNL40pNuBFKAfm38Dof
+
+Usuario Mysql:
+Usuario: cobrio_user
+Senha: A$HAi8hA82%
+
+*********************************************************************
+
+🧩 Exemplo prático de ciclo de deploy
+
+pm2 list
+
+1️⃣ Subir novos binários pelo FileZilla (em /var/www/cobrio)
+2️⃣ Rodar no terminal:
+
+pm2 restart cobrio
+
+
+3️⃣ Verificar logs:
+
+pm2 logs cobrio
+
+
+4️⃣ Confirmar saúde da API:
+
+curl http://localhost:5000/health
+
+********************************************************************
+
+Deploy Front
+ng build --configuration production
+Copiar os arquivos de:
+C:\Cobrio\cobrio-web\dist\cobrio-web
+
+Para(Filezilla):
+/var/www/cobrio/Front
+
+
+Deploy Back
+Buida em Modo release
+
+Copia os arquivos de:
+C:\Cobrio\src\Cobrio.API\bin\Release\net8.0\
+
+Para:
+/var/www/cobrio/Cobrio.API
+
+*******************************************************************
+
+Email Mario: mario.borges@cobrio.com.br / @Cobrio2025

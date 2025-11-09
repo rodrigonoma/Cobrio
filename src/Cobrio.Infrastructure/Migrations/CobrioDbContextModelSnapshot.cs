@@ -1014,6 +1014,59 @@ namespace Cobrio.Infrastructure.Migrations
                     b.ToTable("ReguaDunningConfig", (string)null);
                 });
 
+            modelBuilder.Entity("Cobrio.Domain.Entities.TemplateEmail", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("CHAR(36)");
+
+                    b.Property<DateTime>("AtualizadoEm")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int?>("CanalSugerido")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ConteudoHtml")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Descricao")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<Guid>("EmpresaClienteId")
+                        .HasColumnType("CHAR(36)");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<string>("SubjectEmail")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("VariaveisObrigatorias")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("VariaveisObrigatoriasSistema")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmpresaClienteId")
+                        .HasDatabaseName("idx_template_email_tenant");
+
+                    b.HasIndex("EmpresaClienteId", "Nome")
+                        .IsUnique()
+                        .HasDatabaseName("idx_template_email_tenant_nome");
+
+                    b.ToTable("TemplateEmail", (string)null);
+                });
+
             modelBuilder.Entity("Cobrio.Domain.Entities.TentativaPagamento", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1488,6 +1541,17 @@ namespace Cobrio.Infrastructure.Migrations
                     b.HasOne("Cobrio.Domain.Entities.EmpresaCliente", "EmpresaCliente")
                         .WithOne("ReguaDunning")
                         .HasForeignKey("Cobrio.Domain.Entities.ReguaDunningConfig", "EmpresaClienteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("EmpresaCliente");
+                });
+
+            modelBuilder.Entity("Cobrio.Domain.Entities.TemplateEmail", b =>
+                {
+                    b.HasOne("Cobrio.Domain.Entities.EmpresaCliente", "EmpresaCliente")
+                        .WithMany()
+                        .HasForeignKey("EmpresaClienteId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

@@ -91,10 +91,10 @@ C:\Cobrio\tests\Cobrio.IntegrationTests\obj\Debug\net8.0\Cobrio.IntegrationTests
 C:\Cobrio\tests\Cobrio.IntegrationTests\obj\Debug\net8.0\Cobrio.IntegrationTests.AssemblyInfoInputs.cache
 C:\Cobrio\tests\Cobrio.IntegrationTests\obj\Debug\net8.0\Cobrio.IntegrationTests.AssemblyInfo.cs
 C:\Cobrio\tests\Cobrio.IntegrationTests\obj\Debug\net8.0\Cobrio.IntegrationTests.csproj.CoreCompileInputs.cache
+C:\Cobrio\tests\Cobrio.IntegrationTests\obj\Debug\net8.0\Cobrio.IntegrationTests.sourcelink.json
 C:\Cobrio\tests\Cobrio.IntegrationTests\obj\Debug\net8.0\Cobrio.I.9B7D5163.Up2Date
 C:\Cobrio\tests\Cobrio.IntegrationTests\obj\Debug\net8.0\Cobrio.IntegrationTests.dll
 C:\Cobrio\tests\Cobrio.IntegrationTests\obj\Debug\net8.0\refint\Cobrio.IntegrationTests.dll
 C:\Cobrio\tests\Cobrio.IntegrationTests\obj\Debug\net8.0\Cobrio.IntegrationTests.pdb
 C:\Cobrio\tests\Cobrio.IntegrationTests\obj\Debug\net8.0\Cobrio.IntegrationTests.genruntimeconfig.cache
 C:\Cobrio\tests\Cobrio.IntegrationTests\obj\Debug\net8.0\ref\Cobrio.IntegrationTests.dll
-C:\Cobrio\tests\Cobrio.IntegrationTests\obj\Debug\net8.0\Cobrio.IntegrationTests.sourcelink.json

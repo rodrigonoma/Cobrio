@@ -1,0 +1,154 @@
+<div class="card">
+  <div class="flex justify-content-between align-items-center mb-4">
+    <h2 class="text-2xl font-semibold m-0">
+      {{ editMode ? 'Editar Template' : 'Novo Template' }}
+    </h2>
+    <button pButton type="button" icon="pi pi-times" label="Voltar"
+            (click)="voltar()" class="p-button-text"></button>
+  </div>
+
+  <div class="bg-blue-50 border-1 border-blue-200 border-round p-3 mb-4" *ngIf="!editMode">
+    <div class="flex align-items-start gap-2">
+      <i class="pi pi-info-circle text-blue-600 text-xl mt-1"></i>
+      <div class="text-sm text-blue-800">
+        <strong>Dica:</strong> Para criar templates com todo o contexto (variáveis, canal, etc.),
+        recomendamos criar uma regra de cobrança e usar o botão "Salvar como Template".
+        Este formulário é ideal para editar templates existentes.
+      </div>
+    </div>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="salvar()">
+    <div class="grid">
+      <!-- Nome -->
+      <div class="col-12 md:col-8">
+        <div class="field">
+          <label for="nome" class="font-semibold">Nome do Template *</label>
+          <input id="nome" type="text" pInputText formControlName="nome"
+                 class="w-full" [class.ng-invalid]="isFieldInvalid('nome')"
+                 placeholder="Ex: Cobrança 3 dias antes do vencimento">
+          <small class="p-error" *ngIf="isFieldInvalid('nome')">
+            {{ getFieldError('nome') }}
+          </small>
+        </div>
+      </div>
+
+      <!-- Canal Sugerido -->
+      <div class="col-12 md:col-4">
+        <div class="field">
+          <label for="canalSugerido" class="font-semibold">Canal Sugerido</label>
+          <p-dropdown id="canalSugerido" formControlName="canalSugerido"
+                      [options]="canaisNotificacao" optionLabel="label" optionValue="value"
+                      placeholder="Selecione (opcional)"
+                      [showClear]="true"
+                      class="w-full">
+          </p-dropdown>
+        </div>
+      </div>
+
+      <!-- Descrição -->
+      <div class="col-12">
+        <div class="field">
+          <label for="descricao" class="font-semibold">Descrição</label>
+          <textarea id="descricao" pInputTextarea formControlName="descricao"
+                    rows="2" class="w-full"
+                    placeholder="Descrição opcional do template"></textarea>
+          <small class="p-error" *ngIf="isFieldInvalid('descricao')">
+            {{ getFieldError('descricao') }}
+          </small>
+        </div>
+      </div>
+
+      <!-- Assunto do Email -->
+      <div class="col-12">
+        <div class="field">
+          <label for="subjectEmail" class="font-semibold">Assunto do Email (se aplicável)</label>
+          <input id="subjectEmail" type="text" pInputText formControlName="subjectEmail"
+                 class="w-full"
+                 [placeholder]="'Ex: Cobrança ' + '{{' + 'Valor' + '}}' + ' - Vencimento ' + '{{' + 'DataVencimento' + '}}'"
+                 maxlength="150">
+          <small class="p-error" *ngIf="isFieldInvalid('subjectEmail')">
+            {{ getFieldError('subjectEmail') }}
+          </small>
+        </div>
+      </div>
+
+      <!-- Conteúdo HTML -->
+      <div class="col-12">
+        <div class="field">
+          <label for="conteudoHtml" class="font-semibold">Conteúdo HTML *</label>
+          <small class="block mb-2 text-600">
+            Use variáveis no formato {{'{{'}}NomeVariavel{{'}}'}} para dados dinâmicos.
+          </small>
+          <p-editor formControlName="conteudoHtml"
+                    [style]="{'height':'320px'}"
+                    [class.ng-invalid]="isFieldInvalid('conteudoHtml')">
+            <ng-template pTemplate="header">
+              <span class="ql-formats">
+                <select class="ql-header">
+                  <option value="1">Heading 1</option>
+                  <option value="2">Heading 2</option>
+                  <option value="3">Heading 3</option>
+                  <option selected>Normal</option>
+                </select>
+              </span>
+              <span class="ql-formats">
+                <button class="ql-bold" aria-label="Bold"></button>
+                <button class="ql-italic" aria-label="Italic"></button>
+                <button class="ql-underline" aria-label="Underline"></button>
+              </span>
+              <span class="ql-formats">
+                <select class="ql-color"></select>
+                <select class="ql-background"></select>
+              </span>
+              <span class="ql-formats">
+                <button class="ql-link" aria-label="Insert Link"></button>
+              </span>
+            </ng-template>
+          </p-editor>
+          <small class="p-error block mt-2" *ngIf="isFieldInvalid('conteudoHtml')">
+            {{ getFieldError('conteudoHtml') }}
+          </small>
+        </div>
+      </div>
+
+      <!-- Informações sobre variáveis (se em modo de edição) -->
+      <div class="col-12" *ngIf="editMode && template">
+        <div class="bg-blue-50 border-1 border-blue-200 border-round p-3">
+          <div class="font-semibold mb-2 text-blue-900">
+            <i class="pi pi-info-circle mr-2"></i>
+            Informações do Template
+          </div>
+          <div class="grid">
+            <div class="col-12 md:col-6" *ngIf="template.variaveisObrigatorias && template.variaveisObrigatorias.length > 0">
+              <small class="text-600 font-semibold block mb-2">Variáveis Extraídas ({{ template.variaveisObrigatorias.length }})</small>
+              <div class="flex flex-wrap gap-2">
+                <p-chip *ngFor="let variavel of template.variaveisObrigatorias"
+                        [label]="variavel" styleClass="text-xs bg-blue-100 text-blue-900">
+                </p-chip>
+              </div>
+            </div>
+            <div class="col-12 md:col-6" *ngIf="template.variaveisObrigatoriasSistema && template.variaveisObrigatoriasSistema.length > 0">
+              <small class="text-600 font-semibold block mb-2">Variáveis do Sistema ({{ template.variaveisObrigatoriasSistema.length }})</small>
+              <div class="flex flex-wrap gap-2">
+                <p-chip *ngFor="let variavel of template.variaveisObrigatoriasSistema"
+                        [label]="variavel" styleClass="text-xs bg-orange-100 text-orange-900">
+                </p-chip>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botões de Ação -->
+    <div class="flex justify-content-end gap-2 mt-4">
+      <button pButton type="button" label="Cancelar" icon="pi pi-times"
+              (click)="voltar()" class="p-button-text" [disabled]="loading"></button>
+      <button pButton type="submit" label="Salvar" icon="pi pi-check"
+              [loading]="loading" [disabled]="loading"></button>
+    </div>
+  </form>
+</div>
+
+<p-toast></p-toast>

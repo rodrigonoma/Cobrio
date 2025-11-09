@@ -29,6 +29,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
     { label: 'Planos', icon: 'pi-tag', route: '/planos', moduloChave: 'planos', visible: false },
     { label: 'Regras de Cobrança', icon: 'pi-bell', route: '/regras-cobranca', moduloChave: 'regras-cobranca', visible: false },
     { label: 'Usuários', icon: 'pi-user-edit', route: '/usuarios', moduloChave: 'usuarios', visible: false },
+    { label: 'Templates', icon: 'pi-file', route: '/templates', moduloChave: 'templates', visible: false },
     { label: 'Relatórios', icon: 'pi-chart-bar', route: '/relatorios', moduloChave: 'relatorios', visible: false },
     { label: 'Permissões', icon: 'pi-shield', route: '/permissoes', moduloChave: 'permissoes', visible: false },
     { label: 'Configurações', icon: 'pi-cog', route: '/configuracoes/email', moduloChave: 'configuracoes', visible: false }

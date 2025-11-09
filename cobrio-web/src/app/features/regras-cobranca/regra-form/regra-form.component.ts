@@ -2,8 +2,10 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RegraCobrancaService } from '../../../core/services/regra-cobranca.service';
+import { TemplateEmailService } from '../../../core/services/template-email.service';
 import { MessageService } from 'primeng/api';
 import { TipoMomento, UnidadeTempo } from '../../../core/models/regra-cobranca.models';
+import { TemplateEmail } from '../../../core/models/template-email.models';
 import { Editor } from 'primeng/editor';
 
 @Component({
@@ -51,9 +53,16 @@ export class RegraFormComponent implements OnInit {
   webhookUrl: string = '';
   editorInstance: any;
 
+  // Templates
+  templates: TemplateEmail[] = [];
+  selectedTemplateId: string | null = null;
+  showSaveTemplateDialog = false;
+  saveTemplateForm!: FormGroup;
+
   constructor(
     private fb: FormBuilder,
     private regraService: RegraCobrancaService,
+    private templateService: TemplateEmailService,
     private route: ActivatedRoute,
     private router: Router,
     private messageService: MessageService
@@ -61,6 +70,8 @@ export class RegraFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.initForm();
+    this.initSaveTemplateForm();
+    this.loadTemplates();
     this.checkEditMode();
   }
 
@@ -445,5 +456,125 @@ export class RegraFormComponent implements OnInit {
   isFieldInvalid(fieldName: string): boolean {
     const control = this.form.get(fieldName);
     return !!(control && control.invalid && control.touched);
+  }
+
+  // Template methods
+
+  initSaveTemplateForm(): void {
+    this.saveTemplateForm = this.fb.group({
+      nome: ['', [Validators.required, Validators.maxLength(200)]],
+      descricao: ['', Validators.maxLength(1000)]
+    });
+  }
+
+  loadTemplates(): void {
+    this.templateService.getAll().subscribe({
+      next: (templates) => {
+        this.templates = templates;
+      },
+      error: (error) => {
+        console.error('Erro ao carregar templates:', error);
+      }
+    });
+  }
+
+  onTemplateSelect(templateId: string | null): void {
+    if (!templateId) {
+      this.selectedTemplateId = null;
+      return;
+    }
+
+    const template = this.templates.find(t => t.id === templateId);
+    if (!template) return;
+
+    // Carregar template no editor
+    this.form.patchValue({
+      templateNotificacao: template.conteudoHtml,
+      subjectEmail: template.subjectEmail || ''
+    });
+
+    // Atualizar editor Quill
+    setTimeout(() => {
+      if (this.editor) {
+        const quill = this.editor.getQuill();
+        if (quill && template.conteudoHtml) {
+          quill.root.innerHTML = template.conteudoHtml;
+        }
+      }
+      this.extrairVariaveis(template.conteudoHtml);
+    }, 100);
+
+    // Carregar variáveis obrigatórias do sistema
+    if (template.variaveisObrigatoriasSistema && template.variaveisObrigatoriasSistema.length > 0) {
+      this.variaveisObrigatoriasSistema = [...template.variaveisObrigatoriasSistema];
+    }
+
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Template Carregado',
+      detail: `Template "${template.nome}" carregado com sucesso`
+    });
+  }
+
+  openSaveTemplateDialog(): void {
+    const currentTemplate = this.form.get('templateNotificacao')?.value;
+    const currentSubject = this.form.get('subjectEmail')?.value;
+
+    if (!currentTemplate || currentTemplate.trim() === '') {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Atenção',
+        detail: 'Não há conteúdo no template para salvar'
+      });
+      return;
+    }
+
+    this.saveTemplateForm.reset();
+    this.showSaveTemplateDialog = true;
+  }
+
+  saveTemplate(): void {
+    if (this.saveTemplateForm.invalid) {
+      this.markFormGroupTouched(this.saveTemplateForm);
+      return;
+    }
+
+    const currentChannel = this.form.get('canalNotificacao')?.value;
+    const templateData = {
+      nome: this.saveTemplateForm.get('nome')?.value,
+      descricao: this.saveTemplateForm.get('descricao')?.value || undefined,
+      conteudoHtml: this.form.get('templateNotificacao')?.value,
+      subjectEmail: this.form.get('subjectEmail')?.value || undefined,
+      variaveisObrigatoriasSistema: this.variaveisObrigatoriasSistema.length > 0
+        ? this.variaveisObrigatoriasSistema
+        : undefined,
+      canalSugerido: currentChannel
+    };
+
+    this.templateService.create(templateData).subscribe({
+      next: (template) => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Sucesso',
+          detail: `Template "${template.nome}" salvo com sucesso`
+        });
+        this.showSaveTemplateDialog = false;
+        this.loadTemplates();
+        this.selectedTemplateId = template.id;
+      },
+      error: (error) => {
+        console.error('Erro ao salvar template:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erro',
+          detail: error.error?.message || 'Erro ao salvar template'
+        });
+      }
+    });
+  }
+
+  cancelSaveTemplate(): void {
+    this.showSaveTemplateDialog = false;
+    this.saveTemplateForm.reset();
   }
 }

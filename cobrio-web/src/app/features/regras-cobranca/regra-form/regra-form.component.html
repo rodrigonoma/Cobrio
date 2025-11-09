@@ -192,10 +192,66 @@
         </div>
       </div>
 
+      <!-- Templates Salvos -->
+      <div class="col-12" *ngIf="!ehPadrao && templates.length > 0">
+        <div class="field">
+          <label for="templateSelect" class="font-semibold">
+            <i class="pi pi-file-import mr-2"></i>
+            Carregar Template Salvo
+          </label>
+          <small class="block mb-2 text-600">
+            Selecione um template salvo para carregar seu conteúdo no editor.
+          </small>
+          <p-dropdown
+            id="templateSelect"
+            [(ngModel)]="selectedTemplateId"
+            [ngModelOptions]="{standalone: true}"
+            [options]="templates"
+            optionLabel="nome"
+            optionValue="id"
+            placeholder="Selecione um template..."
+            [showClear]="true"
+            (onChange)="onTemplateSelect($event.value)"
+            class="w-full"
+            appendTo="body">
+            <ng-template pTemplate="selectedItem" let-template>
+              <div *ngIf="template">
+                <div class="font-semibold">{{ template.nome }}</div>
+                <small class="text-600" *ngIf="template.descricao">{{ template.descricao }}</small>
+              </div>
+            </ng-template>
+            <ng-template pTemplate="item" let-template>
+              <div>
+                <div class="font-semibold">{{ template.nome }}</div>
+                <small class="text-600" *ngIf="template.descricao">{{ template.descricao }}</small>
+                <div class="flex align-items-center gap-2 mt-1">
+                  <small class="text-500">
+                    <i class="pi pi-code text-xs"></i>
+                    {{ template.variaveisObrigatorias?.length || 0 }} variáveis
+                  </small>
+                  <small class="text-500" *ngIf="template.canalSugerido">
+                    <i class="pi pi-send text-xs"></i>
+                    {{ template.canalSugerido === 1 ? 'Email' : template.canalSugerido === 2 ? 'SMS' : 'WhatsApp' }}
+                  </small>
+                </div>
+              </div>
+            </ng-template>
+          </p-dropdown>
+        </div>
+      </div>
+
       <!-- Template de Notificação -->
       <div class="col-12">
         <div class="field">
-          <label for="templateNotificacao" class="font-semibold">Template HTML *</label>
+          <div class="flex justify-content-between align-items-center mb-2">
+            <label for="templateNotificacao" class="font-semibold">Template HTML *</label>
+            <button pButton type="button"
+                    label="Salvar como Template"
+                    icon="pi pi-save"
+                    class="p-button-sm p-button-outlined p-button-success"
+                    (click)="openSaveTemplateDialog()"
+                    *ngIf="!ehPadrao"></button>
+          </div>
           <small class="block mb-2 text-600">
             Crie o conteúdo da mensagem usando HTML. Campos do sistema (nome, email, telefone) são enviados separadamente.
             Use variáveis no formato {{'{{'}}NomeVariavel{{'}}'}} para dados específicos da cobrança (valor, link, código de barras, etc).
@@ -355,5 +411,71 @@
     </div>
   </form>
 </div>
+
+<!-- Dialog para Salvar Template -->
+<p-dialog
+  header="Salvar como Template"
+  [(visible)]="showSaveTemplateDialog"
+  [modal]="true"
+  [style]="{width: '500px'}"
+  [draggable]="false"
+  [resizable]="false">
+
+  <form [formGroup]="saveTemplateForm">
+    <div class="field">
+      <label for="templateNome" class="font-semibold">Nome do Template *</label>
+      <small class="block mb-2 text-600">
+        Dê um nome descritivo para identificar este template facilmente.
+      </small>
+      <input id="templateNome" type="text" pInputText
+             formControlName="nome"
+             class="w-full"
+             placeholder="Ex: Cobrança 3 dias antes"
+             autofocus>
+      <small class="p-error block mt-1" *ngIf="saveTemplateForm.get('nome')?.invalid && saveTemplateForm.get('nome')?.touched">
+        Campo obrigatório (máximo 200 caracteres)
+      </small>
+    </div>
+
+    <div class="field mt-3">
+      <label for="templateDescricao" class="font-semibold">Descrição (Opcional)</label>
+      <small class="block mb-2 text-600">
+        Adicione uma descrição para ajudar a entender quando usar este template.
+      </small>
+      <textarea id="templateDescricao" pInputTextarea
+                formControlName="descricao"
+                rows="3"
+                class="w-full"
+                placeholder="Ex: Template para cobranças enviadas 3 dias antes do vencimento"></textarea>
+      <small class="p-error block mt-1" *ngIf="saveTemplateForm.get('descricao')?.invalid && saveTemplateForm.get('descricao')?.touched">
+        Máximo de 1000 caracteres
+      </small>
+    </div>
+
+    <div class="bg-blue-50 border-1 border-blue-200 border-round p-3 mt-3">
+      <div class="font-semibold mb-2 text-blue-900">
+        <i class="pi pi-info-circle mr-2"></i>
+        O que será salvo
+      </div>
+      <ul class="text-sm text-blue-800 pl-3 mb-0">
+        <li>Conteúdo HTML do editor</li>
+        <li>Assunto do email (se preenchido)</li>
+        <li>Variáveis extraídas automaticamente</li>
+        <li>Variáveis obrigatórias do sistema</li>
+        <li>Canal de notificação sugerido</li>
+      </ul>
+    </div>
+  </form>
+
+  <ng-template pTemplate="footer">
+    <button pButton type="button" label="Cancelar" icon="pi pi-times"
+            class="p-button-text"
+            (click)="cancelSaveTemplate()"></button>
+    <button pButton type="button" label="Salvar Template" icon="pi pi-save"
+            class="p-button-success"
+            (click)="saveTemplate()"
+            [disabled]="saveTemplateForm.invalid"></button>
+  </ng-template>
+</p-dialog>
 
 <p-toast></p-toast>

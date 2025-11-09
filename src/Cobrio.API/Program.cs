@@ -67,6 +67,7 @@ builder.Services.AddScoped<ICobrancaRepository, CobrancaRepository>();
 builder.Services.AddScoped<IHistoricoNotificacaoRepository, HistoricoNotificacaoRepository>();
 builder.Services.AddScoped<IHistoricoImportacaoRepository, HistoricoImportacaoRepository>();
 builder.Services.AddScoped<IPermissaoRepository, PermissaoRepository>();
+builder.Services.AddScoped<ITemplateEmailRepository, TemplateEmailRepository>();
 
 // Application Services
 builder.Services.AddScoped<ITokenService, TokenService>();
@@ -84,6 +85,7 @@ builder.Services.AddHttpClient<BrevoEmailStatsService>();
 builder.Services.AddScoped<Cobrio.API.Services.RelatoriosService>();
 builder.Services.AddScoped<Cobrio.API.Services.RelatoriosAvancadosService>();
 builder.Services.AddScoped<IAnalyticsService, Cobrio.API.Services.AnalyticsService>();
+builder.Services.AddScoped<Cobrio.API.Services.TemplateEmailService>();
 
 // Memory Cache
 builder.Services.AddMemoryCache();
@@ -111,19 +113,21 @@ builder.Services.AddScoped<ProcessarCobrancasJob>();
 // HttpContextAccessor para multi-tenant
 builder.Services.AddHttpContextAccessor();
 
-// Hangfire
+// Hangfire - usando banco separado (recomendado)
+var hangfireConnection = builder.Configuration.GetConnectionString("HangfireConnection");
+
 builder.Services.AddHangfire(configuration => configuration
     .SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
     .UseSimpleAssemblyNameTypeSerializer()
     .UseRecommendedSerializerSettings()
     .UseStorage(new MySqlStorage(
-        connectionString,
+        hangfireConnection,
         new MySqlStorageOptions
         {
             QueuePollInterval = TimeSpan.FromSeconds(15),
             JobExpirationCheckInterval = TimeSpan.FromHours(1),
             CountersAggregateInterval = TimeSpan.FromMinutes(5),
-            PrepareSchemaIfNecessary = true,
+            PrepareSchemaIfNecessary = true, // cria tabelas automaticamente
             DashboardJobListLimit = 50000,
             TransactionTimeout = TimeSpan.FromMinutes(1),
             TablesPrefix = "Hangfire"
@@ -277,6 +281,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseSerilogRequestLogging();
 
+// CORS deve vir antes de outros middlewares que podem redirecionar
+app.UseCors("AllowAll");
+
 // Hangfire Dashboard
 app.UseHangfireDashboard("/hangfire", new DashboardOptions
 {
@@ -284,9 +291,11 @@ app.UseHangfireDashboard("/hangfire", new DashboardOptions
     DashboardTitle = "Cobrio - Background Jobs"
 });
 
-app.UseHttpsRedirection();
-
-app.UseCors("AllowAll");
+// HTTPS redirection apenas em produção para evitar problemas com CORS em desenvolvimento
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 // IMPORTANTE: ordem correta dos middlewares
 app.UseAuthentication();  // Primeiro autenticação

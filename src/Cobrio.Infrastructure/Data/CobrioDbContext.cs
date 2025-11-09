@@ -43,12 +43,32 @@ public class CobrioDbContext : DbContext
     public DbSet<Acao> Acoes { get; set; } = null!;
     public DbSet<PermissaoPerfil> PermissoesPerfil { get; set; } = null!;
 
+    // Templates
+    public DbSet<TemplateEmail> TemplatesEmail { get; set; } = null!;
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
         // Aplicar todas as configurations do assembly
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+
+        // Garantir nomenclatura consistente de tabelas em PascalCase em todos os ambientes
+        // Isso evita problemas com diferenças entre MySQL no Windows (case-insensitive) e Linux (case-sensitive)
+        foreach (var entity in modelBuilder.Model.GetEntityTypes())
+        {
+            // Ignorar owned entities (como Endereco que é owned por EmpresaCliente e Assinante)
+            if (entity.IsOwned())
+                continue;
+
+            var tableName = entity.GetTableName();
+
+            // Se a tabela não tem nome configurado explicitamente, usa o nome da classe da entidade
+            if (string.IsNullOrEmpty(tableName) || tableName != entity.ClrType.Name)
+            {
+                entity.SetTableName(entity.ClrType.Name);
+            }
+        }
 
         // Aplicar Global Query Filters para Multi-tenant
         ConfigureMultiTenantFilters(modelBuilder);

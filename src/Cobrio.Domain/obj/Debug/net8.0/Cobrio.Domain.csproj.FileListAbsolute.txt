@@ -5,8 +5,8 @@ C:\Cobrio\src\Cobrio.Domain\obj\Debug\net8.0\Cobrio.Domain.GeneratedMSBuildEdito
 C:\Cobrio\src\Cobrio.Domain\obj\Debug\net8.0\Cobrio.Domain.AssemblyInfoInputs.cache
 C:\Cobrio\src\Cobrio.Domain\obj\Debug\net8.0\Cobrio.Domain.AssemblyInfo.cs
 C:\Cobrio\src\Cobrio.Domain\obj\Debug\net8.0\Cobrio.Domain.csproj.CoreCompileInputs.cache
+C:\Cobrio\src\Cobrio.Domain\obj\Debug\net8.0\Cobrio.Domain.sourcelink.json
 C:\Cobrio\src\Cobrio.Domain\obj\Debug\net8.0\Cobrio.Domain.dll
 C:\Cobrio\src\Cobrio.Domain\obj\Debug\net8.0\refint\Cobrio.Domain.dll
 C:\Cobrio\src\Cobrio.Domain\obj\Debug\net8.0\Cobrio.Domain.pdb
 C:\Cobrio\src\Cobrio.Domain\obj\Debug\net8.0\ref\Cobrio.Domain.dll
-C:\Cobrio\src\Cobrio.Domain\obj\Debug\net8.0\Cobrio.Domain.sourcelink.json

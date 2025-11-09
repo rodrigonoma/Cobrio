@@ -11,10 +11,10 @@ C:\Cobrio\src\Cobrio.Infrastructure\obj\Debug\net8.0\Cobrio.Infrastructure.Gener
 C:\Cobrio\src\Cobrio.Infrastructure\obj\Debug\net8.0\Cobrio.Infrastructure.AssemblyInfoInputs.cache
 C:\Cobrio\src\Cobrio.Infrastructure\obj\Debug\net8.0\Cobrio.Infrastructure.AssemblyInfo.cs
 C:\Cobrio\src\Cobrio.Infrastructure\obj\Debug\net8.0\Cobrio.Infrastructure.csproj.CoreCompileInputs.cache
+C:\Cobrio\src\Cobrio.Infrastructure\obj\Debug\net8.0\Cobrio.Infrastructure.sourcelink.json
 C:\Cobrio\src\Cobrio.Infrastructure\obj\Debug\net8.0\Cobrio.I.FC86CA4C.Up2Date
 C:\Cobrio\src\Cobrio.Infrastructure\obj\Debug\net8.0\Cobrio.Infrastructure.dll
 C:\Cobrio\src\Cobrio.Infrastructure\obj\Debug\net8.0\refint\Cobrio.Infrastructure.dll
 C:\Cobrio\src\Cobrio.Infrastructure\obj\Debug\net8.0\Cobrio.Infrastructure.pdb
 C:\Cobrio\src\Cobrio.Infrastructure\obj\Debug\net8.0\Cobrio.Infrastructure.genruntimeconfig.cache
 C:\Cobrio\src\Cobrio.Infrastructure\obj\Debug\net8.0\ref\Cobrio.Infrastructure.dll
-C:\Cobrio\src\Cobrio.Infrastructure\obj\Debug\net8.0\Cobrio.Infrastructure.sourcelink.json
