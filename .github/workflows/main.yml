@@ -3,18 +3,21 @@ name: Deploy Cobrio to VPS
 on:
   push:
     branches:
-      - master  # ou master, conforme sua branch de produção
+      - master   # altere se a sua branch principal for "main"
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
+      ##############################################
+      # 1️⃣ CHECKOUT DO CÓDIGO
+      ##############################################
       - name: Checkout repository
         uses: actions/checkout@v4
 
       ##############################################
-      # FRONTEND - Build Angular
+      # 2️⃣ FRONTEND (Angular)
       ##############################################
       - name: Build Angular Frontend
         run: |
@@ -26,7 +29,7 @@ jobs:
           CI: false
 
       ##############################################
-      # BACKEND - Build .NET
+      # 3️⃣ BACKEND (.NET)
       ##############################################
       - name: Build .NET Backend
         run: |
@@ -35,46 +38,52 @@ jobs:
           dotnet publish -c Release -o publish
 
       ##############################################
-      # DEPLOY PARA VPS
+      # 4️⃣ LIMPAR DIRETÓRIOS ANTIGOS NA VPS
       ##############################################
-      - name: Deploy to VPS via SSH
+      - name: Clean target folders on VPS
         uses: appleboy/ssh-action@v0.1.8
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            echo "Parando aplicação no servidor..."
+            echo "Parando aplicação backend..."
             pm2 stop cobrio || true
-            echo "Removendo arquivos antigos..."
-            rm -rf /var/www/cobrio/frontend/*
-            rm -rf /var/www/cobrio/backend/*
-            mkdir -p /var/www/cobrio/frontend /var/www/cobrio/backend
-            echo "Servidor limpo. Aguardando upload dos novos arquivos."
+
+            echo "Limpando diretórios antigos..."
+            rm -rf /var/www/cobrio/Front/*
+            rm -rf /var/www/cobrio/Cobrio.API/*
+
+            echo "Diretórios limpos com sucesso."
+            mkdir -p /var/www/cobrio/Front
+            mkdir -p /var/www/cobrio/Cobrio.API
 
       ##############################################
-      # ENVIO DOS ARQUIVOS PARA VPS
+      # 5️⃣ UPLOAD DO FRONTEND (Angular)
       ##############################################
-      - name: Upload Frontend
+      - name: Upload Angular Frontend
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "frontend/dist/"
-          target: "/var/www/cobrio/frontend/"
+          source: "cobrio-web/dist/**"
+          target: "/var/www/cobrio/Front/"
 
-      - name: Upload Backend
+      ##############################################
+      # 6️⃣ UPLOAD DO BACKEND (.NET)
+      ##############################################
+      - name: Upload .NET Backend
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "backend/publish/"
-          target: "/var/www/cobrio/backend/"
+          source: "src/Cobrio.API/publish/**"
+          target: "/var/www/cobrio/Cobrio.API/"
 
       ##############################################
-      # REINICIAR APP NA VPS
+      # 7️⃣ REINICIAR APLICAÇÃO NO PM2
       ##############################################
       - name: Restart PM2 on VPS
         uses: appleboy/ssh-action@v0.1.8
@@ -84,7 +93,8 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             echo "Reiniciando API Cobrio..."
-            cd /var/www/cobrio/backend
-            pm2 start Cobrio.dll --name cobrio || pm2 restart cobrio
+            cd /var/www/cobrio/Cobrio.API
+            pm2 start Cobrio.API.dll --name cobrio || pm2 restart cobrio
             pm2 save
-            echo "Deploy concluído com sucesso 🚀"
+
+            echo "✅ Deploy concluído com sucesso 🚀"
