@@ -20,7 +20,7 @@ jobs:
         run: |
           cd cobrio-web
           npm install -g @angular/cli
-          npm install
+          npm install --legacy-peer-deps
           ng build --configuration production
         env:
           CI: false
