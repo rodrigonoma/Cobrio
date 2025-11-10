@@ -69,6 +69,19 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           source: "cobrio-web/dist/**"
           target: "/var/www/cobrio/Front/"
+          
+      ##############################################
+      # 5️⃣ LIMPA ARQUIVOS DO BACKEND
+      ##############################################
+      - name: Clean old backend files
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            echo "Limpando pasta antiga..."
+            rm -rf /var/www/cobrio/Cobrio.API/*
 
       ##############################################
       # 6️⃣ UPLOAD DO BACKEND (.NET)
@@ -79,8 +92,9 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "./src/Cobrio.API/publish/**"
+          source: "./src/Cobrio.API/publish/*"
           target: "/var/www/cobrio/Cobrio.API/"
+          strip_components: 3
 
       ##############################################
       # 7️⃣ REINICIAR APLICAÇÃO NO PM2
