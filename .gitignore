@@ -60,3 +60,18 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 NUL
+
+# Claude Code
+.claude/
+
+# Deploy/Publish
+publish/
+*.sh
+DEPLOY-PRODUCTION.md
+restart-production.sh
+
+# Temporary SQL scripts
+add-templates-permissions*.sql
+check-permissions.sql
+fix-permissions.sql
+remove-financeiro-module.sql
