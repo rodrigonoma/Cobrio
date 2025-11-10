@@ -3,7 +3,7 @@ name: Deploy Cobrio to VPS
 on:
   push:
     branches:
-      - main  # ou master, conforme sua branch de produção
+      - master  # ou master, conforme sua branch de produção
 
 jobs:
   build-and-deploy:
