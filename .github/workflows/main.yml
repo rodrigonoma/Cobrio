@@ -3,7 +3,7 @@ name: Deploy Cobrio to VPS
 on:
   push:
     branches:
-      - master   # altere se a sua branch principal for "main"
+      - master   # dispara o deploy ao fazer push na branch master
 
 jobs:
   build-and-deploy:
@@ -11,13 +11,13 @@ jobs:
 
     steps:
       ##############################################
-      # 1️⃣ CHECKOUT DO CÓDIGO
+      # 1️⃣ CHECKOUT DO REPOSITÓRIO
       ##############################################
       - name: Checkout repository
         uses: actions/checkout@v4
 
       ##############################################
-      # 2️⃣ FRONTEND (Angular)
+      # 2️⃣ BUILD DO FRONTEND (ANGULAR)
       ##############################################
       - name: Build Angular Frontend
         run: |
@@ -29,37 +29,33 @@ jobs:
           CI: false
 
       ##############################################
-      # 3️⃣ BACKEND (.NET)
+      # 3️⃣ BUILD DO BACKEND (.NET 8)
       ##############################################
       - name: Build .NET Backend
         run: |
           cd src/Cobrio.API
           dotnet restore
-          dotnet publish -c Release -o publish
+          dotnet publish -c Release -o ./publish
 
       ##############################################
       # 4️⃣ LIMPAR DIRETÓRIOS ANTIGOS NA VPS
       ##############################################
-      - name: Clean target folders on VPS
+      - name: Clean old files on VPS
         uses: appleboy/ssh-action@v0.1.8
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            echo "Parando aplicação backend..."
-            pm2 stop cobrio || true
-
-            echo "Limpando diretórios antigos..."
+            echo "🧹 Limpando diretórios antigos..."
             rm -rf /var/www/cobrio/Front/*
             rm -rf /var/www/cobrio/Cobrio.API/*
-
-            echo "Diretórios limpos com sucesso."
             mkdir -p /var/www/cobrio/Front
             mkdir -p /var/www/cobrio/Cobrio.API
+            echo "✅ Limpeza concluída."
 
       ##############################################
-      # 5️⃣ UPLOAD DO FRONTEND (Angular)
+      # 5️⃣ UPLOAD DO FRONTEND (ANGULAR)
       ##############################################
       - name: Upload Angular Frontend
         uses: appleboy/scp-action@v0.1.7
@@ -69,19 +65,6 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           source: "cobrio-web/dist/**"
           target: "/var/www/cobrio/Front/"
-          
-      ##############################################
-      # 5️⃣ LIMPA ARQUIVOS DO BACKEND
-      ##############################################
-      - name: Clean old backend files
-        uses: appleboy/ssh-action@v0.1.8
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          script: |
-            echo "Limpando pasta antiga..."
-            rm -rf /var/www/cobrio/Cobrio.API/*
 
       ##############################################
       # 6️⃣ UPLOAD DO BACKEND (.NET)
@@ -97,7 +80,21 @@ jobs:
           strip_components: 3
 
       ##############################################
-      # 7️⃣ REINICIAR APLICAÇÃO NO PM2
+      # 7️⃣ AJUSTAR PERMISSÕES NA VPS
+      ##############################################
+      - name: Fix permissions
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            sudo chown -R www-data:www-data /var/www/cobrio/Cobrio.API
+            sudo chmod -R 755 /var/www/cobrio/Cobrio.API
+            echo "✅ Permissões ajustadas."
+
+      ##############################################
+      # 8️⃣ REINICIAR API NO PM2
       ##############################################
       - name: Restart PM2 on VPS
         uses: appleboy/ssh-action@v0.1.8
@@ -106,9 +103,9 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            echo "Reiniciando API Cobrio..."
+            echo "🚀 Reiniciando API Cobrio..."
             cd /var/www/cobrio/Cobrio.API
-            pm2 start Cobrio.API.dll --name cobrio || pm2 restart cobrio
+            pm2 delete cobrio || true
+            pm2 start "dotnet Cobrio.API.dll" --name cobrio
             pm2 save
-
             echo "✅ Deploy concluído com sucesso 🚀"
