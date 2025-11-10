@@ -30,7 +30,7 @@ jobs:
       ##############################################
       - name: Build .NET Backend
         run: |
-          cd backend
+          cd src/Cobrio.API
           dotnet restore
           dotnet publish -c Release -o publish
 
