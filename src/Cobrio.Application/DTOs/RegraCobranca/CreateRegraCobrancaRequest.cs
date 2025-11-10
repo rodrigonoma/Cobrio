@@ -28,6 +28,9 @@ public class CreateRegraCobrancaRequest
     [Required(ErrorMessage = "Template de notificação é obrigatório")]
     public string TemplateNotificacao { get; set; } = string.Empty;
 
+    [StringLength(150, ErrorMessage = "Assunto do email deve ter no máximo 150 caracteres")]
+    public string? SubjectEmail { get; set; }
+
     /// <summary>
     /// Lista de variáveis obrigatórias do sistema (campos na raiz do JSON do webhook)
     /// </summary>

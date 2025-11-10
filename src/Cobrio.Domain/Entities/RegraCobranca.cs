@@ -78,7 +78,17 @@ public class RegraCobranca : BaseEntity
         CanalNotificacao = canalNotificacao;
         TemplateNotificacao = templateNotificacao.Trim();
         SubjectEmail = string.IsNullOrWhiteSpace(subjectEmail) ? null : subjectEmail.Trim();
-        VariaveisObrigatorias = JsonSerializer.Serialize(ExtrairVariaveis(templateNotificacao));
+
+        // Extrair variáveis do template E do subject (se houver)
+        var variaveisTemplate = ExtrairVariaveis(templateNotificacao);
+        if (!string.IsNullOrWhiteSpace(subjectEmail))
+        {
+            var variaveisSubject = ExtrairVariaveis(subjectEmail);
+            // Combinar e remover duplicatas
+            variaveisTemplate = variaveisTemplate.Union(variaveisSubject).ToList();
+        }
+        VariaveisObrigatorias = JsonSerializer.Serialize(variaveisTemplate);
+
         VariaveisObrigatoriasSistema = variaveisObrigatoriasSistema != null && variaveisObrigatoriasSistema.Any()
             ? JsonSerializer.Serialize(variaveisObrigatoriasSistema)
             : null;
@@ -188,7 +198,24 @@ public class RegraCobranca : BaseEntity
         if (!string.IsNullOrWhiteSpace(templateNotificacao))
         {
             TemplateNotificacao = templateNotificacao.Trim();
-            VariaveisObrigatorias = JsonSerializer.Serialize(ExtrairVariaveis(templateNotificacao));
+        }
+
+        if (subjectEmail != null)
+        {
+            SubjectEmail = string.IsNullOrWhiteSpace(subjectEmail) ? null : subjectEmail.Trim();
+        }
+
+        // Re-extrair variáveis se template ou subject foram atualizados
+        if (!string.IsNullOrWhiteSpace(templateNotificacao) || subjectEmail != null)
+        {
+            var variaveisTemplate = ExtrairVariaveis(TemplateNotificacao);
+            if (!string.IsNullOrWhiteSpace(SubjectEmail))
+            {
+                var variaveisSubject = ExtrairVariaveis(SubjectEmail);
+                // Combinar e remover duplicatas
+                variaveisTemplate = variaveisTemplate.Union(variaveisSubject).ToList();
+            }
+            VariaveisObrigatorias = JsonSerializer.Serialize(variaveisTemplate);
         }
 
         if (variaveisObrigatoriasSistema != null)
@@ -196,11 +223,6 @@ public class RegraCobranca : BaseEntity
             VariaveisObrigatoriasSistema = variaveisObrigatoriasSistema.Any()
                 ? JsonSerializer.Serialize(variaveisObrigatoriasSistema)
                 : null;
-        }
-
-        if (subjectEmail != null)
-        {
-            SubjectEmail = string.IsNullOrWhiteSpace(subjectEmail) ? null : subjectEmail.Trim();
         }
 
         AtualizarDataModificacao();

@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using OfficeOpenXml;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Globalization;
 
 namespace Cobrio.Application.Services;
 
@@ -239,14 +240,14 @@ public class ExcelImportService
                 }
 
                 // Validar data de vencimento
-                if (!DateTime.TryParse(dataVencimentoStr, out var dataVencimento))
+                if (!TryParseDataVencimento(dataVencimentoStr, out var dataVencimento))
                 {
                     resultado.LinhasComErro++;
                     resultado.Erros.Add(new ErroValidacaoLinha
                     {
                         NumeroLinha = row,
                         TipoErro = "Data Inválida",
-                        Descricao = "A data de vencimento não está em um formato válido. Use: YYYY-MM-DD ou YYYY-MM-DD HH:mm:ss",
+                        Descricao = "A data de vencimento não está em um formato válido. Formatos aceitos: dd/MM/yyyy HH:mm, yyyy-MM-dd HH:mm:ss, etc.",
                         ValorInvalido = dataVencimentoStr
                     });
                     _logger.LogWarning("Linha {Row} ignorada: data de vencimento inválida", row);
@@ -428,6 +429,42 @@ public class ExcelImportService
         return Regex.IsMatch(cleanPhone, phonePattern);
     }
 
+    private bool TryParseDataVencimento(string dataStr, out DateTime data)
+    {
+        data = DateTime.MinValue;
+
+        if (string.IsNullOrWhiteSpace(dataStr))
+            return false;
+
+        // Formatos aceitos
+        string[] formatos = new[]
+        {
+            "yyyy-MM-dd HH:mm:ss",
+            "yyyy-MM-dd HH:mm",
+            "yyyy-MM-dd",
+            "dd/MM/yyyy HH:mm:ss",
+            "dd/MM/yyyy HH:mm",
+            "dd/MM/yyyy",
+            "MM/dd/yyyy HH:mm:ss",
+            "MM/dd/yyyy HH:mm",
+            "MM/dd/yyyy"
+        };
+
+        // Tentar parse com formatos específicos (cultura invariante)
+        if (DateTime.TryParseExact(dataStr, formatos, CultureInfo.InvariantCulture, DateTimeStyles.None, out data))
+            return true;
+
+        // Tentar parse com cultura brasileira
+        if (DateTime.TryParse(dataStr, new CultureInfo("pt-BR"), DateTimeStyles.None, out data))
+            return true;
+
+        // Tentar parse genérico
+        if (DateTime.TryParse(dataStr, out data))
+            return true;
+
+        return false;
+    }
+
     public async Task<ImportacaoResultado> ImportarCobrancasJsonAsync(
         Guid regraCobrancaId,
         List<DTOs.Cobranca.CreateCobrancaRequest> cobrancasRequest,
@@ -468,14 +505,14 @@ public class ExcelImportService
                     continue;
                 }
 
-                if (!DateTime.TryParse(request.DataVencimento, out var dataVencimento))
+                if (!TryParseDataVencimento(request.DataVencimento, out var dataVencimento))
                 {
                     resultado.LinhasComErro++;
                     resultado.Erros.Add(new ErroValidacaoLinha
                     {
                         NumeroLinha = numeroLinha,
                         TipoErro = "Data Inválida",
-                        Descricao = $"Data de vencimento inválida: {request.DataVencimento}",
+                        Descricao = $"Data de vencimento inválida: {request.DataVencimento}. Formatos aceitos: dd/MM/yyyy HH:mm, yyyy-MM-dd HH:mm:ss, etc.",
                         ValorInvalido = request.DataVencimento
                     });
                     continue;

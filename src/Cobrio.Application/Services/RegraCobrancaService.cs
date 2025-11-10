@@ -27,7 +27,8 @@ public class RegraCobrancaService : IRegraCobrancaService
             request.CanalNotificacao,
             request.TemplateNotificacao,
             request.VariaveisObrigatoriasSistema,
-            request.Descricao
+            request.Descricao,
+            request.SubjectEmail
         );
 
         await _regraRepository.AddAsync(regra, cancellationToken);
@@ -43,7 +44,7 @@ public class RegraCobrancaService : IRegraCobrancaService
         if (regra == null)
             throw new KeyNotFoundException($"Regra de cobrança com ID {id} não encontrada");
 
-        regra.Atualizar(request.Nome, request.Descricao, request.TipoMomento, request.ValorTempo, request.UnidadeTempo, request.CanalNotificacao, request.TemplateNotificacao, request.VariaveisObrigatoriasSistema);
+        regra.Atualizar(request.Nome, request.Descricao, request.TipoMomento, request.ValorTempo, request.UnidadeTempo, request.CanalNotificacao, request.TemplateNotificacao, request.VariaveisObrigatoriasSistema, request.SubjectEmail);
 
         if (request.Ativa.HasValue)
         {
@@ -150,6 +151,7 @@ public class RegraCobrancaService : IRegraCobrancaService
             UnidadeTempo = regra.UnidadeTempo,
             CanalNotificacao = regra.CanalNotificacao,
             TemplateNotificacao = regra.TemplateNotificacao,
+            SubjectEmail = regra.SubjectEmail,
             VariaveisObrigatorias = regra.GetVariaveisObrigatorias(),
             VariaveisObrigatoriasSistema = regra.VariaveisObrigatoriasSistema,
             TokenWebhook = regra.TokenWebhook,

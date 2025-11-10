@@ -22,6 +22,9 @@ public class UpdateRegraCobrancaRequest
 
     public string? TemplateNotificacao { get; set; }
 
+    [StringLength(150)]
+    public string? SubjectEmail { get; set; }
+
     /// <summary>
     /// Lista de variáveis obrigatórias do sistema (campos na raiz do JSON do webhook)
     /// </summary>

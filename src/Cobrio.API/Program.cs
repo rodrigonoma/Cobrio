@@ -16,6 +16,12 @@ using Microsoft.OpenApi.Models;
 using Serilog;
 using System.Text;
 using OfficeOpenXml;
+using System.Globalization;
+
+// Configurar cultura padrão da aplicação (pt-BR)
+var cultureInfo = new CultureInfo("pt-BR");
+CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 
 // Configurar licença do EPPlus 8
 ExcelPackage.License.SetNonCommercialPersonal("Cobrio");

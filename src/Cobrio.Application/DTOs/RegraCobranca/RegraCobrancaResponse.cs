@@ -15,6 +15,7 @@ public class RegraCobrancaResponse
     public UnidadeTempo UnidadeTempo { get; set; }
     public CanalNotificacao CanalNotificacao { get; set; }
     public string TemplateNotificacao { get; set; } = string.Empty;
+    public string? SubjectEmail { get; set; }
     public List<string> VariaveisObrigatorias { get; set; } = new();
     public string? VariaveisObrigatoriasSistema { get; set; }
     public string TokenWebhook { get; set; } = string.Empty;
