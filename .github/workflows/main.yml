@@ -1,0 +1,90 @@
+name: Deploy Cobrio to VPS
+
+on:
+  push:
+    branches:
+      - main  # ou master, conforme sua branch de produção
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      ##############################################
+      # FRONTEND - Build Angular
+      ##############################################
+      - name: Build Angular Frontend
+        run: |
+          cd frontend
+          npm install -g @angular/cli
+          npm install
+          ng build --configuration production
+        env:
+          CI: false
+
+      ##############################################
+      # BACKEND - Build .NET
+      ##############################################
+      - name: Build .NET Backend
+        run: |
+          cd backend
+          dotnet restore
+          dotnet publish -c Release -o publish
+
+      ##############################################
+      # DEPLOY PARA VPS
+      ##############################################
+      - name: Deploy to VPS via SSH
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            echo "Parando aplicação no servidor..."
+            pm2 stop cobrio || true
+            echo "Removendo arquivos antigos..."
+            rm -rf /var/www/cobrio/frontend/*
+            rm -rf /var/www/cobrio/backend/*
+            mkdir -p /var/www/cobrio/frontend /var/www/cobrio/backend
+            echo "Servidor limpo. Aguardando upload dos novos arquivos."
+
+      ##############################################
+      # ENVIO DOS ARQUIVOS PARA VPS
+      ##############################################
+      - name: Upload Frontend
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "frontend/dist/"
+          target: "/var/www/cobrio/frontend/"
+
+      - name: Upload Backend
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "backend/publish/"
+          target: "/var/www/cobrio/backend/"
+
+      ##############################################
+      # REINICIAR APP NA VPS
+      ##############################################
+      - name: Restart PM2 on VPS
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            echo "Reiniciando API Cobrio..."
+            cd /var/www/cobrio/backend
+            pm2 start Cobrio.dll --name cobrio || pm2 restart cobrio
+            pm2 save
+            echo "Deploy concluído com sucesso 🚀"
