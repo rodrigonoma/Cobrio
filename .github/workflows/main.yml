@@ -155,7 +155,7 @@ jobs:
             echo "🚀 Reiniciando API Cobrio..."
             cd /var/www/cobrio/Cobrio.API
             pm2 delete cobrio || true
-            pm2 start Cobrio.API.dll --interpreter dotnet --name cobrio
+            pm2 start "dotnet Cobrio.API.dll --urls=http://127.0.0.1:5271" --name cobrio
             pm2 save
             echo "✅ Deploy concluído com sucesso 🚀"
 
