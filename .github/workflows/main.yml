@@ -3,78 +3,147 @@ name: Deploy Cobrio to VPS
 on:
   push:
     branches:
-      - main  # ou master, conforme sua branch de produção
+      - master   # dispara o deploy ao fazer push na branch master
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
+      ##############################################
+      # 1️⃣ CHECKOUT DO REPOSITÓRIO
+      ##############################################
       - name: Checkout repository
         uses: actions/checkout@v4
 
       ##############################################
-      # FRONTEND - Build Angular
+      # 2️⃣ BUILD DO FRONTEND (ANGULAR)
       ##############################################
       - name: Build Angular Frontend
         run: |
-          cd frontend
+          cd cobrio-web
           npm install -g @angular/cli
-          npm install
+          npm install --legacy-peer-deps
           ng build --configuration production
         env:
           CI: false
 
       ##############################################
-      # BACKEND - Build .NET
+      # 3️⃣ BUILD DO BACKEND (.NET 8)
       ##############################################
       - name: Build .NET Backend
         run: |
-          cd backend
+          cd src/Cobrio.API
           dotnet restore
-          dotnet publish -c Release -o publish
+          dotnet publish -c Release -o ./publish
 
       ##############################################
-      # DEPLOY PARA VPS
+      # 4️⃣ LIMPAR DIRETÓRIOS ANTIGOS NA VPS
       ##############################################
-      - name: Deploy to VPS via SSH
+      - name: Clean old files on VPS
         uses: appleboy/ssh-action@v0.1.8
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            echo "Parando aplicação no servidor..."
-            pm2 stop cobrio || true
-            echo "Removendo arquivos antigos..."
-            rm -rf /var/www/cobrio/frontend/*
-            rm -rf /var/www/cobrio/backend/*
-            mkdir -p /var/www/cobrio/frontend /var/www/cobrio/backend
-            echo "Servidor limpo. Aguardando upload dos novos arquivos."
+            echo "🧹 Limpando diretórios antigos..."
+            rm -rf /var/www/cobrio/Front/*
+            rm -rf /var/www/cobrio/Cobrio.API/*
+            mkdir -p /var/www/cobrio/Front
+            mkdir -p /var/www/cobrio/Cobrio.API
+            echo "✅ Limpeza concluída."
 
       ##############################################
-      # ENVIO DOS ARQUIVOS PARA VPS
+      # 5️⃣ UPLOAD DO FRONTEND (ANGULAR)
       ##############################################
-      - name: Upload Frontend
+      - name: Upload Angular Frontend
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "frontend/dist/"
-          target: "/var/www/cobrio/frontend/"
+          source: "cobrio-web/dist/**"
+          target: "/var/www/cobrio/Front/"
 
-      - name: Upload Backend
+      ##############################################
+      # 6️⃣ UPLOAD DO BACKEND (.NET)
+      ##############################################
+      - name: Upload .NET Backend
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "backend/publish/"
-          target: "/var/www/cobrio/backend/"
+          source: "./src/Cobrio.API/publish/*"
+          target: "/var/www/cobrio/Cobrio.API/"
+          strip_components: 3
 
       ##############################################
-      # REINICIAR APP NA VPS
+      # 7️⃣ AJUSTAR PERMISSÕES NA VPS
+      ##############################################
+      - name: Fix permissions
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            sudo chown -R www-data:www-data /var/www/cobrio/Cobrio.API
+            sudo chmod -R 755 /var/www/cobrio/Cobrio.API
+            echo "✅ Permissões ajustadas."
+
+      ##############################################
+      # 8️⃣ CRIAR APPSETTINGS DE PRODUCAO USANDO SECRETS
+      ##############################################
+      - name: Criar appsettings.Production.json no servidor (escapado)
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: 22
+          script: |
+            echo "🛠️ Gerando appsettings.Production.json..."
+            cat > /var/www/cobrio/Cobrio.API/appsettings.Production.json << 'EOF'
+            {
+              "ConnectionStrings": {
+                "DefaultConnection": "${{ secrets.DB_CONNECTION_STRING }}",
+                "HangfireConnection": "${{ secrets.HANGFIRE_CONNECTION_STRING }}",
+                "RedisConnection": "localhost:6379"
+              },
+              "JwtSettings": {
+                "SecretKey": "${{ secrets.JWT_SECRET_KEY }}",
+                "Issuer": "Cobrio.API",
+                "Audience": "Cobrio.Web",
+                "AccessTokenExpirationMinutes": 15,
+                "RefreshTokenExpirationDays": 7
+              },
+              "Brevo": {
+                "ApiKey": "${{ secrets.BREVO_API_KEY }}",
+                "FromEmail": "rodrigonoma@gmail.com",
+                "FromName": "Cobrio - Sistema de Cobrança"
+              },
+              "Twilio": {
+                "AccountSid": "${{ secrets.TWILIO_ACCOUNT_SID }}",
+                "AuthToken": "${{ secrets.TWILIO_AUTH_TOKEN }}",
+                "NumeroRemetente": "+5511999999999",
+                "NumeroWhatsApp": "+14155238886"
+              },
+              "Logging": {
+                "LogLevel": {
+                  "Default": "Information",
+                  "Microsoft.AspNetCore": "Warning",
+                  "Microsoft.EntityFrameworkCore": "Information"
+                }
+              },
+              "AllowedHosts": "*"
+            }
+            EOF
+            echo "✅ appsettings.Production.json criado com sucesso!"
+
+      ##############################################
+      # 8️⃣ REINICIAR API NO PM2
       ##############################################
       - name: Restart PM2 on VPS
         uses: appleboy/ssh-action@v0.1.8
@@ -83,8 +152,10 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            echo "Reiniciando API Cobrio..."
-            cd /var/www/cobrio/backend
-            pm2 start Cobrio.dll --name cobrio || pm2 restart cobrio
+            echo "🚀 Reiniciando API Cobrio..."
+            cd /var/www/cobrio/Cobrio.API
+            pm2 delete cobrio || true
+            pm2 start "dotnet Cobrio.API.dll --urls=http://127.0.0.1:5271" --name cobrio
             pm2 save
-            echo "Deploy concluído com sucesso 🚀"
+            echo "✅ Deploy concluído com sucesso 🚀"
+
