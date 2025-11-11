@@ -96,7 +96,7 @@ jobs:
       ##############################################
       # 8️⃣ CRIAR APPSETTINGS DE PRODUCAO USANDO SECRETS
       ##############################################
-      - name: Criar appsettings.Production.json no servidor
+      - name: Criar appsettings.Production.json no servidor (escapado)
         uses: appleboy/ssh-action@v0.1.8
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -104,8 +104,8 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: 22
           script: |
-            echo "🛠️ Criando appsettings.Production.json..."
-            cat <<EOF > /var/www/cobrio/Cobrio.API/appsettings.Production.json
+            echo "🛠️ Gerando appsettings.Production.json..."
+            cat > /var/www/cobrio/Cobrio.API/appsettings.Production.json << 'EOF'
             {
               "ConnectionStrings": {
                 "DefaultConnection": "${{ secrets.DB_CONNECTION_STRING }}",
