@@ -36,6 +36,7 @@ public class CobrioDbContext : DbContext
     public DbSet<RegraCobranca> RegrasCobranca { get; set; } = null!;
     public DbSet<Cobranca> Cobrancas { get; set; } = null!;
     public DbSet<HistoricoNotificacao> HistoricosNotificacao { get; set; } = null!;
+    public DbSet<HistoricoStatusNotificacao> HistoricosStatusNotificacao { get; set; } = null!;
     public DbSet<HistoricoImportacao> HistoricosImportacao { get; set; } = null!;
 
     // Permissões

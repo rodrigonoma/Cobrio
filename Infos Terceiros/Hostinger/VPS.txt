@@ -58,3 +58,66 @@ Para:
 *******************************************************************
 
 Email Mario: mario.borges@cobrio.com.br / @Cobrio2025
+
+********************************************************************
+id_rsa - gerado para executar actions no github
+
+-----BEGIN OPENSSH PRIVATE KEY-----
+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
+-----END OPENSSH PRIVATE KEY-----
+
+recuperar o servidor VPS em caso de desastre
+No ssh
+cd /root
+tar -xzvf cobrio_backup_YYYYMMDD_HHMM.tar.gz
+sudo cp -r backup_nginx_cobrio_YYYYMMDD_HHMM/sites-available/* /etc/nginx/sites-available/
+sudo cp -r backup_nginx_cobrio_YYYYMMDD_HHMM/sites-enabled/* /etc/nginx/sites-enabled/
+sudo cp -r backup_nginx_cobrio_YYYYMMDD_HHMM/appsettings*.json /var/www/cobrio/Cobrio.API/
+sudo systemctl reload nginx
+pm2 restart cobrio

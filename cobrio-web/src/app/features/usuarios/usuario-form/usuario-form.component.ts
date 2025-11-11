@@ -139,13 +139,17 @@ export class UsuarioFormComponent implements OnInit {
 
     this.usuarioService.create(request).subscribe({
       next: () => {
+        this.loading = false;
         this.messageService.add({
           severity: 'success',
           summary: 'Sucesso',
           detail: 'Usuário criado com sucesso'
         });
-        this.loading = false;
-        this.voltar();
+
+        // Aguardar 1 segundo para o usuário ver a mensagem antes de navegar
+        setTimeout(() => {
+          this.voltar();
+        }, 1000);
       },
       error: (error) => {
         console.error('Erro ao criar usuário:', error);
@@ -171,13 +175,17 @@ export class UsuarioFormComponent implements OnInit {
 
     this.usuarioService.update(this.usuarioId, request).subscribe({
       next: () => {
+        this.loading = false;
         this.messageService.add({
           severity: 'success',
           summary: 'Sucesso',
           detail: 'Usuário atualizado com sucesso'
         });
-        this.loading = false;
-        this.voltar();
+
+        // Aguardar 1 segundo para o usuário ver a mensagem antes de navegar
+        setTimeout(() => {
+          this.voltar();
+        }, 1000);
       },
       error: (error) => {
         console.error('Erro ao atualizar usuário:', error);

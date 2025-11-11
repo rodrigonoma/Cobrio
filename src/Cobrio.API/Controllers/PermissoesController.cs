@@ -108,6 +108,7 @@ public class PermissoesController : ControllerBase
                 ["assinaturas"] = new[] { "menu.view", "read", "create", "delete" },
                 ["planos"] = new[] { "menu.view", "read", "create", "update", "delete", "toggle" },
                 ["regras-cobranca"] = new[] { "menu.view", "read", "create", "update", "delete", "export", "import" },
+                ["logs-notificacoes"] = new[] { "menu.view", "read", "read.details", "export" },
                 ["usuarios"] = new[] { "menu.view", "create", "update", "delete", "reset-password" },
                 ["templates"] = new[] { "menu.view", "read", "read.details", "create", "update", "delete" },
                 ["relatorios"] = new[] { "menu.view", "read", "export" },

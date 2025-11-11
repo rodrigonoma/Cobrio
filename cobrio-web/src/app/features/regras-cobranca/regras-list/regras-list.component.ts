@@ -296,8 +296,12 @@ export class RegrasListComponent implements OnInit {
   mostrarExemploPayload(regra: RegraCobranca): void {
     this.selectedRegra = regra;
 
-    // Extrair todas as variáveis do template
-    const todasVariaveis = this.extrairVariaveis(regra.templateNotificacao);
+    // Extrair todas as variáveis do template E do subject
+    const variaveisTemplate = this.extrairVariaveis(regra.templateNotificacao);
+    const variaveisSubject = this.extrairVariaveis(regra.subjectEmail || '');
+
+    // Combinar e remover duplicatas
+    const todasVariaveis = [...new Set([...variaveisTemplate, ...variaveisSubject])].sort();
 
     // Filtrar variáveis que já estão nos campos obrigatórios do sistema
     const camposObrigatorios = regra.variaveisObrigatoriasSistema
@@ -451,6 +455,28 @@ export class RegrasListComponent implements OnInit {
         summary: 'Erro',
         detail: 'Erro ao copiar JSON'
       });
+    });
+  }
+
+  usarExemploAgora(): void {
+    // Preencher o campo JSON com o exemplo
+    this.jsonInput = this.exemploPayloadJson;
+
+    // Selecionar o tipo JSON
+    this.tipoImportacao = 'json';
+
+    // Fechar o modal de exemplo
+    this.displayPayloadDialog = false;
+
+    // Abrir o modal de envio em massa
+    this.displayImportDialog = true;
+
+    // Mostrar mensagem de sucesso
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Exemplo Carregado',
+      detail: 'JSON de exemplo carregado! Você pode editá-lo antes de importar.',
+      life: 5000
     });
   }
 

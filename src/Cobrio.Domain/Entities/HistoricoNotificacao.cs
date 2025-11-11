@@ -29,10 +29,36 @@ public class HistoricoNotificacao : BaseEntity
     // Resposta do provedor (SendGrid, Twilio, etc)
     public string? RespostaProvedor { get; private set; }
 
+    // === Campos para rastreamento de eventos do Brevo ===
+
+    // ID da mensagem no Brevo (para correlacionar eventos)
+    public string? MessageIdProvedor { get; private set; }
+
+    // Rastreamento de aberturas
+    public int QuantidadeAberturas { get; private set; }
+    public DateTime? DataPrimeiraAbertura { get; private set; }
+    public DateTime? DataUltimaAbertura { get; private set; }
+    public string? IpAbertura { get; private set; }
+    public string? UserAgentAbertura { get; private set; }
+
+    // Rastreamento de cliques
+    public int QuantidadeCliques { get; private set; }
+    public DateTime? DataPrimeiroClique { get; private set; }
+    public DateTime? DataUltimoClique { get; private set; }
+    public string? LinkClicado { get; private set; }
+
+    // Detalhes de bounce/erro
+    public string? MotivoRejeicao { get; private set; }
+    public string? CodigoErroProvedor { get; private set; }
+
     // Navegação
     public Cobranca Cobranca { get; private set; } = null!;
     public RegraCobranca RegraCobranca { get; private set; } = null!;
     public EmpresaCliente EmpresaCliente { get; private set; } = null!;
+
+    // Timeline de mudanças de status
+    private readonly List<HistoricoStatusNotificacao> _historicoStatus = new();
+    public IReadOnlyCollection<HistoricoStatusNotificacao> HistoricoStatus => _historicoStatus.AsReadOnly();
 
     // Construtor para EF Core
     private HistoricoNotificacao() { }
@@ -115,5 +141,121 @@ public class HistoricoNotificacao : BaseEntity
             StatusNotificacao.Falha,
             mensagemErro,
             respostaProvedor);
+    }
+
+    // === Métodos para processar eventos do webhook ===
+
+    public void RegistrarMessageId(string messageId)
+    {
+        if (string.IsNullOrWhiteSpace(messageId))
+            return;
+
+        MessageIdProvedor = messageId;
+        AtualizarDataModificacao();
+    }
+
+    public void AtualizarStatus(StatusNotificacao novoStatus, string? motivoRejeicao = null, string? codigoErro = null)
+    {
+        var statusAnterior = Status;
+
+        // Só registra mudança se for diferente
+        if (statusAnterior != novoStatus)
+        {
+            var detalhes = new List<string>();
+            if (!string.IsNullOrWhiteSpace(motivoRejeicao))
+                detalhes.Add($"Motivo: {motivoRejeicao}");
+            if (!string.IsNullOrWhiteSpace(codigoErro))
+                detalhes.Add($"Código: {codigoErro}");
+
+            // Registrar na timeline
+            var mudanca = HistoricoStatusNotificacao.Criar(
+                this.Id,
+                statusAnterior,
+                novoStatus,
+                detalhes.Count > 0 ? string.Join(", ", detalhes) : null
+            );
+            _historicoStatus.Add(mudanca);
+
+            Status = novoStatus;
+        }
+
+        if (!string.IsNullOrWhiteSpace(motivoRejeicao))
+            MotivoRejeicao = motivoRejeicao;
+
+        if (!string.IsNullOrWhiteSpace(codigoErro))
+            CodigoErroProvedor = codigoErro;
+
+        AtualizarDataModificacao();
+    }
+
+    public void RegistrarAbertura(DateTime dataAbertura, string? ip = null, string? userAgent = null)
+    {
+        QuantidadeAberturas++;
+
+        if (DataPrimeiraAbertura == null)
+            DataPrimeiraAbertura = dataAbertura;
+
+        DataUltimaAbertura = dataAbertura;
+
+        if (!string.IsNullOrWhiteSpace(ip))
+            IpAbertura = ip;
+
+        if (!string.IsNullOrWhiteSpace(userAgent))
+            UserAgentAbertura = userAgent;
+
+        // Atualizar status se ainda não foi marcado como aberto
+        if (Status != StatusNotificacao.Aberto && Status != StatusNotificacao.Clicado)
+        {
+            var statusAnterior = Status;
+            Status = StatusNotificacao.Aberto;
+
+            // Registrar mudança na timeline
+            var mudanca = HistoricoStatusNotificacao.Criar(
+                this.Id,
+                statusAnterior,
+                StatusNotificacao.Aberto,
+                $"Email aberto {QuantidadeAberturas}x",
+                ip,
+                userAgent
+            );
+            _historicoStatus.Add(mudanca);
+        }
+
+        AtualizarDataModificacao();
+    }
+
+    public void RegistrarClique(DateTime dataClique, string? link = null)
+    {
+        QuantidadeCliques++;
+
+        if (DataPrimeiroClique == null)
+            DataPrimeiroClique = dataClique;
+
+        DataUltimoClique = dataClique;
+
+        if (!string.IsNullOrWhiteSpace(link))
+            LinkClicado = link;
+
+        // Atualizar status para clicado (mais engajado que apenas aberto)
+        if (Status != StatusNotificacao.Clicado)
+        {
+            var statusAnterior = Status;
+            Status = StatusNotificacao.Clicado;
+
+            // Registrar mudança na timeline
+            var detalhes = $"Link clicado {QuantidadeCliques}x";
+            if (!string.IsNullOrWhiteSpace(link))
+                detalhes += $": {link}";
+
+            var mudanca = HistoricoStatusNotificacao.Criar(
+                this.Id,
+                statusAnterior,
+                StatusNotificacao.Clicado,
+                detalhes
+            );
+            _historicoStatus.Add(mudanca);
+        }
+
+        AtualizarDataModificacao();
     }
 }

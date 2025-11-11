@@ -1,0 +1,269 @@
+<p-dialog
+  [(visible)]="displayValue"
+  [modal]="true"
+  [style]="{width: '1000px', maxHeight: '90vh'}"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="log-detail-modal-disruptive"
+>
+  <ng-template pTemplate="header">
+    <div class="modal-header-disruptive">
+      <div class="header-icon-wrapper">
+        <i [class]="getCanalIcon(log.canalUtilizado)" class="header-icon"></i>
+      </div>
+      <div class="header-content">
+        <h2>Timeline de Notificação</h2>
+        <p>{{ log.emailDestinatario || log.telefoneDestinatario }}</p>
+      </div>
+      <p-tag
+        [severity]="getStatusSeverity(log.status)"
+        [value]="log.statusTexto"
+        [icon]="getStatusIcon(log.status)"
+        styleClass="status-tag-large"
+      ></p-tag>
+    </div>
+  </ng-template>
+
+  <div class="modal-body-disruptive" *ngIf="log">
+
+    <!-- 🎯 DASHBOARD DE MÉTRICAS -->
+    <div class="metrics-dashboard">
+      <div class="metric-card engagement-card" [class.excellent]="getEngajamentoScore() === 100" [class.good]="getEngajamentoScore() >= 50 && getEngajamentoScore() < 100">
+        <div class="metric-icon">
+          <i class="pi pi-chart-line"></i>
+        </div>
+        <div class="metric-content">
+          <div class="metric-value">{{ getEngajamentoScore() }}%</div>
+          <div class="metric-label">
+            Engajamento
+            <i class="pi pi-question-circle help-icon"
+               pTooltip="Score de interação: +50% se abriu o email, +50% se clicou em links. Máximo: 100%"
+               tooltipPosition="top"></i>
+          </div>
+          <div class="metric-sublabel">{{ getEngajamentoLabel() }}</div>
+        </div>
+      </div>
+
+      <div class="metric-card opens-card" [class.active]="log.quantidadeAberturas > 0">
+        <div class="metric-icon">
+          <i class="pi pi-envelope-open"></i>
+        </div>
+        <div class="metric-content">
+          <div class="metric-value">{{ log.quantidadeAberturas }}</div>
+          <div class="metric-label">
+            Aberturas
+            <i class="pi pi-question-circle help-icon"
+               pTooltip="Quantidade de vezes que o email foi aberto pelo destinatário"
+               tooltipPosition="top"></i>
+          </div>
+          <div class="metric-sublabel">{{ getTaxaAbertura() }}%</div>
+        </div>
+      </div>
+
+      <div class="metric-card clicks-card" [class.active]="log.quantidadeCliques > 0">
+        <div class="metric-icon">
+          <i class="pi pi-external-link"></i>
+        </div>
+        <div class="metric-content">
+          <div class="metric-value">{{ log.quantidadeCliques }}</div>
+          <div class="metric-label">
+            Cliques
+            <i class="pi pi-question-circle help-icon"
+               pTooltip="Quantidade de cliques em links do email. CTR = (Cliques ÷ Aberturas) × 100%"
+               tooltipPosition="top"></i>
+          </div>
+          <div class="metric-sublabel">{{ getTaxaClique() }}% CTR</div>
+        </div>
+      </div>
+
+      <div class="metric-card events-card">
+        <div class="metric-icon">
+          <i class="pi pi-history"></i>
+        </div>
+        <div class="metric-content">
+          <div class="metric-value">{{ timeline.length }}</div>
+          <div class="metric-label">
+            Eventos
+            <i class="pi pi-question-circle help-icon"
+               pTooltip="Quantidade de eventos registrados na linha do tempo (enviado, entregue, aberto, clicado)"
+               tooltipPosition="top"></i>
+          </div>
+          <div class="metric-sublabel">Registrados</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 📅 TIMELINE VERTICAL INTERATIVA -->
+    <div class="timeline-section">
+      <div class="section-header">
+        <h3><i class="pi pi-clock"></i> Linha do Tempo</h3>
+        <p>Acompanhe a jornada completa da notificação</p>
+      </div>
+
+      <div class="timeline-container">
+        <div
+          *ngFor="let event of timeline; let i = index; let last = last"
+          class="timeline-event"
+          [class.selected]="selectedEvent?.id === event.id"
+          [class.clickable]="event.ipOrigem || event.userAgent"
+          (click)="selectEvent(event)"
+        >
+          <!-- Connector Line -->
+          <div class="timeline-connector" *ngIf="!last">
+            <div class="connector-line" [style.background]="event.color"></div>
+          </div>
+
+          <!-- Event Card -->
+          <div class="event-card" [style.border-color]="event.color">
+            <div class="event-icon" [style.background]="event.color">
+              <i [class]="event.icon"></i>
+            </div>
+
+            <div class="event-content">
+              <div class="event-header">
+                <div class="event-title">{{ event.statusNovoTexto }}</div>
+                <div class="event-time">{{ getTempoRelativo(event.dataMudanca) }}</div>
+              </div>
+
+              <div class="event-details">
+                <div class="event-timestamp">
+                  <i class="pi pi-calendar"></i>
+                  {{ formatDate(event.dataMudanca) }}
+                </div>
+                <div class="event-description" *ngIf="event.detalhes">
+                  {{ event.detalhes }}
+                </div>
+              </div>
+
+              <!-- Expandable Technical Details -->
+              <div class="event-tech-details" *ngIf="selectedEvent?.id === event.id && (event.ipOrigem || event.userAgent)">
+                <div class="tech-detail-item" *ngIf="event.ipOrigem">
+                  <i class="pi pi-globe"></i>
+                  <span><strong>IP:</strong> {{ event.ipOrigem }}</span>
+                </div>
+                <div class="tech-detail-item" *ngIf="event.userAgent">
+                  <i class="pi pi-desktop"></i>
+                  <span><strong>User Agent:</strong> {{ event.userAgent }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🔗 INFORMAÇÕES ADICIONAIS -->
+    <div class="additional-info" *ngIf="log.linkClicado || log.assunto">
+      <div class="info-card link-card" *ngIf="log.linkClicado">
+        <div class="info-icon">
+          <i class="pi pi-link"></i>
+        </div>
+        <div class="info-content">
+          <div class="info-label">Link Clicado</div>
+          <a [href]="log.linkClicado" target="_blank" class="info-link">
+            {{ log.linkClicado }}
+            <i class="pi pi-external-link"></i>
+          </a>
+        </div>
+      </div>
+
+      <div class="info-card subject-card" *ngIf="log.assunto">
+        <div class="info-icon">
+          <i class="pi pi-envelope"></i>
+        </div>
+        <div class="info-content">
+          <div class="info-label">Assunto do Email</div>
+          <div class="info-value">{{ log.assunto }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ⚠️ ALERTAS E ERROS -->
+    <div class="error-alert" *ngIf="hasError()">
+      <div class="alert-header">
+        <i class="pi pi-exclamation-triangle"></i>
+        <span>Ocorreram problemas no envio</span>
+      </div>
+      <div class="alert-content">
+        <div class="alert-item" *ngIf="log.mensagemErro">
+          <strong>Erro:</strong> {{ log.mensagemErro }}
+        </div>
+        <div class="alert-item" *ngIf="log.motivoRejeicao">
+          <strong>Motivo:</strong> {{ log.motivoRejeicao }}
+        </div>
+        <div class="alert-item" *ngIf="log.codigoErroProvedor">
+          <strong>Código:</strong> {{ log.codigoErroProvedor }}
+        </div>
+      </div>
+    </div>
+
+    <!-- 🔧 INFORMAÇÕES TÉCNICAS (Collapsible) -->
+    <div class="technical-info">
+      <p-accordion>
+        <p-accordionTab>
+          <ng-template pTemplate="header">
+            <i class="pi pi-cog"></i>
+            <span>Informações Técnicas e IDs</span>
+          </ng-template>
+          <div class="tech-grid">
+            <div class="tech-item">
+              <label>Cobrança ID</label>
+              <code>{{ log.cobrancaId }}</code>
+            </div>
+            <div class="tech-item">
+              <label>Regra ID</label>
+              <code>{{ log.regraCobrancaId }}</code>
+            </div>
+            <div class="tech-item">
+              <label>Regra Nome</label>
+              <code>{{ log.nomeRegra }}</code>
+            </div>
+            <div class="tech-item" *ngIf="log.messageIdProvedor">
+              <label>Message ID (Brevo)</label>
+              <code>{{ log.messageIdProvedor }}</code>
+            </div>
+            <div class="tech-item">
+              <label>Data de Envio</label>
+              <code>{{ formatDate(log.dataEnvio) }}</code>
+            </div>
+            <div class="tech-item" *ngIf="log.dataPrimeiraAbertura">
+              <label>Primeira Abertura</label>
+              <code>{{ formatDate(log.dataPrimeiraAbertura) }}</code>
+            </div>
+            <div class="tech-item" *ngIf="log.dataUltimaAbertura">
+              <label>Última Abertura</label>
+              <code>{{ formatDate(log.dataUltimaAbertura) }}</code>
+            </div>
+            <div class="tech-item" *ngIf="log.dataPrimeiroClique">
+              <label>Primeiro Clique</label>
+              <code>{{ formatDate(log.dataPrimeiroClique) }}</code>
+            </div>
+            <div class="tech-item" *ngIf="log.dataUltimoClique">
+              <label>Último Clique</label>
+              <code>{{ formatDate(log.dataUltimoClique) }}</code>
+            </div>
+            <div class="tech-item" *ngIf="log.ipAbertura">
+              <label>IP de Abertura</label>
+              <code>{{ log.ipAbertura }}</code>
+            </div>
+            <div class="tech-item" *ngIf="log.userAgentAbertura">
+              <label>User Agent</label>
+              <code class="full-width">{{ log.userAgentAbertura }}</code>
+            </div>
+          </div>
+        </p-accordionTab>
+      </p-accordion>
+    </div>
+
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      label="Fechar"
+      icon="pi pi-times"
+      class="p-button-secondary"
+      (click)="displayValue = false"
+    ></button>
+  </ng-template>
+</p-dialog>

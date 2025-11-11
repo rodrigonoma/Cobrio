@@ -18,19 +18,22 @@ public class ExcelImportService
     private readonly ICobrancaRepository _cobrancaRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IHistoricoImportacaoRepository _historicoRepository;
+    private readonly ICurrentUserService _currentUserService;
 
     public ExcelImportService(
         ILogger<ExcelImportService> logger,
         IRegraCobrancaRepository regraRepository,
         ICobrancaRepository cobrancaRepository,
         IUnitOfWork unitOfWork,
-        IHistoricoImportacaoRepository historicoRepository)
+        IHistoricoImportacaoRepository historicoRepository,
+        ICurrentUserService currentUserService)
     {
         _logger = logger;
         _regraRepository = regraRepository;
         _cobrancaRepository = cobrancaRepository;
         _unitOfWork = unitOfWork;
         _historicoRepository = historicoRepository;
+        _currentUserService = currentUserService;
     }
 
     public async Task<byte[]> GerarModeloExcelAsync(Guid regraCobrancaId, CancellationToken cancellationToken = default)
@@ -304,6 +307,12 @@ public class ExcelImportService
                         regra.UnidadeTempo,
                         regra.EhPadrao);
 
+                    // Auditoria: Definir usuário de criação
+                    if (_currentUserService.UserId.HasValue)
+                    {
+                        cobranca.DefinirUsuarioCriacao(_currentUserService.UserId.Value);
+                    }
+
                     cobrancas.Add(cobranca);
                     resultado.LinhasProcessadas++;
                 }
@@ -366,7 +375,7 @@ public class ExcelImportService
         var historico = new HistoricoImportacao(
             regraCobrancaId,
             regra.EmpresaClienteId,
-            null, // UsuarioId - pode ser obtido do contexto HTTP se disponível
+            _currentUserService.UserId, // Auditoria: usuário que realizou a importação
             nomeArquivo,
             totalLinhas,
             resultado.LinhasProcessadas,
@@ -587,6 +596,12 @@ public class ExcelImportService
                         regra.UnidadeTempo,
                         regra.EhPadrao);
 
+                    // Auditoria: Definir usuário de criação
+                    if (_currentUserService.UserId.HasValue)
+                    {
+                        cobranca.DefinirUsuarioCriacao(_currentUserService.UserId.Value);
+                    }
+
                     cobrancas.Add(cobranca);
                     resultado.LinhasProcessadas++;
                 }
@@ -641,7 +656,7 @@ public class ExcelImportService
         var historico = new HistoricoImportacao(
             regraCobrancaId,
             regra.EmpresaClienteId,
-            null,
+            _currentUserService.UserId, // Auditoria: usuário que realizou a importação
             $"importacao-json-{DateTime.Now:yyyyMMdd-HHmmss}.json",
             totalLinhas,
             resultado.LinhasProcessadas,

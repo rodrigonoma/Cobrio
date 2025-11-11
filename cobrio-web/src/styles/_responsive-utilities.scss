@@ -1,0 +1,421 @@
+// ========================================
+// Responsive Utilities - Cobrio
+// ========================================
+
+@import 'variables';
+@import 'mixins';
+
+// === PrimeNG Dialog Responsivo ===
+// Sobrescreve estilos padrão do PrimeNG para melhor UX mobile
+
+.p-dialog {
+  @include mobile-only {
+    width: calc(100vw - #{$spacing-md}) !important;
+    max-width: calc(100vw - #{$spacing-md}) !important;
+    max-height: 90vh !important;
+    margin: $spacing-sm !important;
+  }
+
+  .p-dialog-header {
+    @include mobile-only {
+      padding: $spacing-md;
+
+      .p-dialog-title {
+        font-size: $font-size-lg;
+      }
+
+      .p-dialog-header-icon {
+        @include touch-target;
+      }
+    }
+  }
+
+  .p-dialog-content {
+    @include mobile-only {
+      padding: $spacing-md;
+      max-height: calc(90vh - 140px);
+      overflow-y: auto;
+
+      @include custom-scrollbar;
+    }
+  }
+
+  .p-dialog-footer {
+    @include mobile-only {
+      padding: $spacing-md;
+      flex-direction: column-reverse;
+      gap: $spacing-sm;
+
+      button {
+        width: 100%;
+        justify-content: center;
+        @include touch-target;
+      }
+    }
+  }
+}
+
+// === PrimeNG Table Responsivo ===
+
+.p-datatable {
+  @include mobile-only {
+    font-size: $font-size-sm;
+
+    .p-datatable-header {
+      padding: $spacing-sm;
+    }
+
+    .p-datatable-thead > tr > th {
+      padding: $spacing-sm;
+      font-size: $font-size-xs;
+    }
+
+    .p-datatable-tbody > tr > td {
+      padding: $spacing-sm;
+      font-size: $font-size-sm;
+    }
+
+    // Esconder colunas menos importantes em mobile (adicionar classe .hide-mobile)
+    .hide-mobile {
+      display: none !important;
+    }
+  }
+}
+
+// Wrapper para tornar tabelas scrolláveis horizontalmente em mobile
+.table-responsive-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch; // Smooth scrolling no iOS
+
+  @include mobile-only {
+    @include custom-scrollbar(6px);
+    margin: 0 calc(-1 * #{$spacing-md});
+    padding: 0 $spacing-md;
+  }
+}
+
+// === Card-based Table Alternative para Mobile ===
+// Usa quando a tabela tem muitas colunas
+
+.table-card-view {
+  display: none;
+
+  @include mobile-only {
+    display: block;
+  }
+
+  .table-card {
+    background: $bg-white;
+    border-radius: $radius-base;
+    padding: $spacing-md;
+    margin-bottom: $spacing-md;
+    box-shadow: $shadow-sm;
+    border: 1px solid $border-light;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  .card-row {
+    @include flex-between;
+    padding: $spacing-sm 0;
+    border-bottom: 1px solid $border-lighter;
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  .card-label {
+    font-weight: 600;
+    color: $text-medium;
+    font-size: $font-size-xs;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .card-value {
+    font-size: $font-size-sm;
+    color: $text-dark;
+    text-align: right;
+  }
+}
+
+// Esconder tabela tradicional em mobile quando usando card view
+.table-card-view + .p-datatable {
+  @include mobile-only {
+    display: none !important;
+  }
+}
+
+// === Buttons Touch-Friendly ===
+
+.p-button {
+  @include mobile-only {
+    @include touch-target;
+
+    &:not(.p-button-icon-only) {
+      padding: 0.75rem 1.25rem;
+    }
+  }
+}
+
+.p-button-group {
+  @include mobile-only {
+    flex-direction: column;
+    width: 100%;
+
+    .p-button {
+      width: 100%;
+      border-radius: $radius-base !important;
+      margin-bottom: $spacing-xs;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+}
+
+// === Dropdown & MultiSelect ===
+
+.p-dropdown,
+.p-multiselect {
+  @include mobile-only {
+    width: 100% !important;
+    @include touch-target;
+  }
+}
+
+.p-dropdown-panel,
+.p-multiselect-panel {
+  @include mobile-only {
+    max-width: calc(100vw - #{$spacing-md}) !important;
+  }
+}
+
+// === Input Fields ===
+
+.p-inputtext,
+.p-inputtextarea,
+.p-calendar input {
+  @include mobile-only {
+    font-size: $font-size-base !important; // Previne zoom no iOS
+    @include touch-target;
+  }
+}
+
+// === Toast / Messages ===
+
+.p-toast {
+  @include mobile-only {
+    width: calc(100vw - #{$spacing-md}) !important;
+    max-width: calc(100vw - #{$spacing-md}) !important;
+
+    &.p-toast-top-right,
+    &.p-toast-top-left,
+    &.p-toast-bottom-right,
+    &.p-toast-bottom-left {
+      left: 50% !important;
+      transform: translateX(-50%);
+    }
+
+    &.p-toast-top-right,
+    &.p-toast-top-left {
+      top: $spacing-md !important;
+    }
+
+    &.p-toast-bottom-right,
+    &.p-toast-bottom-left {
+      bottom: $spacing-md !important;
+    }
+
+    .p-toast-message {
+      margin: $spacing-xs 0;
+    }
+  }
+}
+
+// === Form Grid Responsivo ===
+
+.form-grid {
+  display: grid;
+  gap: $spacing-md;
+  grid-template-columns: repeat(2, 1fr);
+
+  @include mobile-only {
+    grid-template-columns: 1fr;
+    gap: $spacing-sm;
+  }
+
+  &.cols-3 {
+    grid-template-columns: repeat(3, 1fr);
+
+    @include mobile-only {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &.cols-4 {
+    grid-template-columns: repeat(4, 1fr);
+
+    @include respond-below($breakpoint-lg) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @include mobile-only {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+
+  label {
+    font-weight: 600;
+    font-size: $font-size-sm;
+    color: $text-medium;
+  }
+
+  small {
+    font-size: $font-size-xs;
+    color: $text-light;
+  }
+}
+
+// === Utility Classes ===
+
+// Esconder em mobile
+.hide-on-mobile {
+  @include mobile-only {
+    display: none !important;
+  }
+}
+
+// Mostrar apenas em mobile
+.show-on-mobile {
+  display: none !important;
+
+  @include mobile-only {
+    display: block !important;
+  }
+}
+
+// Stack em mobile
+.stack-on-mobile {
+  @include mobile-only {
+    @include flex-column;
+    gap: $spacing-sm;
+
+    > * {
+      width: 100%;
+    }
+  }
+}
+
+// Full width em mobile
+.full-width-mobile {
+  @include mobile-only {
+    width: 100% !important;
+  }
+}
+
+// Touch-friendly spacing
+.touch-spacing {
+  @include mobile-only {
+    margin: $spacing-md 0;
+
+    &:first-child {
+      margin-top: 0;
+    }
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+// === Safe Area (para dispositivos com notch) ===
+
+.safe-area-top {
+  @include safe-area-top;
+}
+
+.safe-area-bottom {
+  @include safe-area-bottom;
+}
+
+.safe-area-padding {
+  @include safe-area-padding;
+}
+
+// === Container Responsivo ===
+
+.container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 $spacing-xl;
+
+  @include mobile-only {
+    padding: 0 $spacing-md;
+  }
+}
+
+.container-fluid {
+  width: 100%;
+  padding: 0 $spacing-xl;
+
+  @include mobile-only {
+    padding: 0 $spacing-md;
+  }
+}
+
+// === Spacing Utilities ===
+
+.section-spacing {
+  padding: $spacing-2xl 0;
+
+  @include mobile-only {
+    padding: $spacing-xl 0;
+  }
+}
+
+.card-spacing {
+  padding: $spacing-xl;
+
+  @include mobile-only {
+    padding: $spacing-md;
+  }
+}
+
+// === Typography Responsive ===
+
+.heading-responsive {
+  font-size: $font-size-3xl;
+  line-height: 1.2;
+
+  @include mobile-only {
+    font-size: $font-size-2xl;
+  }
+}
+
+.subheading-responsive {
+  font-size: $font-size-2xl;
+  line-height: 1.3;
+
+  @include mobile-only {
+    font-size: $font-size-xl;
+  }
+}
+
+// === Print Utilities ===
+
+.no-print {
+  @include print-hidden;
+}

@@ -25,13 +25,14 @@ public class PermissaoSeeder
             new Modulo("Assinaturas", "assinaturas", "Gerenciar assinaturas de clientes", "pi-users", "/assinaturas", 2),
             new Modulo("Planos", "planos", "Gerenciar planos de oferta", "pi-tag", "/planos", 3),
             new Modulo("Regras de Cobrança", "regras-cobranca", "Configurar regras de cobrança", "pi-bell", "/regras-cobranca", 4),
-            new Modulo("Usuários", "usuarios", "Gerenciar usuários do sistema", "pi-user-edit", "/usuarios", 5),
-            new Modulo("Templates", "templates", "Gerenciar templates de email", "pi-file", "/templates", 6),
-            new Modulo("Relatórios", "relatorios", "Visualizar relatórios e dashboards", "pi-chart-bar", "/relatorios", 7),
-            new Modulo("Relatórios Operacionais", "relatorios-operacionais", "Relatórios operacionais e execução de cobranças", "pi-chart-line", "/relatorios", 8),
-            new Modulo("Relatórios Gerenciais", "relatorios-gerenciais", "Relatórios gerenciais e análises estratégicas", "pi-chart-pie", "/relatorios", 9),
-            new Modulo("Configurações", "configuracoes", "Configurar sistema (email, integrações, etc)", "pi-cog", "/configuracoes/email", 10),
-            new Modulo("Permissões", "permissoes", "Configurar permissões de perfis (Proprietário)", "pi-shield", "/permissoes", 11)
+            new Modulo("Logs de Notificações", "logs-notificacoes", "Visualizar histórico de notificações enviadas", "pi-list", "/logs-notificacoes", 5),
+            new Modulo("Usuários", "usuarios", "Gerenciar usuários do sistema", "pi-user-edit", "/usuarios", 6),
+            new Modulo("Templates", "templates", "Gerenciar templates de email", "pi-file", "/templates", 7),
+            new Modulo("Relatórios", "relatorios", "Visualizar relatórios e dashboards", "pi-chart-bar", "/relatorios", 8),
+            new Modulo("Relatórios Operacionais", "relatorios-operacionais", "Relatórios operacionais e execução de cobranças", "pi-chart-line", "/relatorios", 9),
+            new Modulo("Relatórios Gerenciais", "relatorios-gerenciais", "Relatórios gerenciais e análises estratégicas", "pi-chart-pie", "/relatorios", 10),
+            new Modulo("Configurações", "configuracoes", "Configurar sistema (email, integrações, etc)", "pi-cog", "/configuracoes/email", 11),
+            new Modulo("Permissões", "permissoes", "Configurar permissões de perfis (Proprietário)", "pi-shield", "/permissoes", 12)
         };
 
         await _context.Modulos.AddRangeAsync(modulos);
@@ -80,6 +81,7 @@ public class PermissaoSeeder
             ["assinaturas"] = new[] { "menu.view", "read", "read.details", "create", "update", "delete", "export" },
             ["planos"] = new[] { "menu.view", "read", "read.details", "create", "update", "delete", "toggle", "export" },
             ["regras-cobranca"] = new[] { "menu.view", "read", "read.details", "create", "update", "delete", "export", "import" },
+            ["logs-notificacoes"] = new[] { "menu.view", "read", "read.details", "export" },
             ["usuarios"] = new[] { "menu.view", "read", "read.details", "create", "update", "delete", "reset-password" },
             ["templates"] = new[] { "menu.view", "read", "read.details", "create", "update", "delete" },
             ["relatorios"] = new[] { "menu.view", "read", "export" },
@@ -153,13 +155,14 @@ public class PermissaoSeeder
             ("Assinaturas", "assinaturas", "Gerenciar assinaturas de clientes", "pi-users", "/assinaturas", 2),
             ("Planos", "planos", "Gerenciar planos de oferta", "pi-tag", "/planos", 3),
             ("Regras de Cobrança", "regras-cobranca", "Configurar regras de cobrança", "pi-bell", "/regras-cobranca", 4),
-            ("Usuários", "usuarios", "Gerenciar usuários do sistema", "pi-user-edit", "/usuarios", 5),
-            ("Templates", "templates", "Gerenciar templates de email", "pi-file", "/templates", 6),
-            ("Relatórios", "relatorios", "Visualizar relatórios e dashboards", "pi-chart-bar", "/relatorios", 7),
-            ("Relatórios Operacionais", "relatorios-operacionais", "Relatórios operacionais e execução de cobranças", "pi-chart-line", "/relatorios", 8),
-            ("Relatórios Gerenciais", "relatorios-gerenciais", "Relatórios gerenciais e análises estratégicas", "pi-chart-pie", "/relatorios", 9),
-            ("Configurações", "configuracoes", "Configurar sistema (email, integrações, etc)", "pi-cog", "/configuracoes/email", 10),
-            ("Permissões", "permissoes", "Configurar permissões de perfis (Proprietário)", "pi-shield", "/permissoes", 11)
+            ("Logs de Notificações", "logs-notificacoes", "Visualizar histórico de notificações enviadas", "pi-list", "/logs-notificacoes", 5),
+            ("Usuários", "usuarios", "Gerenciar usuários do sistema", "pi-user-edit", "/usuarios", 6),
+            ("Templates", "templates", "Gerenciar templates de email", "pi-file", "/templates", 7),
+            ("Relatórios", "relatorios", "Visualizar relatórios e dashboards", "pi-chart-bar", "/relatorios", 8),
+            ("Relatórios Operacionais", "relatorios-operacionais", "Relatórios operacionais e execução de cobranças", "pi-chart-line", "/relatorios", 9),
+            ("Relatórios Gerenciais", "relatorios-gerenciais", "Relatórios gerenciais e análises estratégicas", "pi-chart-pie", "/relatorios", 10),
+            ("Configurações", "configuracoes", "Configurar sistema (email, integrações, etc)", "pi-cog", "/configuracoes/email", 11),
+            ("Permissões", "permissoes", "Configurar permissões de perfis (Proprietário)", "pi-shield", "/permissoes", 12)
         };
 
         var modulosExistentes = await _context.Modulos.Select(m => m.Chave).ToListAsync();
@@ -206,6 +209,7 @@ public class PermissaoSeeder
             ["assinaturas"] = new[] { "menu.view", "read", "read.details", "create", "update", "delete", "export" },
             ["planos"] = new[] { "menu.view", "read", "read.details", "create", "update", "delete", "toggle", "export" },
             ["regras-cobranca"] = new[] { "menu.view", "read", "read.details", "create", "update", "delete", "export", "import" },
+            ["logs-notificacoes"] = new[] { "menu.view", "read", "read.details", "export" },
             ["usuarios"] = new[] { "menu.view", "read", "read.details", "create", "update", "delete", "reset-password" },
             ["templates"] = new[] { "menu.view", "read", "read.details", "create", "update", "delete" },
             ["relatorios"] = new[] { "menu.view", "read", "export" },

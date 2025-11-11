@@ -1,0 +1,89 @@
+// ========================================
+// Variáveis Globais - Cobrio
+// ========================================
+
+// === Cores ===
+$primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+$primary-color: #2563eb;
+$primary-light: #eff6ff;
+$danger-color: #dc2626;
+$success-color: #10b981;
+$warning-color: #f59e0b;
+$info-color: #3b82f6;
+
+// Cores de texto
+$text-dark: #1f2937;
+$text-medium: #4b5563;
+$text-light: #6b7280;
+$text-lighter: #9ca3af;
+
+// Cores de fundo
+$bg-white: #ffffff;
+$bg-light: #f9fafb;
+$bg-lighter: #f3f4f6;
+
+// Cores de borda
+$border-light: #e5e7eb;
+$border-lighter: #f3f4f6;
+
+// === Breakpoints ===
+$breakpoint-xs: 480px;
+$breakpoint-sm: 640px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 1024px;
+$breakpoint-xl: 1280px;
+$breakpoint-2xl: 1536px;
+
+// === Layout Dimensions ===
+$header-height: 90px;
+$header-height-mobile: 70px;
+$sidebar-width: 260px;
+$sidebar-width-collapsed: 70px;
+
+// === Z-Index Scale ===
+$z-dropdown: 1000;
+$z-sticky: 100;
+$z-modal-backdrop: 999;
+$z-modal: 1001;
+$z-sidebar-mobile: 998;
+$z-notification: 1002;
+
+// === Transitions ===
+$transition-fast: 0.15s ease-in-out;
+$transition-base: 0.2s ease-in-out;
+$transition-slow: 0.3s ease-in-out;
+
+// === Shadows ===
+$shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+$shadow-base: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+$shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+$shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+$shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+// === Border Radius ===
+$radius-sm: 0.25rem;
+$radius-base: 0.5rem;
+$radius-lg: 0.75rem;
+$radius-xl: 1rem;
+$radius-full: 9999px;
+
+// === Spacing ===
+$spacing-xs: 0.25rem;
+$spacing-sm: 0.5rem;
+$spacing-md: 1rem;
+$spacing-lg: 1.5rem;
+$spacing-xl: 2rem;
+$spacing-2xl: 3rem;
+
+// === Touch Targets (Mobile UX) ===
+$min-touch-target: 44px; // Apple HIG & Material Design recommendation
+
+// === Typography ===
+$font-size-xs: 0.75rem;    // 12px
+$font-size-sm: 0.875rem;   // 14px
+$font-size-base: 1rem;     // 16px
+$font-size-lg: 1.125rem;   // 18px
+$font-size-xl: 1.25rem;    // 20px
+$font-size-2xl: 1.5rem;    // 24px
+$font-size-3xl: 1.875rem;  // 30px
+$font-size-4xl: 2.25rem;   // 36px

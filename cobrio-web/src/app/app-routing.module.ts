@@ -38,6 +38,10 @@ const routes: Routes = [
       {
         path: 'templates',
         loadChildren: () => import('./features/templates/templates.module').then(m => m.TemplatesModule)
+      },
+      {
+        path: 'logs-notificacoes',
+        loadChildren: () => import('./features/logs-notificacoes/logs-notificacoes.module').then(m => m.LogsNotificacoesModule)
       }
     ]
   },

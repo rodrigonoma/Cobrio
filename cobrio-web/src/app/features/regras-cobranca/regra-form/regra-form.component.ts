@@ -88,8 +88,13 @@ export class RegraFormComponent implements OnInit {
     });
 
     // Extrair variáveis ao mudar o template
-    this.form.get('templateNotificacao')?.valueChanges.subscribe(value => {
-      this.extrairVariaveis(value);
+    this.form.get('templateNotificacao')?.valueChanges.subscribe(() => {
+      this.extrairVariaveisDeTodosOsCampos();
+    });
+
+    // Extrair variáveis ao mudar o subject do email
+    this.form.get('subjectEmail')?.valueChanges.subscribe(() => {
+      this.extrairVariaveisDeTodosOsCampos();
     });
 
     // Atualizar variáveis obrigatórias e validação de subject ao mudar o canal de notificação
@@ -169,7 +174,7 @@ export class RegraFormComponent implements OnInit {
               quill.root.innerHTML = regra.templateNotificacao;
             }
           }
-          this.extrairVariaveis(regra.templateNotificacao);
+          this.extrairVariaveisDeTodosOsCampos();
         }, 100);
 
         this.webhookUrl = this.gerarWebhookUrl(regra.tokenWebhook);
@@ -225,6 +230,39 @@ export class RegraFormComponent implements OnInit {
     this.variaveisExtraidas = Array.from(variaveis).sort();
   }
 
+  extrairVariaveisDeTodosOsCampos(): void {
+    const template = this.form.get('templateNotificacao')?.value || '';
+    const subject = this.form.get('subjectEmail')?.value || '';
+
+    // Combinar template e subject para extrair todas as variáveis
+    const textoCompleto = template + ' ' + subject;
+
+    if (!textoCompleto.trim()) {
+      this.variaveisExtraidas = [];
+      return;
+    }
+
+    const regex = /\{\{([^}]+)\}\}/g;
+    const variaveis = new Set<string>();
+    let match;
+
+    while ((match = regex.exec(textoCompleto)) !== null) {
+      // Remover tags HTML, entidades HTML e limpar espaços
+      let variavel = match[1]
+        .replace(/<\/?[^>]+(>|$)/g, '') // Remove todas as tags HTML
+        .replace(/&nbsp;/g, ' ') // Remove &nbsp;
+        .replace(/&[a-z]+;/gi, '') // Remove outras entidades HTML
+        .replace(/\s+/g, ' ') // Normaliza múltiplos espaços
+        .trim();
+
+      if (variavel) {
+        variaveis.add(variavel);
+      }
+    }
+
+    this.variaveisExtraidas = Array.from(variaveis).sort();
+  }
+
   inserirVariavel(variavel: string): void {
     const control = this.form.get('templateNotificacao');
     if (!control) return;
@@ -261,8 +299,7 @@ export class RegraFormComponent implements OnInit {
 
     // Extrair variáveis do novo HTML
     setTimeout(() => {
-      const novoHtml = quill.root.innerHTML;
-      this.extrairVariaveis(novoHtml);
+      this.extrairVariaveisDeTodosOsCampos();
     }, 0);
   }
 
@@ -501,7 +538,7 @@ export class RegraFormComponent implements OnInit {
           quill.root.innerHTML = template.conteudoHtml;
         }
       }
-      this.extrairVariaveis(template.conteudoHtml);
+      this.extrairVariaveisDeTodosOsCampos();
     }, 100);
 
     // Carregar variáveis obrigatórias do sistema

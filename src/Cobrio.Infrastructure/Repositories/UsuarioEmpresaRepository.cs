@@ -54,4 +54,15 @@ public class UsuarioEmpresaRepository : Repository<UsuarioEmpresa>, IUsuarioEmpr
         return await _context.UsuariosEmpresa
             .CountAsync(u => u.EmpresaClienteId == empresaClienteId && u.Ativo, cancellationToken);
     }
+
+    public async Task<IEnumerable<UsuarioEmpresa>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default)
+    {
+        if (!ids.Any())
+            return Enumerable.Empty<UsuarioEmpresa>();
+
+        return await _context.UsuariosEmpresa
+            .IgnoreQueryFilters() // Para buscar usuários de outras empresas (para auditoria)
+            .Where(u => ids.Contains(u.Id))
+            .ToListAsync(cancellationToken);
+    }
 }

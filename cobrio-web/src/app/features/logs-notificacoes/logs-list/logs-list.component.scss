@@ -1,0 +1,257 @@
+.logs-container {
+  padding: 1.5rem;
+
+  .card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    .card-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid #e9ecef;
+
+      h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        color: #333;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .text-muted {
+        margin: 0.5rem 0 0 0;
+        color: #6c757d;
+        font-size: 0.9rem;
+      }
+    }
+
+    .card-body {
+      padding: 1.5rem;
+    }
+  }
+
+  .filtros-section {
+    margin-bottom: 1.5rem;
+    padding: 1.25rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+
+    .filtros-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .filtro-item {
+      display: flex;
+      flex-direction: column;
+
+      label {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        margin-bottom: 0.4rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #495057;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+
+        i {
+          font-size: 0.9rem;
+          color: #667eea;
+        }
+      }
+
+      input,
+      ::ng-deep .p-calendar,
+      ::ng-deep .p-dropdown {
+        font-size: 0.9rem;
+      }
+
+      input {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+
+        &:focus {
+          border-color: #667eea;
+          box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+          outline: none;
+        }
+
+        &::placeholder {
+          color: #adb5bd;
+          font-size: 0.85rem;
+        }
+      }
+    }
+
+    .filtros-actions {
+      display: flex;
+      gap: 0.75rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid #dee2e6;
+
+      button {
+        padding: 0.5rem 1.25rem;
+        font-size: 0.9rem;
+        font-weight: 500;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+      }
+    }
+  }
+
+  .data-info {
+    display: flex;
+    flex-direction: column;
+
+    .data {
+      font-weight: 500;
+    }
+
+    .hora {
+      font-size: 0.85rem;
+      color: #6c757d;
+    }
+  }
+
+  .destinatario-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+
+    span {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.9rem;
+
+      i {
+        color: #6c757d;
+      }
+    }
+  }
+
+  .text-center {
+    text-align: center;
+  }
+
+  .id-badge {
+    display: inline-block;
+    padding: 0.35rem 0.75rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 0.5px;
+    cursor: help;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+    }
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 0.25rem 0.6rem;
+    background: #007bff;
+    color: white;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
+  .empty-state {
+    padding: 3rem;
+    text-align: center;
+
+    p {
+      margin-top: 1rem;
+      color: #6c757d;
+      font-size: 1rem;
+    }
+  }
+}
+
+// Responsividade
+@media (max-width: 768px) {
+  .logs-container {
+    padding: 1rem;
+
+    .card-header h2 {
+      font-size: 1.25rem;
+    }
+
+    .filtros-section {
+      padding: 1rem;
+
+      .filtros-grid {
+        grid-template-columns: 1fr;
+        gap: 0.875rem;
+      }
+
+      .filtros-actions {
+        flex-direction: row;
+        flex-wrap: wrap;
+
+        button {
+          flex: 1;
+          min-width: 120px;
+        }
+      }
+    }
+  }
+
+  // Esconder coluna de ID Envio em mobile para economizar espaço
+  ::ng-deep .p-datatable {
+    th:nth-child(1),
+    td:nth-child(1) {
+      display: none !important;
+    }
+
+    // Ajustar tamanho da fonte
+    font-size: 0.85rem;
+
+    // Reduzir padding das células
+    .p-datatable-tbody > tr > td {
+      padding: 0.5rem 0.25rem;
+    }
+  }
+
+  // Badge de ID menor
+  .id-badge {
+    font-size: 0.65rem;
+    padding: 0.25rem 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  // Em telas muito pequenas, esconder também aberturas e cliques
+  ::ng-deep .p-datatable {
+    th:nth-child(7),
+    th:nth-child(8),
+    td:nth-child(7),
+    td:nth-child(8) {
+      display: none !important;
+    }
+
+    font-size: 0.75rem;
+  }
+}

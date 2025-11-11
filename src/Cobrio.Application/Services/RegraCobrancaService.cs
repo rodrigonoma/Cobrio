@@ -9,11 +9,16 @@ public class RegraCobrancaService : IRegraCobrancaService
 {
     private readonly IRegraCobrancaRepository _regraRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICurrentUserService _currentUserService;
 
-    public RegraCobrancaService(IRegraCobrancaRepository regraRepository, IUnitOfWork unitOfWork)
+    public RegraCobrancaService(
+        IRegraCobrancaRepository regraRepository,
+        IUnitOfWork unitOfWork,
+        ICurrentUserService currentUserService)
     {
         _regraRepository = regraRepository;
         _unitOfWork = unitOfWork;
+        _currentUserService = currentUserService;
     }
 
     public async Task<RegraCobrancaResponse> CreateAsync(Guid empresaClienteId, CreateRegraCobrancaRequest request, CancellationToken cancellationToken = default)
@@ -30,6 +35,12 @@ public class RegraCobrancaService : IRegraCobrancaService
             request.Descricao,
             request.SubjectEmail
         );
+
+        // Auditoria: Definir usuário de criação
+        if (_currentUserService.UserId.HasValue)
+        {
+            regra.DefinirUsuarioCriacao(_currentUserService.UserId.Value);
+        }
 
         await _regraRepository.AddAsync(regra, cancellationToken);
         await _unitOfWork.CommitAsync(cancellationToken);
@@ -50,6 +61,12 @@ public class RegraCobrancaService : IRegraCobrancaService
         {
             if (request.Ativa.Value) regra.Ativar();
             else regra.Desativar();
+        }
+
+        // Auditoria: Registrar usuário de modificação
+        if (_currentUserService.UserId.HasValue)
+        {
+            regra.AtualizarDataModificacao(_currentUserService.UserId.Value);
         }
 
         _regraRepository.Update(regra);

@@ -1,7 +1,7 @@
-import { Component, Input, OnInit, OnDestroy } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { Router, NavigationEnd } from '@angular/router';
 import { Subject, takeUntil, forkJoin } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, filter } from 'rxjs/operators';
 import { AuthService } from '../../../core/services/auth.service';
 import { PermissaoService } from '../../../core/services/permissao.service';
 
@@ -20,6 +20,7 @@ interface MenuItem {
 })
 export class SidebarComponent implements OnInit, OnDestroy {
   @Input() collapsed = false;
+  @Output() closeSidebar = new EventEmitter<void>();
   private destroy$ = new Subject<void>();
   userProfile: string = '';
 
@@ -28,6 +29,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
     { label: 'Assinaturas', icon: 'pi-users', route: '/assinaturas', moduloChave: 'assinaturas', visible: false },
     { label: 'Planos', icon: 'pi-tag', route: '/planos', moduloChave: 'planos', visible: false },
     { label: 'Regras de Cobrança', icon: 'pi-bell', route: '/regras-cobranca', moduloChave: 'regras-cobranca', visible: false },
+    { label: 'Logs de Notificações', icon: 'pi-list', route: '/logs-notificacoes', moduloChave: 'logs-notificacoes', visible: false },
     { label: 'Usuários', icon: 'pi-user-edit', route: '/usuarios', moduloChave: 'usuarios', visible: false },
     { label: 'Templates', icon: 'pi-file', route: '/templates', moduloChave: 'templates', visible: false },
     { label: 'Relatórios', icon: 'pi-chart-bar', route: '/relatorios', moduloChave: 'relatorios', visible: false },
@@ -49,6 +51,18 @@ export class SidebarComponent implements OnInit, OnDestroy {
         if (user?.perfil) {
           this.userProfile = user.perfil;
           this.carregarPermissoesMenu();
+        }
+      });
+
+    // Fechar sidebar após navegação em mobile
+    this.router.events
+      .pipe(
+        filter(event => event instanceof NavigationEnd),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(() => {
+        if (window.innerWidth < 768) {
+          this.onMenuItemClick();
         }
       });
   }
@@ -103,5 +117,12 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   canViewMenuItem(item: MenuItem): boolean {
     return item.visible;
+  }
+
+  onMenuItemClick(): void {
+    // Fechar sidebar em mobile após clicar em um item
+    if (window.innerWidth < 768) {
+      this.closeSidebar.emit();
+    }
   }
 }

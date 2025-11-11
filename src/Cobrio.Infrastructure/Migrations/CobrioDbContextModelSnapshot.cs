@@ -55,6 +55,12 @@ namespace Cobrio.Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("varchar(20)");
 
+                    b.Property<Guid?>("UsuarioCriacaoId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("UsuarioModificacaoId")
+                        .HasColumnType("char(36)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Chave")
@@ -133,6 +139,12 @@ namespace Cobrio.Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("varchar(20)");
 
+                    b.Property<Guid?>("UsuarioCriacaoId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("UsuarioModificacaoId")
+                        .HasColumnType("char(36)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("PlanoOfertaId")
@@ -193,6 +205,12 @@ namespace Cobrio.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasDefaultValue(0);
+
+                    b.Property<Guid?>("UsuarioCriacaoId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("UsuarioModificacaoId")
+                        .HasColumnType("char(36)");
 
                     b.HasKey("Id");
 
@@ -259,6 +277,12 @@ namespace Cobrio.Infrastructure.Migrations
                     b.Property<string>("Telefone")
                         .HasMaxLength(20)
                         .HasColumnType("varchar(20)");
+
+                    b.Property<Guid?>("UsuarioCriacaoId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("UsuarioModificacaoId")
+                        .HasColumnType("char(36)");
 
                     b.HasKey("Id");
 
@@ -340,6 +364,12 @@ namespace Cobrio.Infrastructure.Migrations
                     b.Property<string>("TransacaoIdGateway")
                         .HasMaxLength(255)
                         .HasColumnType("varchar(255)");
+
+                    b.Property<Guid?>("UsuarioCriacaoId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("UsuarioModificacaoId")
+                        .HasColumnType("char(36)");
 
                     b.Property<long>("ValorBruto")
                         .HasColumnType("bigint")
@@ -430,8 +460,14 @@ namespace Cobrio.Infrastructure.Migrations
                         .HasColumnType("int")
                         .HasDefaultValue(0);
 
+                    b.Property<Guid?>("UsuarioCriacaoId")
+                        .HasColumnType("char(36)");
+
                     b.Property<Guid?>("UsuarioId")
                         .HasColumnType("CHAR(36)");
+
+                    b.Property<Guid?>("UsuarioModificacaoId")
+                        .HasColumnType("char(36)");
 
                     b.HasKey("Id");
 
@@ -463,14 +499,35 @@ namespace Cobrio.Infrastructure.Migrations
                     b.Property<Guid>("CobrancaId")
                         .HasColumnType("CHAR(36)");
 
+                    b.Property<string>("CodigoErroProvedor")
+                        .HasColumnType("longtext");
+
                     b.Property<DateTime>("CriadoEm")
                         .HasColumnType("datetime(6)");
 
                     b.Property<DateTime>("DataEnvio")
                         .HasColumnType("DATETIME");
 
+                    b.Property<DateTime?>("DataPrimeiraAbertura")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DataPrimeiroClique")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DataUltimaAbertura")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DataUltimoClique")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<Guid>("EmpresaClienteId")
                         .HasColumnType("CHAR(36)");
+
+                    b.Property<string>("IpAbertura")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("LinkClicado")
+                        .HasColumnType("longtext");
 
                     b.Property<string>("MensagemEnviada")
                         .IsRequired()
@@ -479,9 +536,21 @@ namespace Cobrio.Infrastructure.Migrations
                     b.Property<string>("MensagemErro")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("MessageIdProvedor")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("MotivoRejeicao")
+                        .HasColumnType("longtext");
+
                     b.Property<string>("PayloadUtilizado")
                         .IsRequired()
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("QuantidadeAberturas")
+                        .HasColumnType("int");
+
+                    b.Property<int>("QuantidadeCliques")
+                        .HasColumnType("int");
 
                     b.Property<Guid>("RegraCobrancaId")
                         .HasColumnType("CHAR(36)");
@@ -491,6 +560,15 @@ namespace Cobrio.Infrastructure.Migrations
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
+
+                    b.Property<string>("UserAgentAbertura")
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid?>("UsuarioCriacaoId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("UsuarioModificacaoId")
+                        .HasColumnType("char(36)");
 
                     b.HasKey("Id");
 
@@ -510,6 +588,52 @@ namespace Cobrio.Infrastructure.Migrations
                         .HasDatabaseName("idx_historico_status_data");
 
                     b.ToTable("HistoricoNotificacao", (string)null);
+                });
+
+            modelBuilder.Entity("Cobrio.Domain.Entities.HistoricoStatusNotificacao", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("AtualizadoEm")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("DataMudanca")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Detalhes")
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid>("HistoricoNotificacaoId")
+                        .HasColumnType("CHAR(36)");
+
+                    b.Property<string>("IpOrigem")
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("StatusAnterior")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StatusNovo")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserAgent")
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid?>("UsuarioCriacaoId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("UsuarioModificacaoId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HistoricoNotificacaoId");
+
+                    b.ToTable("HistoricoStatusNotificacao");
                 });
 
             modelBuilder.Entity("Cobrio.Domain.Entities.ItemFatura", b =>
@@ -545,6 +669,12 @@ namespace Cobrio.Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("varchar(20)")
                         .HasDefaultValueSql("'Plano'");
+
+                    b.Property<Guid?>("UsuarioCriacaoId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("UsuarioModificacaoId")
+                        .HasColumnType("char(36)");
 
                     b.Property<long>("ValorTotal")
                         .HasColumnType("bigint")
@@ -619,6 +749,12 @@ namespace Cobrio.Infrastructure.Migrations
                         .HasMaxLength(4)
                         .HasColumnType("varchar(4)");
 
+                    b.Property<Guid?>("UsuarioCriacaoId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("UsuarioModificacaoId")
+                        .HasColumnType("char(36)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("AssinanteId")
@@ -679,6 +815,12 @@ namespace Cobrio.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
+                    b.Property<Guid?>("UsuarioCriacaoId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("UsuarioModificacaoId")
+                        .HasColumnType("char(36)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Chave")
@@ -723,6 +865,12 @@ namespace Cobrio.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("tinyint(1)")
                         .HasDefaultValue(false);
+
+                    b.Property<Guid?>("UsuarioCriacaoId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("UsuarioModificacaoId")
+                        .HasColumnType("char(36)");
 
                     b.HasKey("Id");
 
@@ -793,6 +941,12 @@ namespace Cobrio.Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("varchar(20)");
 
+                    b.Property<Guid?>("UsuarioCriacaoId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("UsuarioModificacaoId")
+                        .HasColumnType("char(36)");
+
                     b.Property<long>("Valor")
                         .HasColumnType("bigint")
                         .HasColumnName("ValorCentavos");
@@ -850,8 +1004,14 @@ namespace Cobrio.Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)");
 
+                    b.Property<Guid?>("UsuarioCriacaoId")
+                        .HasColumnType("char(36)");
+
                     b.Property<Guid>("UsuarioEmpresaId")
                         .HasColumnType("CHAR(36)");
+
+                    b.Property<Guid?>("UsuarioModificacaoId")
+                        .HasColumnType("char(36)");
 
                     b.HasKey("Id");
 
@@ -916,6 +1076,12 @@ namespace Cobrio.Infrastructure.Migrations
 
                     b.Property<int>("UnidadeTempo")
                         .HasColumnType("int");
+
+                    b.Property<Guid?>("UsuarioCriacaoId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("UsuarioModificacaoId")
+                        .HasColumnType("char(36)");
 
                     b.Property<int>("ValorTempo")
                         .HasColumnType("int");
@@ -1006,6 +1172,12 @@ namespace Cobrio.Infrastructure.Migrations
                         .HasColumnType("int")
                         .HasDefaultValue(3);
 
+                    b.Property<Guid?>("UsuarioCriacaoId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("UsuarioModificacaoId")
+                        .HasColumnType("char(36)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("EmpresaClienteId")
@@ -1047,6 +1219,12 @@ namespace Cobrio.Infrastructure.Migrations
                     b.Property<string>("SubjectEmail")
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)");
+
+                    b.Property<Guid?>("UsuarioCriacaoId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("UsuarioModificacaoId")
+                        .HasColumnType("char(36)");
 
                     b.Property<string>("VariaveisObrigatorias")
                         .IsRequired()
@@ -1110,6 +1288,12 @@ namespace Cobrio.Infrastructure.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("varchar(255)");
 
+                    b.Property<Guid?>("UsuarioCriacaoId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("UsuarioModificacaoId")
+                        .HasColumnType("char(36)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("FaturaId")
@@ -1172,6 +1356,12 @@ namespace Cobrio.Infrastructure.Migrations
 
                     b.Property<DateTime?>("UltimoAcesso")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<Guid?>("UsuarioCriacaoId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("UsuarioModificacaoId")
+                        .HasColumnType("char(36)");
 
                     b.HasKey("Id");
 
@@ -1431,6 +1621,17 @@ namespace Cobrio.Infrastructure.Migrations
                     b.Navigation("RegraCobranca");
                 });
 
+            modelBuilder.Entity("Cobrio.Domain.Entities.HistoricoStatusNotificacao", b =>
+                {
+                    b.HasOne("Cobrio.Domain.Entities.HistoricoNotificacao", "HistoricoNotificacao")
+                        .WithMany("HistoricoStatus")
+                        .HasForeignKey("HistoricoNotificacaoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("HistoricoNotificacao");
+                });
+
             modelBuilder.Entity("Cobrio.Domain.Entities.ItemFatura", b =>
                 {
                     b.HasOne("Cobrio.Domain.Entities.Fatura", "Fatura")
@@ -1621,6 +1822,11 @@ namespace Cobrio.Infrastructure.Migrations
                     b.Navigation("Itens");
 
                     b.Navigation("Tentativas");
+                });
+
+            modelBuilder.Entity("Cobrio.Domain.Entities.HistoricoNotificacao", b =>
+                {
+                    b.Navigation("HistoricoStatus");
                 });
 
             modelBuilder.Entity("Cobrio.Domain.Entities.Modulo", b =>

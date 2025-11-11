@@ -85,6 +85,7 @@ builder.Services.AddScoped<IPermissaoService, PermissaoService>();
 builder.Services.AddScoped<CobrancaService>();
 builder.Services.AddScoped<ExcelImportService>();
 builder.Services.AddScoped<UsuarioEmpresaService>();
+builder.Services.AddScoped<BrevoWebhookService>();
 
 // Reports Services
 builder.Services.AddHttpClient<BrevoEmailStatsService>();
@@ -118,6 +119,9 @@ builder.Services.AddScoped<ProcessarCobrancasJob>();
 
 // HttpContextAccessor para multi-tenant
 builder.Services.AddHttpContextAccessor();
+
+// Current User Service para auditoria
+builder.Services.AddScoped<ICurrentUserService, Cobrio.Infrastructure.Services.CurrentUserService>();
 
 // Hangfire - usando banco separado (recomendado)
 var hangfireConnection = builder.Configuration.GetConnectionString("HangfireConnection");

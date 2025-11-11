@@ -8,4 +8,6 @@ public interface IHistoricoNotificacaoRepository : IRepository<HistoricoNotifica
     Task<IEnumerable<HistoricoNotificacao>> GetByCobrancaIdAsync(Guid cobrancaId, CancellationToken cancellationToken = default);
     Task<IEnumerable<HistoricoNotificacao>> GetByRegraIdAsync(Guid regraId, CancellationToken cancellationToken = default);
     Task<IEnumerable<HistoricoNotificacao>> GetByStatusAsync(StatusNotificacao status, DateTime dataInicio, DateTime dataFim, CancellationToken cancellationToken = default);
+    Task<HistoricoNotificacao?> GetByMessageIdProvedor(string messageId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<HistoricoNotificacao>> GetByFiltrosAsync(Guid empresaClienteId, DateTime? dataInicio, DateTime? dataFim, StatusNotificacao? status, string? emailDestinatario, CancellationToken cancellationToken = default);
 }

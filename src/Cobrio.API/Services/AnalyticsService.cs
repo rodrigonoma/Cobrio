@@ -15,11 +15,16 @@ public class AnalyticsService : IAnalyticsService
     private readonly CobrioDbContext _context;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly Guid _empresaClienteId;
+    private readonly Domain.Interfaces.ICurrentUserService _currentUserService;
 
-    public AnalyticsService(CobrioDbContext context, IHttpContextAccessor httpContextAccessor)
+    public AnalyticsService(
+        CobrioDbContext context,
+        IHttpContextAccessor httpContextAccessor,
+        Domain.Interfaces.ICurrentUserService currentUserService)
     {
         _context = context;
         _httpContextAccessor = httpContextAccessor;
+        _currentUserService = currentUserService;
 
         var tenantId = _httpContextAccessor.HttpContext?.Items["TenantId"];
         if (tenantId == null || tenantId is not Guid)
@@ -45,8 +50,14 @@ public class AnalyticsService : IAnalyticsService
             .Include(c => c.Historicos)
             .Where(c => c.EmpresaClienteId == empresaId && c.CriadoEm >= dataInicio);
 
+        // Aplicar filtros de segurança
+        cobrancasQuery = ApplySecurityFiltersToCobrancas(cobrancasQuery);
+
         var historicosQuery = _context.HistoricosNotificacao
             .Where(h => h.EmpresaClienteId == empresaId && h.DataEnvio >= dataInicio);
+
+        // Aplicar filtros de segurança
+        historicosQuery = ApplySecurityFiltersToHistoricos(historicosQuery);
 
         // Aplicar filtros
         if (!string.IsNullOrEmpty(canal) && canal != "todos")
@@ -389,12 +400,21 @@ public class AnalyticsService : IAnalyticsService
 
     private async Task<StatusOperacionalDto> CalcularStatusOperacional(CancellationToken cancellationToken)
     {
-        var cobrancasPendentes = await _context.Cobrancas
-            .Where(c => c.EmpresaClienteId == _empresaClienteId && c.Status == StatusCobranca.Pendente)
-            .CountAsync(cancellationToken);
+        var cobrancasQuery = _context.Cobrancas
+            .Where(c => c.EmpresaClienteId == _empresaClienteId && c.Status == StatusCobranca.Pendente);
 
-        var ultimaExecucao = await _context.Cobrancas
-            .Where(c => c.EmpresaClienteId == _empresaClienteId && c.DataProcessamento != null)
+        // Aplicar filtros de segurança
+        cobrancasQuery = ApplySecurityFiltersToCobrancas(cobrancasQuery);
+
+        var cobrancasPendentes = await cobrancasQuery.CountAsync(cancellationToken);
+
+        var ultimaExecucaoQuery = _context.Cobrancas
+            .Where(c => c.EmpresaClienteId == _empresaClienteId && c.DataProcessamento != null);
+
+        // Aplicar filtros de segurança
+        ultimaExecucaoQuery = ApplySecurityFiltersToCobrancas(ultimaExecucaoQuery);
+
+        var ultimaExecucao = await ultimaExecucaoQuery
             .OrderByDescending(c => c.DataProcessamento)
             .Select(c => c.DataProcessamento)
             .FirstOrDefaultAsync(cancellationToken);
@@ -425,23 +445,35 @@ public class AnalyticsService : IAnalyticsService
         var dataInicio = DateTime.UtcNow.Date.AddDays(-30);
 
         // Contar mensagens enviadas por canal nos últimos 30 dias
-        var mensagensBrevo = await _context.HistoricosNotificacao
+        var brevoQuery = _context.HistoricosNotificacao
             .Where(h => h.EmpresaClienteId == _empresaClienteId &&
                        h.CanalUtilizado == CanalNotificacao.Email &&
-                       h.DataEnvio >= dataInicio)
-            .CountAsync(cancellationToken);
+                       h.DataEnvio >= dataInicio);
 
-        var mensagensTwilioWhatsApp = await _context.HistoricosNotificacao
+        // Aplicar filtros de segurança
+        brevoQuery = ApplySecurityFiltersToHistoricos(brevoQuery);
+
+        var mensagensBrevo = await brevoQuery.CountAsync(cancellationToken);
+
+        var whatsappQuery = _context.HistoricosNotificacao
             .Where(h => h.EmpresaClienteId == _empresaClienteId &&
                        h.CanalUtilizado == CanalNotificacao.WhatsApp &&
-                       h.DataEnvio >= dataInicio)
-            .CountAsync(cancellationToken);
+                       h.DataEnvio >= dataInicio);
 
-        var mensagensTwilioSMS = await _context.HistoricosNotificacao
+        // Aplicar filtros de segurança
+        whatsappQuery = ApplySecurityFiltersToHistoricos(whatsappQuery);
+
+        var mensagensTwilioWhatsApp = await whatsappQuery.CountAsync(cancellationToken);
+
+        var smsQuery = _context.HistoricosNotificacao
             .Where(h => h.EmpresaClienteId == _empresaClienteId &&
                        h.CanalUtilizado == CanalNotificacao.SMS &&
-                       h.DataEnvio >= dataInicio)
-            .CountAsync(cancellationToken);
+                       h.DataEnvio >= dataInicio);
+
+        // Aplicar filtros de segurança
+        smsQuery = ApplySecurityFiltersToHistoricos(smsQuery);
+
+        var mensagensTwilioSMS = await smsQuery.CountAsync(cancellationToken);
 
         var mensagensTwilioTotal = mensagensTwilioWhatsApp + mensagensTwilioSMS;
 
@@ -630,6 +662,71 @@ public class AnalyticsService : IAnalyticsService
         }
 
         return insights;
+    }
+
+    // Filtros de segurança
+    private IQueryable<HistoricoNotificacao> ApplySecurityFiltersToHistoricos(IQueryable<HistoricoNotificacao> query)
+    {
+        // Proprietário vê tudo
+        if (_currentUserService.EhProprietario)
+            return query;
+
+        // Se não está autenticado, retorna vazio
+        if (!_currentUserService.IsAuthenticated || !_currentUserService.UserId.HasValue)
+            return query.Where(h => false);
+
+        var userId = _currentUserService.UserId.Value;
+        var perfil = _currentUserService.Perfil;
+
+        // Operador vê apenas o que ele criou
+        if (perfil == PerfilUsuario.Operador)
+        {
+            return query.Where(h => h.UsuarioCriacaoId == userId);
+        }
+
+        // Admin vê seus próprios + dados antigos
+        if (perfil == PerfilUsuario.Admin)
+        {
+            return query.Where(h =>
+                h.UsuarioCriacaoId == userId ||
+                !h.UsuarioCriacaoId.HasValue
+            );
+        }
+
+        // Fallback: retorna apenas dados do próprio usuário
+        return query.Where(h => h.UsuarioCriacaoId == userId || !h.UsuarioCriacaoId.HasValue);
+    }
+
+    private IQueryable<Cobranca> ApplySecurityFiltersToCobrancas(IQueryable<Cobranca> query)
+    {
+        // Proprietário vê tudo
+        if (_currentUserService.EhProprietario)
+            return query;
+
+        // Se não está autenticado, retorna vazio
+        if (!_currentUserService.IsAuthenticated || !_currentUserService.UserId.HasValue)
+            return query.Where(c => false);
+
+        var userId = _currentUserService.UserId.Value;
+        var perfil = _currentUserService.Perfil;
+
+        // Operador vê apenas o que ele criou
+        if (perfil == PerfilUsuario.Operador)
+        {
+            return query.Where(c => c.UsuarioCriacaoId == userId);
+        }
+
+        // Admin vê seus próprios + dados antigos
+        if (perfil == PerfilUsuario.Admin)
+        {
+            return query.Where(c =>
+                c.UsuarioCriacaoId == userId ||
+                !c.UsuarioCriacaoId.HasValue
+            );
+        }
+
+        // Fallback: retorna apenas dados do próprio usuário
+        return query.Where(c => c.UsuarioCriacaoId == userId || !c.UsuarioCriacaoId.HasValue);
     }
 
     // Métodos auxiliares

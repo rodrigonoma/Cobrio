@@ -159,6 +159,12 @@ public class ProcessarCobrancasJob
                     resultado.RespostaProvedor ?? "Enviado com sucesso"
                 );
 
+                // Registrar MessageId do provedor (Brevo) para correlacionar com webhooks
+                if (!string.IsNullOrWhiteSpace(resultado.IdRastreamento))
+                {
+                    historico.RegistrarMessageId(resultado.IdRastreamento);
+                }
+
                 await _historicoRepository.AddAsync(historico, cancellationToken);
                 _logger.LogInformation(
                     "Cobrança {CobrancaId} processada com sucesso. IdRastreamento: {IdRastreamento}",

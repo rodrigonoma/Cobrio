@@ -233,9 +233,16 @@
     <div>
       <div class="flex justify-content-between align-items-center mb-2">
         <label class="font-semibold">Exemplo de JSON:</label>
-        <button pButton type="button" label="Copiar JSON" icon="pi pi-copy"
-                class="p-button-sm p-button-outlined"
-                (click)="copiarPayloadExemplo()"></button>
+        <div class="flex gap-2">
+          <button pButton type="button" label="Copiar JSON" icon="pi pi-copy"
+                  class="p-button-sm p-button-outlined"
+                  (click)="copiarPayloadExemplo()"></button>
+          <button pButton type="button" label="Usar Agora" icon="pi pi-bolt"
+                  class="p-button-sm p-button-success"
+                  (click)="usarExemploAgora()"
+                  pTooltip="Preencher automaticamente na tela de Envio em Massa"
+                  tooltipPosition="left"></button>
+        </div>
       </div>
       <pre class="p-3 border-round overflow-auto" style="max-height: 400px; background-color: #1e293b; color: #f1f5f9;"><code>{{ exemploPayloadJson }}</code></pre>
     </div>

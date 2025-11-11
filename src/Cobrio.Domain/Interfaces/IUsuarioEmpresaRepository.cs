@@ -10,4 +10,5 @@ public interface IUsuarioEmpresaRepository : IRepository<UsuarioEmpresa>
     Task<IEnumerable<UsuarioEmpresa>> GetByEmpresaIdAsync(Guid empresaClienteId, CancellationToken cancellationToken = default);
     Task<UsuarioEmpresa?> GetByIdAndEmpresaAsync(Guid id, Guid empresaClienteId, CancellationToken cancellationToken = default);
     Task<int> ContarUsuariosAtivosPorEmpresaAsync(Guid empresaClienteId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<UsuarioEmpresa>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default);
 }

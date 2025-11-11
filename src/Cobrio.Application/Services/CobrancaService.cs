@@ -10,15 +10,18 @@ public class CobrancaService
     private readonly ICobrancaRepository _cobrancaRepository;
     private readonly IRegraCobrancaRepository _regraRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICurrentUserService _currentUserService;
 
     public CobrancaService(
         ICobrancaRepository cobrancaRepository,
         IRegraCobrancaRepository regraRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ICurrentUserService currentUserService)
     {
         _cobrancaRepository = cobrancaRepository;
         _regraRepository = regraRepository;
         _unitOfWork = unitOfWork;
+        _currentUserService = currentUserService;
     }
 
     public async Task<CobrancaResponse> CreateByTokenAsync(
@@ -81,6 +84,12 @@ public class CobrancaService
             regra.UnidadeTempo,
             regra.EhPadrao
         );
+
+        // Auditoria: Definir usuário de criação
+        if (_currentUserService.UserId.HasValue)
+        {
+            cobranca.DefinirUsuarioCriacao(_currentUserService.UserId.Value);
+        }
 
         await _cobrancaRepository.AddAsync(cobranca, cancellationToken);
         await _unitOfWork.CommitAsync(cancellationToken);

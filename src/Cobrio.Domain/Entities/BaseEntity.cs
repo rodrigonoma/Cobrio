@@ -6,6 +6,10 @@ public abstract class BaseEntity
     public DateTime CriadoEm { get; protected set; }
     public DateTime AtualizadoEm { get; protected set; }
 
+    // Auditoria de usuários
+    public Guid? UsuarioCriacaoId { get; protected set; }
+    public Guid? UsuarioModificacaoId { get; protected set; }
+
     protected BaseEntity()
     {
         Id = Guid.NewGuid();
@@ -20,9 +24,21 @@ public abstract class BaseEntity
         AtualizadoEm = DateTime.UtcNow;
     }
 
-    public void AtualizarDataModificacao()
+    public void DefinirUsuarioCriacao(Guid usuarioId)
+    {
+        if (UsuarioCriacaoId == null || UsuarioCriacaoId == Guid.Empty)
+        {
+            UsuarioCriacaoId = usuarioId;
+        }
+    }
+
+    public void AtualizarDataModificacao(Guid? usuarioId = null)
     {
         AtualizadoEm = DateTime.UtcNow;
+        if (usuarioId.HasValue && usuarioId.Value != Guid.Empty)
+        {
+            UsuarioModificacaoId = usuarioId.Value;
+        }
     }
 
     public override bool Equals(object? obj)

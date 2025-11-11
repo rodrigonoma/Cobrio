@@ -8,3 +8,6 @@
 - corrigindo permissões
 - retirar o visualizar do modulo Usuarios.
 - ultima solicitacao
+- ajuste banco
+- criar historico do webhook mais completo
+- adicionando logs na tela de permissao

@@ -1,7 +1,19 @@
 <div class="main-layout">
   <app-header (toggleSidebar)="toggleSidebar()"></app-header>
+
+  <!-- Backdrop overlay para mobile quando sidebar está aberta -->
+  <div
+    class="sidebar-backdrop"
+    *ngIf="!sidebarCollapsed"
+    (click)="closeSidebar()"
+    [@fadeAnimation]>
+  </div>
+
   <div class="layout-content">
-    <app-sidebar [collapsed]="sidebarCollapsed"></app-sidebar>
+    <app-sidebar
+      [collapsed]="sidebarCollapsed"
+      (closeSidebar)="closeSidebar()">
+    </app-sidebar>
     <main class="content-area">
       <router-outlet></router-outlet>
     </main>

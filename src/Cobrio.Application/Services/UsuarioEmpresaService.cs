@@ -10,13 +10,16 @@ public class UsuarioEmpresaService
 {
     private readonly IUsuarioEmpresaRepository _usuarioRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICurrentUserService _currentUserService;
 
     public UsuarioEmpresaService(
         IUsuarioEmpresaRepository usuarioRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ICurrentUserService currentUserService)
     {
         _usuarioRepository = usuarioRepository;
         _unitOfWork = unitOfWork;
+        _currentUserService = currentUserService;
     }
 
     public async Task<IEnumerable<UsuarioEmpresaResponse>> GetAllByEmpresaAsync(
@@ -64,6 +67,12 @@ public class UsuarioEmpresaService
             request.Perfil
         );
 
+        // Auditoria: Definir usuário de criação
+        if (_currentUserService.UserId.HasValue)
+        {
+            usuario.DefinirUsuarioCriacao(_currentUserService.UserId.Value);
+        }
+
         await _usuarioRepository.AddAsync(usuario, cancellationToken);
         await _unitOfWork.CommitAsync(cancellationToken);
 
@@ -104,6 +113,12 @@ public class UsuarioEmpresaService
             usuario.Ativar();
         else if (!request.Ativo && usuario.Ativo)
             usuario.Desativar();
+
+        // Auditoria: Registrar usuário de modificação
+        if (_currentUserService.UserId.HasValue)
+        {
+            usuario.AtualizarDataModificacao(_currentUserService.UserId.Value);
+        }
 
         await _unitOfWork.CommitAsync(cancellationToken);
 
@@ -156,6 +171,13 @@ public class UsuarioEmpresaService
 
         // Atualizar senha
         usuario.AtualizarSenha(passwordHash);
+
+        // Auditoria: Registrar usuário de modificação
+        if (_currentUserService.UserId.HasValue)
+        {
+            usuario.AtualizarDataModificacao(_currentUserService.UserId.Value);
+        }
+
         await _unitOfWork.CommitAsync(cancellationToken);
     }
 
