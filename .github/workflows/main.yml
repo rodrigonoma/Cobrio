@@ -94,6 +94,56 @@ jobs:
             echo "✅ Permissões ajustadas."
 
       ##############################################
+      # 8️⃣ CRIAR APPSETTINGS DE PRODUCAO USANDO SECRETS
+      ##############################################
+      - name: Criar appsettings.Production.json no servidor
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: 22
+          script: |
+            echo "🛠️ Criando appsettings.Production.json..."
+            cat <<EOF > /var/www/cobrio/Cobrio.API/appsettings.Production.json
+            {
+              "ConnectionStrings": {
+                "DefaultConnection": "${{ secrets.DB_CONNECTION_STRING }}",
+                "HangfireConnection": "${{ secrets.HANGFIRE_CONNECTION_STRING }}",
+                "RedisConnection": "localhost:6379"
+              },
+              "JwtSettings": {
+                "SecretKey": "${{ secrets.JWT_SECRET_KEY }}",
+                "Issuer": "Cobrio.API",
+                "Audience": "Cobrio.Web",
+                "AccessTokenExpirationMinutes": 15,
+                "RefreshTokenExpirationDays": 7
+              },
+              "Brevo": {
+                "ApiKey": "${{ secrets.BREVO_API_KEY }}",
+                "FromEmail": "rodrigonoma@gmail.com",
+                "FromName": "Cobrio - Sistema de Cobrança"
+              },
+              "Twilio": {
+                "AccountSid": "${{ secrets.TWILIO_ACCOUNT_SID }}",
+                "AuthToken": "${{ secrets.TWILIO_AUTH_TOKEN }}",
+                "NumeroRemetente": "+5511999999999",
+                "NumeroWhatsApp": "+14155238886"
+              },
+              "Logging": {
+                "LogLevel": {
+                  "Default": "Information",
+                  "Microsoft.AspNetCore": "Warning",
+                  "Microsoft.EntityFrameworkCore": "Information"
+                }
+              },
+              "AllowedHosts": "*"
+            }
+            EOF
+            echo "✅ appsettings.Production.json criado com sucesso!"
+
+
+      ##############################################
       # 8️⃣ REINICIAR API NO PM2
       ##############################################
       - name: Restart PM2 on VPS
