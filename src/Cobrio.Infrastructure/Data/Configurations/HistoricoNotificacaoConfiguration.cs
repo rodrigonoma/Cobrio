@@ -77,6 +77,12 @@ public class HistoricoNotificacaoConfiguration : IEntityTypeConfiguration<Histor
             .HasForeignKey(h => h.EmpresaClienteId)
             .OnDelete(DeleteBehavior.NoAction);
 
+        // Relacionamento com HistoricoStatusNotificacao
+        builder.HasMany(h => h.HistoricoStatus)
+            .WithOne(s => s.HistoricoNotificacao)
+            .HasForeignKey(s => s.HistoricoNotificacaoId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         // Índices
         builder.HasIndex(h => new { h.EmpresaClienteId, h.DataEnvio })
             .HasDatabaseName("idx_historico_tenant_data");

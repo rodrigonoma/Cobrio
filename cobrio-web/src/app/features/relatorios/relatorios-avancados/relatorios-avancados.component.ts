@@ -4,6 +4,7 @@ import { PermissaoService } from '../../../core/services/permissao.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { RelatoriosOperacionaisComponent } from '../../relatorios-operacionais/relatorios-operacionais.component';
 import { RelatoriosGerenciaisComponent } from '../../relatorios-gerenciais/relatorios-gerenciais.component';
+import { RelatorioConsumoComponent } from '../../relatorio-consumo/relatorio-consumo.component';
 
 interface TabItem {
   label: string;
@@ -15,7 +16,7 @@ interface TabItem {
 @Component({
   selector: 'app-relatorios-avancados',
   standalone: true,
-  imports: [CommonModule, RelatoriosOperacionaisComponent, RelatoriosGerenciaisComponent],
+  imports: [CommonModule, RelatoriosOperacionaisComponent, RelatoriosGerenciaisComponent, RelatorioConsumoComponent],
   templateUrl: './relatorios-avancados.component.html',
   styleUrls: ['./relatorios-avancados.component.css']
 })
@@ -34,6 +35,12 @@ export class RelatoriosAvancadosComponent implements OnInit {
       label: 'Relatórios Gerenciais',
       moduloChave: 'relatorios-gerenciais',
       component: RelatoriosGerenciaisComponent,
+      visible: false
+    },
+    {
+      label: 'Relatório de Consumo',
+      moduloChave: 'relatorio-consumo',
+      component: RelatorioConsumoComponent,
       visible: false
     }
   ];

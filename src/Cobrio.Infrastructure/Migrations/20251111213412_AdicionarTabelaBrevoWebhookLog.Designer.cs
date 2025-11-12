@@ -3,6 +3,7 @@ using System;
 using Cobrio.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Cobrio.Infrastructure.Migrations
 {
     [DbContext(typeof(CobrioDbContext))]
-    partial class CobrioDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251111213412_AdicionarTabelaBrevoWebhookLog")]
+    partial class AdicionarTabelaBrevoWebhookLog
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

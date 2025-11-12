@@ -1,0 +1,21 @@
+{
+  "event": "unique_opened",
+  "email": "rodrigonoma@gmail.com",
+  "id": 1636105,
+  "date": "2025-11-11 22:05:33",
+  "ts": 1762909533,
+  "message-id": "<202511120105.17350695709@smtp-relay.mailin.fr>",
+  "ts_event": 1762909533,
+  "subject": "Lembrete de Cobrança - 150.00",
+  "tag": null,
+  "sending_ip": "74.125.210.165",
+  "ts_epoch": 1762909533321,
+  "tags": null,
+  "ip": null,
+  "user_agent": "Mozilla/5.0 (Windows NT 5.1; rv:11.0) Gecko Firefox/11.0 (via ggpht.com GoogleImageProxy)",
+  "link": "",
+  "reason": null,
+  "code": null,
+  "template_id": null,
+  "params": null
+}

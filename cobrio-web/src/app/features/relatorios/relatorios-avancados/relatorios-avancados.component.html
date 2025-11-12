@@ -24,6 +24,7 @@
       >
         <span class="tab-icon" *ngIf="i === 0">📊</span>
         <span class="tab-icon" *ngIf="i === 1">📈</span>
+        <span class="tab-icon" *ngIf="i === 2">📡</span>
         {{ tab.label }}
       </button>
     </div>
@@ -43,6 +44,14 @@
         class="tab-panel active"
       >
         <app-relatorios-gerenciais></app-relatorios-gerenciais>
+      </div>
+
+      <!-- Tab Relatório de Consumo -->
+      <div
+        *ngIf="activeTabIndex === 2 && isTabVisible(2)"
+        class="tab-panel active"
+      >
+        <app-relatorio-consumo></app-relatorio-consumo>
       </div>
     </div>
   </div>

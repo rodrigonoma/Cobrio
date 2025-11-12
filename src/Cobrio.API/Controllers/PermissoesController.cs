@@ -114,6 +114,7 @@ public class PermissoesController : ControllerBase
                 ["relatorios"] = new[] { "menu.view", "read", "export" },
                 ["relatorios-operacionais"] = new[] { "read", "export" },
                 ["relatorios-gerenciais"] = new[] { "read", "export" },
+                ["relatorio-consumo"] = new[] { "read", "export" },
                 ["permissoes"] = new[] { "menu.view", "read", "config-permissions" }
             };
 

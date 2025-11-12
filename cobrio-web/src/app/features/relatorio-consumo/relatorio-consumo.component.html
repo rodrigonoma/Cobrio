@@ -1,0 +1,242 @@
+<div class="relatorio-consumo-container">
+  <div class="header">
+    <h1>Relatório de Consumo</h1>
+    <p class="subtitle">Acompanhe o uso de canais de notificação (Email, SMS, WhatsApp)</p>
+  </div>
+
+  <!-- FILTROS -->
+  <div class="filtros-card">
+    <h3>Filtros</h3>
+    <div class="filtros-grid">
+      <div class="filtro-item">
+        <label>Data Início:</label>
+        <input
+          type="date"
+          [(ngModel)]="dataInicio"
+          class="form-control"
+        />
+      </div>
+
+      <div class="filtro-item">
+        <label>Data Fim:</label>
+        <input
+          type="date"
+          [(ngModel)]="dataFim"
+          class="form-control"
+        />
+      </div>
+
+      <div class="filtro-item">
+        <label>Canal:</label>
+        <select [(ngModel)]="canalFiltro" class="form-control">
+          <option [ngValue]="undefined">Todos os Canais</option>
+          <option [ngValue]="CanalNotificacao.Email">Email</option>
+          <option [ngValue]="CanalNotificacao.SMS">SMS</option>
+          <option [ngValue]="CanalNotificacao.WhatsApp">WhatsApp</option>
+        </select>
+      </div>
+
+      <div class="filtro-acoes">
+        <button class="btn btn-primary" (click)="aplicarFiltros()" [disabled]="loading">
+          {{ loading ? 'Carregando...' : 'Aplicar Filtros' }}
+        </button>
+        <button class="btn btn-secondary" (click)="limparFiltros()" [disabled]="loading">
+          Limpar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Carregando dados...</p>
+  </div>
+
+  <!-- CONTEÚDO -->
+  <div *ngIf="!loading && dashboard" class="content">
+
+    <!-- CARDS DE TOTALIZADORES -->
+    <div class="totalizadores">
+      <div class="card-total">
+        <div class="icon">📊</div>
+        <div class="info">
+          <h4>Total de Envios</h4>
+          <p class="value">{{ dashboard.totais.totalEnvios | number }}</p>
+          <p class="subtitle">Média: {{ dashboard.totais.mediaEnviosPorDia | number:'1.2-2' }}/dia</p>
+        </div>
+      </div>
+
+      <div class="card-total email">
+        <div class="icon">📧</div>
+        <div class="info">
+          <h4>Emails</h4>
+          <p class="value">{{ dashboard.totais.totalEmails | number }}</p>
+          <p class="subtitle">
+            {{ dashboard.totais.totalEnvios > 0 ? formatPercentage(dashboard.totais.totalEmails / dashboard.totais.totalEnvios * 100) : '0%' }} do total
+          </p>
+        </div>
+      </div>
+
+      <div class="card-total sms">
+        <div class="icon">💬</div>
+        <div class="info">
+          <h4>SMS</h4>
+          <p class="value">{{ dashboard.totais.totalSMS | number }}</p>
+          <p class="subtitle">
+            {{ dashboard.totais.totalEnvios > 0 ? formatPercentage(dashboard.totais.totalSMS / dashboard.totais.totalEnvios * 100) : '0%' }} do total
+          </p>
+        </div>
+      </div>
+
+      <div class="card-total whatsapp">
+        <div class="icon">💚</div>
+        <div class="info">
+          <h4>WhatsApp</h4>
+          <p class="value">{{ dashboard.totais.totalWhatsApp | number }}</p>
+          <p class="subtitle">
+            {{ dashboard.totais.totalEnvios > 0 ? formatPercentage(dashboard.totais.totalWhatsApp / dashboard.totais.totalEnvios * 100) : '0%' }} do total
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONSUMO POR CANAL -->
+    <div class="section-card">
+      <h3>Consumo por Canal</h3>
+      <div *ngIf="dashboard.consumoPorCanal.length > 0" class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Canal</th>
+              <th>Total Envios</th>
+              <th>Sucessos</th>
+              <th>Falhas</th>
+              <th>Taxa Sucesso</th>
+              <th>% do Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of dashboard.consumoPorCanal">
+              <td>
+                <span class="canal-badge" [style.background-color]="getCanalColor(item.canal)">
+                  {{ getCanalLabel(item.canal) }}
+                </span>
+              </td>
+              <td><strong>{{ item.totalEnvios | number }}</strong></td>
+              <td class="success-text">{{ item.sucessos | number }}</td>
+              <td class="error-text">{{ item.falhas | number }}</td>
+              <td>
+                <span class="badge-success">{{ formatPercentage(item.taxaSucesso) }}</span>
+              </td>
+              <td>{{ formatPercentage(item.percentualDoTotal) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div *ngIf="dashboard.consumoPorCanal.length === 0" class="empty-state">
+        <p>Nenhum dado disponível para o período selecionado</p>
+      </div>
+    </div>
+
+    <!-- CONSUMO POR USUÁRIO -->
+    <div class="section-card">
+      <h3>Consumo por Usuário</h3>
+      <div *ngIf="dashboard.consumoPorUsuario.length > 0" class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Usuário</th>
+              <th>Total Envios</th>
+              <th>Emails</th>
+              <th>SMS</th>
+              <th>WhatsApp</th>
+              <th>% do Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of dashboard.consumoPorUsuario">
+              <td><strong>{{ item.nomeUsuario }}</strong></td>
+              <td><strong>{{ item.totalEnvios | number }}</strong></td>
+              <td>{{ item.enviosEmail | number }}</td>
+              <td>{{ item.enviosSMS | number }}</td>
+              <td>{{ item.enviosWhatsApp | number }}</td>
+              <td>{{ formatPercentage(item.percentualDoTotal) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div *ngIf="dashboard.consumoPorUsuario.length === 0" class="empty-state">
+        <p>Nenhum dado disponível para o período selecionado</p>
+      </div>
+    </div>
+
+    <!-- CONSUMO POR RÉGUA -->
+    <div class="section-card">
+      <h3>Consumo por Régua de Cobrança</h3>
+      <div *ngIf="dashboard.consumoPorRegua.length > 0" class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Régua</th>
+              <th>Canal</th>
+              <th>Total Envios</th>
+              <th>% do Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of dashboard.consumoPorRegua">
+              <td><strong>{{ item.nomeRegua }}</strong></td>
+              <td>
+                <span class="canal-badge" [style.background-color]="getCanalColor(item.canal)">
+                  {{ getCanalLabel(item.canal) }}
+                </span>
+              </td>
+              <td><strong>{{ item.totalEnvios | number }}</strong></td>
+              <td>{{ formatPercentage(item.percentualDoTotal) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div *ngIf="dashboard.consumoPorRegua.length === 0" class="empty-state">
+        <p>Nenhum dado disponível para o período selecionado</p>
+      </div>
+    </div>
+
+    <!-- EVOLUÇÃO TEMPORAL -->
+    <div class="section-card">
+      <h3>Evolução Temporal</h3>
+      <div *ngIf="dashboard.evolucaoTemporal.length > 0" class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Total Envios</th>
+              <th>Emails</th>
+              <th>SMS</th>
+              <th>WhatsApp</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of dashboard.evolucaoTemporal">
+              <td><strong>{{ formatDate(item.data) }}</strong></td>
+              <td><strong>{{ item.totalEnvios | number }}</strong></td>
+              <td>{{ item.enviosEmail | number }}</td>
+              <td>{{ item.enviosSMS | number }}</td>
+              <td>{{ item.enviosWhatsApp | number }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div *ngIf="dashboard.evolucaoTemporal.length === 0" class="empty-state">
+        <p>Nenhum dado disponível para o período selecionado</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SEM DADOS -->
+  <div *ngIf="!loading && !dashboard" class="empty-state-main">
+    <p>Nenhum dado disponível. Ajuste os filtros e tente novamente.</p>
+  </div>
+</div>

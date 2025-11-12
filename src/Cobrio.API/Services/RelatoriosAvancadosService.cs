@@ -33,16 +33,19 @@ public class RelatoriosAvancadosService
     {
         try
         {
+            // Ajustar dataFim para incluir o dia inteiro
+            dataFim = AjustarDataFimParaFinalDoDia(dataFim);
+
             // Período anterior para comparação
             var diasPeriodo = (dataFim - dataInicio).Days;
             var dataInicioPeriodoAnterior = dataInicio.AddDays(-diasPeriodo);
             var dataFimPeriodoAnterior = dataInicio.AddSeconds(-1);
 
-            // Query base
+            // Query base (usando CriadoEm ao invés de DataProcessamento para incluir todas as cobranças criadas no período)
             var queryAtual = _context.Cobrancas
                 .Where(c => c.EmpresaClienteId == empresaClienteId &&
-                           c.DataProcessamento >= dataInicio &&
-                           c.DataProcessamento <= dataFim);
+                           c.CriadoEm >= dataInicio &&
+                           c.CriadoEm <= dataFim);
 
             if (regraCobrancaId.HasValue)
                 queryAtual = queryAtual.Where(c => c.RegraCobrancaId == regraCobrancaId.Value);
@@ -65,11 +68,11 @@ public class RelatoriosAvancadosService
 
             var cobrancasRetentadas = cobrancasAtual.Count(c => c.TentativasEnvio > 1);
 
-            // Período anterior
+            // Período anterior (usando CriadoEm)
             var queryAnterior = _context.Cobrancas
                 .Where(c => c.EmpresaClienteId == empresaClienteId &&
-                           c.DataProcessamento >= dataInicioPeriodoAnterior &&
-                           c.DataProcessamento <= dataFimPeriodoAnterior &&
+                           c.CriadoEm >= dataInicioPeriodoAnterior &&
+                           c.CriadoEm <= dataFimPeriodoAnterior &&
                            c.Status == StatusCobranca.Processada);
 
             if (regraCobrancaId.HasValue)
@@ -112,6 +115,9 @@ public class RelatoriosAvancadosService
     {
         try
         {
+            // Ajustar dataFim para incluir o dia inteiro
+            dataFim = AjustarDataFimParaFinalDoDia(dataFim);
+
             var query = from hn in _context.HistoricosNotificacao
                         join c in _context.Cobrancas on hn.CobrancaId equals c.Id
                         join rc in _context.RegrasCobranca on hn.RegraCobrancaId equals rc.Id
@@ -171,15 +177,18 @@ public class RelatoriosAvancadosService
     {
         try
         {
-            // Falhas por tipo
+            // Ajustar dataFim para incluir o dia inteiro
+            dataFim = AjustarDataFimParaFinalDoDia(dataFim);
+
+            // Falhas por tipo (usando CriadoEm)
             var cobrancasFalhas = await _context.Cobrancas
                 .Where(c => c.EmpresaClienteId == empresaClienteId &&
-                           c.DataProcessamento >= dataInicio &&
-                           c.DataProcessamento <= dataFim &&
+                           c.CriadoEm >= dataInicio &&
+                           c.CriadoEm <= dataFim &&
                            c.Status == StatusCobranca.Falha)
                 .Select(c => new
                 {
-                    Data = c.DataProcessamento!.Value.Date,
+                    Data = c.CriadoEm.Date,
                     c.MensagemErro,
                     c.RegraCobrancaId
                 })
@@ -256,17 +265,21 @@ public class RelatoriosAvancadosService
     {
         try
         {
+            // Ajustar dataFim para incluir o dia inteiro
+            dataFim = AjustarDataFimParaFinalDoDia(dataFim);
+
+            // Usando CriadoEm para pegar todas cobranças criadas no período (não apenas processadas)
             var dados = await (from c in _context.Cobrancas
                               where c.EmpresaClienteId == empresaClienteId &&
-                                    c.DataProcessamento >= dataInicio &&
-                                    c.DataProcessamento <= dataFim &&
-                                    c.Status == StatusCobranca.Processada
+                                    c.CriadoEm >= dataInicio &&
+                                    c.CriadoEm <= dataFim
                               select new
                               {
-                                  Data = c.DataProcessamento!.Value.Date,
+                                  Data = c.CriadoEm.Date,
                                   c.Id,
                                   c.PayloadJson,
-                                  c.DataProcessamento
+                                  c.DataProcessamento,
+                                  c.Status
                               }).ToListAsync(cancellationToken);
 
             var faturaIds = dados
@@ -349,12 +362,15 @@ public class RelatoriosAvancadosService
     {
         try
         {
+            // Ajustar dataFim para incluir o dia inteiro
+            dataFim = AjustarDataFimParaFinalDoDia(dataFim);
+
+            // Usando CriadoEm para incluir todas cobranças criadas no período
             var dados = await (from rc in _context.RegrasCobranca
                               join c in _context.Cobrancas on rc.Id equals c.RegraCobrancaId
                               where rc.EmpresaClienteId == empresaClienteId &&
-                                    c.DataProcessamento >= dataInicio &&
-                                    c.DataProcessamento <= dataFim &&
-                                    c.Status == StatusCobranca.Processada
+                                    c.CriadoEm >= dataInicio &&
+                                    c.CriadoEm <= dataFim
                               select new
                               {
                                   rc.Id,
@@ -364,7 +380,8 @@ public class RelatoriosAvancadosService
                                   rc.ValorTempo,
                                   rc.UnidadeTempo,
                                   CobrancaId = c.Id,
-                                  c.PayloadJson
+                                  c.PayloadJson,
+                                  c.Status
                               }).ToListAsync(cancellationToken);
 
             var faturaIds = dados
@@ -443,6 +460,9 @@ public class RelatoriosAvancadosService
     {
         try
         {
+            // Ajustar dataFim para incluir o dia inteiro
+            dataFim = AjustarDataFimParaFinalDoDia(dataFim);
+
             var faturas = await _context.Faturas
                 .Where(f => f.EmpresaClienteId == empresaClienteId &&
                            f.Status == StatusFatura.Pago &&
@@ -537,6 +557,9 @@ public class RelatoriosAvancadosService
     {
         try
         {
+            // Ajustar dataFim para incluir o dia inteiro
+            dataFim = AjustarDataFimParaFinalDoDia(dataFim);
+
             var dados = await (from hn in _context.HistoricosNotificacao
                               join c in _context.Cobrancas on hn.CobrancaId equals c.Id
                               join rc in _context.RegrasCobranca on hn.RegraCobrancaId equals rc.Id
@@ -639,19 +662,23 @@ public class RelatoriosAvancadosService
     {
         try
         {
+            // Ajustar dataFim para incluir o dia inteiro
+            dataFim = AjustarDataFimParaFinalDoDia(dataFim);
+
+            // Usando CriadoEm para incluir todas cobranças criadas no período
             var dados = await (from rc in _context.RegrasCobranca
                               join c in _context.Cobrancas on rc.Id equals c.RegraCobrancaId
                               where rc.EmpresaClienteId == empresaClienteId &&
-                                    c.DataProcessamento >= dataInicio &&
-                                    c.DataProcessamento <= dataFim &&
-                                    c.Status == StatusCobranca.Processada
+                                    c.CriadoEm >= dataInicio &&
+                                    c.CriadoEm <= dataFim
                               select new
                               {
-                                  Periodo = c.DataProcessamento!.Value.ToString("yyyy-MM"),
+                                  Periodo = c.CriadoEm.ToString("yyyy-MM"),
                                   rc.Id,
                                   rc.Nome,
                                   rc.CanalNotificacao,
-                                  c.PayloadJson
+                                  c.PayloadJson,
+                                  c.Status
                               }).ToListAsync(cancellationToken);
 
             var faturaIds = dados
@@ -724,13 +751,17 @@ public class RelatoriosAvancadosService
     {
         try
         {
+            // Ajustar dataFim para incluir o dia inteiro
+            dataFim = AjustarDataFimParaFinalDoDia(dataFim);
+
+            // Usando CriadoEm para incluir todas cobranças criadas no período
             var cobrancas = await _context.Cobrancas
                 .Where(c => c.EmpresaClienteId == empresaClienteId &&
-                           c.DataProcessamento >= dataInicio &&
-                           c.DataProcessamento <= dataFim)
+                           c.CriadoEm >= dataInicio &&
+                           c.CriadoEm <= dataFim)
                 .Select(c => new
                 {
-                    Periodo = c.DataProcessamento!.Value.ToString("yyyy-MM"),
+                    Periodo = c.CriadoEm.ToString("yyyy-MM"),
                     c.Id,
                     c.Status,
                     c.PayloadJson
@@ -833,6 +864,9 @@ public class RelatoriosAvancadosService
     {
         try
         {
+            // Ajustar dataFim para incluir o dia inteiro
+            dataFim = AjustarDataFimParaFinalDoDia(dataFim);
+
             var dados = await (from hn in _context.HistoricosNotificacao
                               join c in _context.Cobrancas on hn.CobrancaId equals c.Id
                               where hn.EmpresaClienteId == empresaClienteId &&
@@ -974,6 +1008,9 @@ public class RelatoriosAvancadosService
     {
         try
         {
+            // Ajustar dataFim para incluir o dia inteiro
+            dataFim = AjustarDataFimParaFinalDoDia(dataFim);
+
             var faturas = await _context.Faturas
                 .Where(f => f.EmpresaClienteId == empresaClienteId &&
                            f.DataVencimento >= dataInicio &&
@@ -1052,19 +1089,23 @@ public class RelatoriosAvancadosService
     {
         try
         {
+            // Ajustar dataFim para incluir o dia inteiro
+            dataFim = AjustarDataFimParaFinalDoDia(dataFim);
+
+            // Usando CriadoEm para incluir todas cobranças criadas no período
             var dados = await (from c in _context.Cobrancas
                               join rc in _context.RegrasCobranca on c.RegraCobrancaId equals rc.Id
                               where c.EmpresaClienteId == empresaClienteId &&
-                                    c.DataProcessamento >= dataInicio &&
-                                    c.DataProcessamento <= dataFim &&
-                                    c.Status == StatusCobranca.Processada
+                                    c.CriadoEm >= dataInicio &&
+                                    c.CriadoEm <= dataFim
                               select new
                               {
                                   RegraId = rc.Id,
                                   rc.Nome,
                                   CobrancaId = c.Id,
                                   c.PayloadJson,
-                                  c.DataProcessamento
+                                  c.DataProcessamento,
+                                  c.Status
                               }).ToListAsync(cancellationToken);
 
             var cobrancasIds = dados.Select(d => d.CobrancaId).ToList();
@@ -1183,12 +1224,15 @@ public class RelatoriosAvancadosService
     {
         try
         {
+            // Ajustar dataFim para incluir o dia inteiro
+            dataFim = AjustarDataFimParaFinalDoDia(dataFim);
+
+            // Usando CriadoEm para incluir todas cobranças criadas no período
             var cobrancas = await _context.Cobrancas
                 .Where(c => c.EmpresaClienteId == empresaClienteId &&
-                           c.DataProcessamento >= dataInicio &&
-                           c.DataProcessamento <= dataFim &&
-                           c.Status == StatusCobranca.Processada)
-                .Select(c => new { c.Id, c.PayloadJson })
+                           c.CriadoEm >= dataInicio &&
+                           c.CriadoEm <= dataFim)
+                .Select(c => new { c.Id, c.PayloadJson, c.Status })
                 .ToListAsync(cancellationToken);
 
             var cobrancasIds = cobrancas.Select(c => c.Id).ToList();
@@ -1309,8 +1353,188 @@ public class RelatoriosAvancadosService
     }
 
     // ========================================================================
+    // RELATÓRIO DE CONSUMO
+    // ========================================================================
+
+    public async Task<DashboardConsumoResponse> GetDashboardConsumoAsync(
+        Guid empresaClienteId,
+        DateTime dataInicio,
+        DateTime dataFim,
+        CanalNotificacao? canalFiltro = null,
+        Guid? usuarioFiltro = null,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // Ajustar dataFim para incluir o dia inteiro
+            dataFim = AjustarDataFimParaFinalDoDia(dataFim);
+
+            // Buscar históricos de notificações no período
+            var query = _context.HistoricosNotificacao
+                .Include(h => h.RegraCobranca)
+                .Include(h => h.Cobranca)
+                .Where(h => h.EmpresaClienteId == empresaClienteId &&
+                           h.DataEnvio >= dataInicio &&
+                           h.DataEnvio <= dataFim);
+
+            // Aplicar filtro de canal se fornecido
+            if (canalFiltro.HasValue)
+                query = query.Where(h => h.CanalUtilizado == canalFiltro.Value);
+
+            var historicos = await query
+                .Select(h => new
+                {
+                    h.Id,
+                    h.CanalUtilizado,
+                    h.DataEnvio,
+                    h.Status,
+                    h.RegraCobrancaId,
+                    NomeRegra = h.RegraCobranca.Nome,
+                    UsuarioId = h.Cobranca.UsuarioCriacaoId
+                })
+                .ToListAsync(cancellationToken);
+
+            // Aplicar filtro de usuário se fornecido
+            if (usuarioFiltro.HasValue)
+                historicos = historicos.Where(h => h.UsuarioId == usuarioFiltro.Value).ToList();
+
+            var totalEnvios = historicos.Count;
+            var diasPeriodo = (dataFim - dataInicio).Days + 1;
+
+            // Buscar nomes dos usuários
+            var usuariosIds = historicos
+                .Where(h => h.UsuarioId.HasValue)
+                .Select(h => h.UsuarioId!.Value)
+                .Distinct()
+                .ToList();
+
+            var usuarios = await _context.UsuariosEmpresa
+                .Where(u => usuariosIds.Contains(u.Id))
+                .Select(u => new { u.Id, u.Nome })
+                .ToDictionaryAsync(u => u.Id, u => u.Nome, cancellationToken);
+
+            // === TOTALIZADORES ===
+            var totais = new ConsumoTotaisResponse
+            {
+                TotalEnvios = totalEnvios,
+                TotalEmails = historicos.Count(h => h.CanalUtilizado == CanalNotificacao.Email),
+                TotalSMS = historicos.Count(h => h.CanalUtilizado == CanalNotificacao.SMS),
+                TotalWhatsApp = historicos.Count(h => h.CanalUtilizado == CanalNotificacao.WhatsApp),
+                MediaEnviosPorDia = diasPeriodo > 0 ? Math.Round((decimal)totalEnvios / diasPeriodo, 2) : 0
+            };
+
+            // === CONSUMO POR CANAL ===
+            var consumoPorCanal = historicos
+                .GroupBy(h => h.CanalUtilizado)
+                .Select(g => new ConsumoPorCanalResponse
+                {
+                    Canal = g.Key,
+                    NomeCanal = g.Key.ToString(),
+                    TotalEnvios = g.Count(),
+                    Sucessos = g.Count(h => h.Status == StatusNotificacao.Sucesso ||
+                                           h.Status == StatusNotificacao.Enviado ||
+                                           h.Status == StatusNotificacao.Entregue ||
+                                           h.Status == StatusNotificacao.Aberto ||
+                                           h.Status == StatusNotificacao.Clicado),
+                    Falhas = g.Count(h => h.Status == StatusNotificacao.Falha ||
+                                         h.Status == StatusNotificacao.ErroEnvio ||
+                                         h.Status == StatusNotificacao.HardBounce ||
+                                         h.Status == StatusNotificacao.SoftBounce),
+                    TaxaSucesso = g.Count() > 0
+                        ? Math.Round((decimal)g.Count(h => h.Status == StatusNotificacao.Sucesso ||
+                                                           h.Status == StatusNotificacao.Enviado ||
+                                                           h.Status == StatusNotificacao.Entregue ||
+                                                           h.Status == StatusNotificacao.Aberto ||
+                                                           h.Status == StatusNotificacao.Clicado) / g.Count() * 100, 2)
+                        : 0,
+                    PercentualDoTotal = totalEnvios > 0
+                        ? Math.Round((decimal)g.Count() / totalEnvios * 100, 2)
+                        : 0
+                })
+                .OrderByDescending(c => c.TotalEnvios)
+                .ToList();
+
+            // === CONSUMO POR USUÁRIO ===
+            var consumoPorUsuario = historicos
+                .GroupBy(h => new { h.UsuarioId })
+                .Select(g => new ConsumoPorUsuarioResponse
+                {
+                    UsuarioId = g.Key.UsuarioId,
+                    NomeUsuario = g.Key.UsuarioId.HasValue && usuarios.ContainsKey(g.Key.UsuarioId.Value)
+                        ? usuarios[g.Key.UsuarioId.Value]
+                        : "Sistema",
+                    TotalEnvios = g.Count(),
+                    EnviosEmail = g.Count(h => h.CanalUtilizado == CanalNotificacao.Email),
+                    EnviosSMS = g.Count(h => h.CanalUtilizado == CanalNotificacao.SMS),
+                    EnviosWhatsApp = g.Count(h => h.CanalUtilizado == CanalNotificacao.WhatsApp),
+                    PercentualDoTotal = totalEnvios > 0
+                        ? Math.Round((decimal)g.Count() / totalEnvios * 100, 2)
+                        : 0
+                })
+                .OrderByDescending(u => u.TotalEnvios)
+                .ToList();
+
+            // === CONSUMO POR RÉGUA ===
+            var consumoPorRegua = historicos
+                .GroupBy(h => new { h.RegraCobrancaId, h.NomeRegra, h.CanalUtilizado })
+                .Select(g => new ConsumoPorReguaResponse
+                {
+                    ReguaId = g.Key.RegraCobrancaId,
+                    NomeRegua = g.Key.NomeRegra,
+                    Canal = g.Key.CanalUtilizado,
+                    TotalEnvios = g.Count(),
+                    PercentualDoTotal = totalEnvios > 0
+                        ? Math.Round((decimal)g.Count() / totalEnvios * 100, 2)
+                        : 0
+                })
+                .OrderByDescending(r => r.TotalEnvios)
+                .ToList();
+
+            // === EVOLUÇÃO TEMPORAL ===
+            var evolucaoTemporal = historicos
+                .GroupBy(h => h.DataEnvio.Date)
+                .Select(g => new ConsumoTemporalResponse
+                {
+                    Data = g.Key,
+                    TotalEnvios = g.Count(),
+                    EnviosEmail = g.Count(h => h.CanalUtilizado == CanalNotificacao.Email),
+                    EnviosSMS = g.Count(h => h.CanalUtilizado == CanalNotificacao.SMS),
+                    EnviosWhatsApp = g.Count(h => h.CanalUtilizado == CanalNotificacao.WhatsApp)
+                })
+                .OrderBy(e => e.Data)
+                .ToList();
+
+            return new DashboardConsumoResponse
+            {
+                DataInicio = dataInicio,
+                DataFim = dataFim,
+                Totais = totais,
+                ConsumoPorCanal = consumoPorCanal,
+                ConsumoPorUsuario = consumoPorUsuario,
+                ConsumoPorRegua = consumoPorRegua,
+                EvolucaoTemporal = evolucaoTemporal
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao buscar dashboard de consumo");
+            throw;
+        }
+    }
+
+    // ========================================================================
     // MÉTODOS AUXILIARES
     // ========================================================================
+
+    /// <summary>
+    /// Ajusta dataFim para incluir o dia inteiro (até 23:59:59.999) se vier sem hora
+    /// </summary>
+    private static DateTime AjustarDataFimParaFinalDoDia(DateTime dataFim)
+    {
+        if (dataFim.TimeOfDay == TimeSpan.Zero)
+            return dataFim.Date.AddDays(1).AddTicks(-1);
+        return dataFim;
+    }
 
     private static decimal ExtractValorFromPayload(string payloadJson)
     {

@@ -72,6 +72,7 @@ builder.Services.AddScoped<IRegraCobrancaRepository, RegraCobrancaRepository>();
 builder.Services.AddScoped<ICobrancaRepository, CobrancaRepository>();
 builder.Services.AddScoped<IHistoricoNotificacaoRepository, HistoricoNotificacaoRepository>();
 builder.Services.AddScoped<IHistoricoImportacaoRepository, HistoricoImportacaoRepository>();
+builder.Services.AddScoped<IBrevoWebhookLogRepository, BrevoWebhookLogRepository>();
 builder.Services.AddScoped<IPermissaoRepository, PermissaoRepository>();
 builder.Services.AddScoped<ITemplateEmailRepository, TemplateEmailRepository>();
 

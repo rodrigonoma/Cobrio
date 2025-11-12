@@ -225,6 +225,64 @@ export interface ComparativoOmnichannelResponse {
 }
 
 // ============================================================================
+// INTERFACES - RELATÓRIO DE CONSUMO
+// ============================================================================
+
+export interface DashboardConsumoResponse {
+  dataInicio: string;
+  dataFim: string;
+  totais: ConsumoTotaisResponse;
+  consumoPorCanal: ConsumoPorCanalResponse[];
+  consumoPorUsuario: ConsumoPorUsuarioResponse[];
+  consumoPorRegua: ConsumoPorReguaResponse[];
+  evolucaoTemporal: ConsumoTemporalResponse[];
+}
+
+export interface ConsumoTotaisResponse {
+  totalEnvios: number;
+  totalEmails: number;
+  totalSMS: number;
+  totalWhatsApp: number;
+  mediaEnviosPorDia: number;
+}
+
+export interface ConsumoPorCanalResponse {
+  canal: CanalNotificacao;
+  nomeCanal: string;
+  totalEnvios: number;
+  sucessos: number;
+  falhas: number;
+  taxaSucesso: number;
+  percentualDoTotal: number;
+}
+
+export interface ConsumoPorUsuarioResponse {
+  usuarioId?: string;
+  nomeUsuario: string;
+  totalEnvios: number;
+  enviosEmail: number;
+  enviosSMS: number;
+  enviosWhatsApp: number;
+  percentualDoTotal: number;
+}
+
+export interface ConsumoPorReguaResponse {
+  reguaId: string;
+  nomeRegua: string;
+  canal: CanalNotificacao;
+  totalEnvios: number;
+  percentualDoTotal: number;
+}
+
+export interface ConsumoTemporalResponse {
+  data: string;
+  totalEnvios: number;
+  enviosEmail: number;
+  enviosSMS: number;
+  enviosWhatsApp: number;
+}
+
+// ============================================================================
 // ENUMS
 // ============================================================================
 
@@ -454,6 +512,34 @@ export class RelatoriosAvancadosService {
 
     return this.http.get<ComparativoOmnichannelResponse[]>(
       `${this.apiUrl}/comparativo-omnichannel`,
+      { params }
+    );
+  }
+
+  // ========================================================================
+  // RELATÓRIO DE CONSUMO
+  // ========================================================================
+
+  getDashboardConsumo(
+    dataInicio: Date,
+    dataFim: Date,
+    canal?: CanalNotificacao,
+    usuarioId?: string
+  ): Observable<DashboardConsumoResponse> {
+    let params = new HttpParams()
+      .set('dataInicio', dataInicio.toISOString())
+      .set('dataFim', dataFim.toISOString());
+
+    if (canal !== undefined) {
+      params = params.set('canal', canal.toString());
+    }
+
+    if (usuarioId) {
+      params = params.set('usuarioId', usuarioId);
+    }
+
+    return this.http.get<DashboardConsumoResponse>(
+      `${this.apiUrl}/dashboard-consumo`,
       { params }
     );
   }

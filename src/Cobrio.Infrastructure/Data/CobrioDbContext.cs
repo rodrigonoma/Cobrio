@@ -38,6 +38,7 @@ public class CobrioDbContext : DbContext
     public DbSet<HistoricoNotificacao> HistoricosNotificacao { get; set; } = null!;
     public DbSet<HistoricoStatusNotificacao> HistoricosStatusNotificacao { get; set; } = null!;
     public DbSet<HistoricoImportacao> HistoricosImportacao { get; set; } = null!;
+    public DbSet<BrevoWebhookLog> BrevoWebhookLogs { get; set; } = null!;
 
     // Permissões
     public DbSet<Modulo> Modulos { get; set; } = null!;

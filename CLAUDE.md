@@ -11,3 +11,4 @@
 - ajuste banco
 - criar historico do webhook mais completo
 - adicionando logs na tela de permissao
+- permissoes no modulo de relatorio de consumo

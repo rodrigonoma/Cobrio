@@ -35,6 +35,14 @@ pm2 logs cobrio
 
 curl http://localhost:5000/health
 
+  # 1. Backend
+  # Upload da pasta Cobriopublish para /var/www/cobrio/Cobrio.API/
+  pm2 restart cobrio-api
+
+  # 2. Frontend
+  # Upload da pasta cobrio-web/dist/cobrio-web/ para /var/www/cobrio/cobrio-web/
+  sudo systemctl reload nginx
+
 ********************************************************************
 
 Deploy Front

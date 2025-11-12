@@ -61,12 +61,12 @@
           </div>
 
           <div class="filtro-item filtro-texto">
-            <label for="cobrancaIdFiltro"><i class="pi pi-tag"></i> ID Cobrança</label>
+            <label for="idEnvioFiltro"><i class="pi pi-send"></i> ID Envio</label>
             <input
               pInputText
-              id="cobrancaIdFiltro"
+              id="idEnvioFiltro"
               type="text"
-              [(ngModel)]="cobrancaIdFiltro"
+              [(ngModel)]="idEnvioFiltro"
               placeholder="ID completo ou parcial..."
               class="p-inputtext-sm"
             />
@@ -92,6 +92,15 @@
             icon="pi pi-filter"
             class="p-button-primary p-button-sm"
             (click)="carregarLogs()"
+          ></button>
+          <button
+            pButton
+            label="Atualizar"
+            icon="pi pi-refresh"
+            class="p-button-success p-button-sm"
+            (click)="carregarLogs()"
+            [loading]="loading"
+            pTooltip="Atualizar lista de notificações"
           ></button>
           <button
             pButton

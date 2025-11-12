@@ -25,7 +25,7 @@ export class LogsListComponent implements OnInit {
   dataFim?: Date;
   statusSelecionado?: StatusNotificacao;
   emailFiltro = '';
-  cobrancaIdFiltro = '';
+  idEnvioFiltro = '';
   regraFiltro = '';
 
   // Opções de status para dropdown
@@ -66,7 +66,7 @@ export class LogsListComponent implements OnInit {
 
     this.notificacoesService.listar(filtros).subscribe({
       next: (logs) => {
-        this.logs = logs.map(log => ({
+        let logsFiltrados = logs.map(log => ({
           ...log,
           dataEnvio: new Date(log.dataEnvio),
           dataPrimeiraAbertura: log.dataPrimeiraAbertura ? new Date(log.dataPrimeiraAbertura) : undefined,
@@ -74,6 +74,24 @@ export class LogsListComponent implements OnInit {
           dataPrimeiroClique: log.dataPrimeiroClique ? new Date(log.dataPrimeiroClique) : undefined,
           dataUltimoClique: log.dataUltimoClique ? new Date(log.dataUltimoClique) : undefined
         }));
+
+        // Filtro local por ID de Envio
+        if (this.idEnvioFiltro && this.idEnvioFiltro.trim() !== '') {
+          const idBusca = this.idEnvioFiltro.trim().toLowerCase();
+          logsFiltrados = logsFiltrados.filter(log =>
+            log.id.toLowerCase().includes(idBusca)
+          );
+        }
+
+        // Filtro local por Regra
+        if (this.regraFiltro && this.regraFiltro.trim() !== '') {
+          const regraBusca = this.regraFiltro.trim().toLowerCase();
+          logsFiltrados = logsFiltrados.filter(log =>
+            log.nomeRegra.toLowerCase().includes(regraBusca)
+          );
+        }
+
+        this.logs = logsFiltrados;
         this.loading = false;
       },
       error: (error) => {
@@ -93,7 +111,7 @@ export class LogsListComponent implements OnInit {
     this.dataFim = undefined;
     this.statusSelecionado = undefined;
     this.emailFiltro = '';
-    this.cobrancaIdFiltro = '';
+    this.idEnvioFiltro = '';
     this.regraFiltro = '';
     this.carregarLogs();
   }

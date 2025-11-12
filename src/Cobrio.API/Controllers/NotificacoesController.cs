@@ -1,6 +1,7 @@
 using Cobrio.Application.DTOs.HistoricoNotificacao;
 using Cobrio.Domain.Enums;
 using Cobrio.Domain.Interfaces;
+using Cobrio.Infrastructure.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -75,15 +76,15 @@ public class NotificacoesController : ControllerBase
                     EmailDestinatario = email,
                     TelefoneDestinatario = telefone,
                     Assunto = ExtrairAssunto(h.MensagemEnviada),
-                    DataEnvio = h.DataEnvio,
+                    DataEnvio = h.DataEnvio.ToBrasiliaTime(),
                     MensagemErro = h.MensagemErro,
                     MotivoRejeicao = h.MotivoRejeicao,
                     QuantidadeAberturas = h.QuantidadeAberturas,
-                    DataPrimeiraAbertura = h.DataPrimeiraAbertura,
-                    DataUltimaAbertura = h.DataUltimaAbertura,
+                    DataPrimeiraAbertura = h.DataPrimeiraAbertura.ToBrasiliaTime(),
+                    DataUltimaAbertura = h.DataUltimaAbertura.ToBrasiliaTime(),
                     QuantidadeCliques = h.QuantidadeCliques,
-                    DataPrimeiroClique = h.DataPrimeiroClique,
-                    DataUltimoClique = h.DataUltimoClique,
+                    DataPrimeiroClique = h.DataPrimeiroClique.ToBrasiliaTime(),
+                    DataUltimoClique = h.DataUltimoClique.ToBrasiliaTime(),
                     LinkClicado = h.LinkClicado,
                     MessageIdProvedor = h.MessageIdProvedor,
                     UsuarioCriacaoId = h.UsuarioCriacaoId,
@@ -135,15 +136,15 @@ public class NotificacoesController : ControllerBase
                 EmailDestinatario = email,
                 TelefoneDestinatario = telefone,
                 Assunto = ExtrairAssunto(historico.MensagemEnviada),
-                DataEnvio = historico.DataEnvio,
+                DataEnvio = historico.DataEnvio.ToBrasiliaTime(),
                 MensagemErro = historico.MensagemErro,
                 MotivoRejeicao = historico.MotivoRejeicao,
                 QuantidadeAberturas = historico.QuantidadeAberturas,
-                DataPrimeiraAbertura = historico.DataPrimeiraAbertura,
-                DataUltimaAbertura = historico.DataUltimaAbertura,
+                DataPrimeiraAbertura = historico.DataPrimeiraAbertura.ToBrasiliaTime(),
+                DataUltimaAbertura = historico.DataUltimaAbertura.ToBrasiliaTime(),
                 QuantidadeCliques = historico.QuantidadeCliques,
-                DataPrimeiroClique = historico.DataPrimeiroClique,
-                DataUltimoClique = historico.DataUltimoClique,
+                DataPrimeiroClique = historico.DataPrimeiroClique.ToBrasiliaTime(),
+                DataUltimoClique = historico.DataUltimoClique.ToBrasiliaTime(),
                 LinkClicado = historico.LinkClicado,
                 MessageIdProvedor = historico.MessageIdProvedor
             };

@@ -56,8 +56,34 @@ public class HistoricoNotificacaoRepository : Repository<HistoricoNotificacao>, 
         if (string.IsNullOrWhiteSpace(messageId))
             return null;
 
+        // IMPORTANTE: IgnoreQueryFilters() para permitir busca cross-tenant
+        // Isso é necessário porque o webhook do Brevo não tem contexto de tenant
         return await _dbSet
+            .IgnoreQueryFilters()
             .FirstOrDefaultAsync(h => h.MessageIdProvedor == messageId, cancellationToken);
+    }
+
+    public async Task<HistoricoNotificacao?> GetByEmailEDataAsync(string email, DateTime dataReferencia, int toleranciaMinutos = 30, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return null;
+
+        var dataInicio = dataReferencia.AddMinutes(-toleranciaMinutos);
+        var dataFim = dataReferencia.AddMinutes(toleranciaMinutos);
+
+        // IMPORTANTE: IgnoreQueryFilters() para permitir busca cross-tenant
+        // Busca o histórico mais recente de email enviado nesse período
+        // Busca tanto no PayloadUtilizado quanto no PayloadJson da Cobranca
+        return await _dbSet
+            .IgnoreQueryFilters()
+            .Include(h => h.Cobranca)
+            .Where(h =>
+                h.CanalUtilizado == CanalNotificacao.Email &&
+                h.DataEnvio >= dataInicio &&
+                h.DataEnvio <= dataFim &&
+                (h.PayloadUtilizado.Contains(email) || h.Cobranca.PayloadJson.Contains(email)))
+            .OrderByDescending(h => h.DataEnvio)
+            .FirstOrDefaultAsync(cancellationToken);
     }
 
     public async Task<IEnumerable<HistoricoNotificacao>> GetByFiltrosAsync(

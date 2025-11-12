@@ -417,4 +417,46 @@ public class RelatoriosAvancadosController : ControllerBase
             return BadRequest(new { message = "Erro ao buscar comparativo omnichannel" });
         }
     }
+
+    // ========================================================================
+    // RELATÓRIO DE CONSUMO
+    // ========================================================================
+
+    /// <summary>
+    /// Dashboard de consumo de canais (Email, SMS, WhatsApp)
+    /// </summary>
+    [HttpGet("dashboard-consumo")]
+    [ProducesResponseType(typeof(DashboardConsumoResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetDashboardConsumo(
+        [FromQuery] DateTime dataInicio,
+        [FromQuery] DateTime dataFim,
+        [FromQuery] CanalNotificacao? canal,
+        [FromQuery] Guid? usuarioId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var empresaId = GetEmpresaClienteId();
+
+            // Validar período máximo (1 ano)
+            if ((dataFim - dataInicio).TotalDays > 365)
+            {
+                return BadRequest(new { message = "Período máximo permitido: 365 dias" });
+            }
+
+            var resultado = await _relatoriosService.GetDashboardConsumoAsync(
+                empresaId, dataInicio, dataFim, canal, usuarioId, cancellationToken);
+
+            return Ok(resultado);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao buscar dashboard de consumo");
+            return BadRequest(new { message = "Erro ao buscar dashboard de consumo" });
+        }
+    }
 }
